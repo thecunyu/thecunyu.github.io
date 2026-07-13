@@ -246,10 +246,36 @@ img {
 </div>
 <script>
 (function(){
-  var MIN=1400, MAX=7000, MODULE_SRC="https://framerusercontent.com/sites/1RP1V5YpEmiIyt7ixRTh6W/script_main.YpU_Ih9Y.mjs";
+  var MIN=1400, MAX=7000, FORCETOP=true, MODULE_SRC="https://framerusercontent.com/sites/1RP1V5YpEmiIyt7ixRTh6W/script_main.YpU_Ih9Y.mjs";
   var t0=Date.now(), shown=0, target=8, assetsReady=false, exited=false;
 
+  /* 禁用浏览器的滚动位置恢复:刷新也从顶部进场,初始状态永远一致 */
+  if(FORCETOP){
+    try{history.scrollRestoration='manual'}catch(e){}
+    window.scrollTo(0,0);
+  }
+
   function $(id){return document.getElementById(id)}
+
+  /* ---------- 预载 Framer 主模块:下载+编译在加载页期间完成 ---------- */
+  var moduleReady=!MODULE_SRC, winLoaded=false;
+  (function preloadModule(){
+    if(!MODULE_SRC)return;
+    var done=function(){moduleReady=true;calcTarget();maybeFinish()};
+    try{
+      var l=document.createElement('link');
+      if(l.relList&&l.relList.supports&&l.relList.supports('modulepreload')){
+        l.rel='modulepreload';l.href=MODULE_SRC;
+        l.onload=done;l.onerror=done;
+        document.head.appendChild(l);
+      }else{
+        fetch(MODULE_SRC,{mode:'cors'}).then(done,done);
+      }
+    }catch(e){done()}
+  })();
+  function maybeFinish(){
+    if(winLoaded&&moduleReady){assetsReady=true;target=100}
+  }
 
   /* ---------- 名字:等网站字体(Lato)就绪后以最终字体淡入,杜绝跳变 ---------- */
   var nameShown=false;
@@ -279,25 +305,31 @@ img {
   }
   function reveal(){
     if(exited)return; exited=true;
+    if(FORCETOP)window.scrollTo(0,0);
+    /* 1. 启动内联引导器的入场动画(下一帧统一应用所有初始状态) */
     try{ if(window.__cyAppearStart)window.__cyAppearStart(); }catch(e){}
-    requestAnimationFrame(function(){
-      var h=$('cy-hide'); if(h)h.parentNode.removeChild(h);   // 显示 #main
-      var l=$('cy-loader'); if(l)l.classList.add('cy-exit');  // 幕布上升
-      injectModule();                                          // 交给 Framer 水合
+    /* 2. 立即执行已预载好的主模块:水合与动画按 Framer 原生顺序无缝接力,
+          且因为已在缓存中编译完毕,不存在网络时间差 */
+    injectModule();
+    /* 3. 等两帧确保初始状态就位,再揭幕 */
+    requestAnimationFrame(function(){requestAnimationFrame(function(){
+      var h=$('cy-hide'); if(h)h.parentNode.removeChild(h);
+      var l=$('cy-loader'); if(l)l.classList.add('cy-exit');
       setTimeout(function(){
         if(l&&l.parentNode)l.parentNode.removeChild(l);
         var st=$('cy-loader-style'); if(st)st.parentNode.removeChild(st);
       },1100);
-    });
+    })});
   }
 
   /* ---------- 真实加载进度 ---------- */
   var imgTotal=0, imgDone=0, fontsDone=false, domDone=false;
   function calcTarget(){
-    var t=15;
-    if(domDone)t+=15;
-    if(imgTotal>0)t+=(imgDone/imgTotal)*55; else if(domDone)t+=55;
-    if(fontsDone)t+=14;
+    var t=12;
+    if(domDone)t+=13;
+    if(imgTotal>0)t+=(imgDone/imgTotal)*45; else if(domDone)t+=45;
+    if(fontsDone)t+=12;
+    if(moduleReady)t+=18;
     target=Math.max(target,Math.min(t,99));
   }
   function watchImages(){
@@ -320,7 +352,7 @@ img {
     document.fonts.ready.then(function(){fontsDone=true;calcTarget()});
   else fontsDone=true;
 
-  window.addEventListener('load',function(){assetsReady=true;target=100});
+  window.addEventListener('load',function(){winLoaded=true;maybeFinish()});
   setTimeout(function(){assetsReady=true;target=100},MAX); // 超时兜底
 
   /* ---------- 数字/进度条渲染 ---------- */
