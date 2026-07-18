@@ -38,7 +38,10 @@ html {
   scroll-behavior: smooth;
   overflow-x: hidden;
   background: var(--paper); /* 给最底层的画布上色，防止拖拽缩放时漏出白边 */
+  scrollbar-width: none;            /* Firefox：隐藏页面滚动条 */
 }
+/* 隐藏所有滚动条（页面 + 建筑 folder 内部），滚动能力不受影响 */
+::-webkit-scrollbar{width:0;height:0;background:transparent}
 body {
   background: var(--paper);
   color: var(--ink);
@@ -118,21 +121,23 @@ body.is-ready .top{translate:0 0}
 
 /* ============ HERO ============ */
 .hero{
-  min-height:100svh;display:flex;flex-direction:column;position:relative;
+  min-height:100vh;min-height:100lvh;   /* lvh：手机地址栏收起前，横幅刚好压在首屏之外 */
+  display:flex;flex-direction:column;position:relative;
   padding-top:calc(56px + 2vh);padding-bottom:8vh;
 }
 /* aurora field — Apple-Music-like slow cold light, sealed under frosted glass */
-.hero__bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.hero__bg{position:absolute;left:50%;top:0;bottom:0;width:100vw;transform:translateX(-50%);
+  z-index:0;overflow:hidden;pointer-events:none}
 .hero__bg i{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform;display:block}
-.hero__bg .b1{width:48vw;height:48vw;left:-10%;top:-14%;background:radial-gradient(circle,rgba(0,47,167,.20),transparent 68%);animation:drift1 36s ease-in-out infinite alternate}
-.hero__bg .b2{width:42vw;height:42vw;right:-8%;top:22%;background:radial-gradient(circle,rgba(127,180,216,.34),transparent 66%);animation:drift2 44s ease-in-out infinite alternate}
-.hero__bg .b3{width:40vw;height:40vw;left:32%;top:-6%;background:radial-gradient(circle,rgba(255,255,255,.75),transparent 70%);animation:drift3 31s ease-in-out infinite alternate}
-.hero__bg .b4{width:34vw;height:34vw;left:14%;bottom:-12%;background:radial-gradient(circle,rgba(143,166,255,.22),transparent 66%);animation:drift4 39s ease-in-out infinite alternate}
+.hero__bg .b1{width:48vw;height:48vw;left:-10%;top:-14%;background:radial-gradient(circle,rgba(0,47,167,.34),transparent 68%);animation:drift1 36s ease-in-out infinite alternate}
+.hero__bg .b2{width:42vw;height:42vw;right:-8%;top:22%;background:radial-gradient(circle,rgba(127,180,216,.52),transparent 66%);animation:drift2 44s ease-in-out infinite alternate}
+.hero__bg .b3{width:40vw;height:40vw;left:32%;top:-6%;background:radial-gradient(circle,rgba(255,255,255,.9),transparent 70%);animation:drift3 31s ease-in-out infinite alternate}
+.hero__bg .b4{width:34vw;height:34vw;left:14%;bottom:-12%;background:radial-gradient(circle,rgba(143,166,255,.38),transparent 66%);animation:drift4 39s ease-in-out infinite alternate}
 @keyframes drift1{to{transform:translate(14vw,10vh) scale(1.18)}}
 @keyframes drift2{to{transform:translate(-12vw,-8vh) scale(.9)}}
 @keyframes drift3{to{transform:translate(-9vw,12vh) scale(1.12)}}
 @keyframes drift4{to{transform:translate(11vw,-9vh) scale(1.15)}}
-.hero__frost{position:absolute;inset:0;backdrop-filter:blur(44px) saturate(1.15);-webkit-backdrop-filter:blur(44px) saturate(1.15);background:rgba(223,228,232,.26)}
+.hero__frost{position:absolute;inset:0;backdrop-filter:blur(36px) saturate(1.2);-webkit-backdrop-filter:blur(36px) saturate(1.2);background:rgba(223,228,232,.15)}
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
@@ -224,10 +229,10 @@ section.rec{padding-top:120px; padding-bottom:100px; position:relative}
 /* ============ 01 RESEARCH ============ */
 .research{display:grid;grid-template-columns:1.05fr 1fr;gap:80px}
 .research__lede{
-  font-family:var(--font-s);
-  font-size:clamp(21px,2.2vw,28px);line-height:1.5;font-weight:400;
+  font-family:var(--font-d);
+  font-size:clamp(19px,2vw,25px);line-height:1.65;font-weight:400;letter-spacing:.002em;
 }
-.research__lede em{font-style:italic;color:var(--ikb)}
+.research__lede em{font-family:var(--font-s);font-style:italic;color:var(--ikb);font-size:1.08em}
 .research__lede .sm{
   display:block;margin-top:28px;
   font-family:var(--font-s);font-style:italic;
@@ -405,8 +410,8 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 /* Apple-style progressive blur：五层 backdrop 叠加，模糊量向边缘逐层累积，
    截断处糊到完全不可读 —— 画廊因此看起来 infinite */
 .veil{position:absolute;left:-2px;right:-2px;z-index:4;pointer-events:none}
-.veil--top{top:0;height:290px}
-.veil--bottom{bottom:0;height:330px}
+.veil--top{top:-1px;height:175px}
+.veil--bottom{bottom:-1px;height:200px}
 .veil i{position:absolute;inset:0;display:block}
 .veil--top i:nth-child(1){backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 18%,transparent 40%);mask-image:linear-gradient(180deg,#000 0%,#000 18%,transparent 40%)}
@@ -430,8 +435,8 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 70%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,#000 70%,transparent 100%)}
 /* 压暗层：优雅地沉入墨色 */
 .veil::after{content:"";position:absolute;inset:0}
-.veil--top::after{background:linear-gradient(180deg,rgba(13,16,19,.92) 0%,rgba(13,16,19,.4) 48%,transparent 100%)}
-.veil--bottom::after{background:linear-gradient(0deg,rgba(13,16,19,.94) 0%,rgba(13,16,19,.42) 48%,transparent 100%)}
+.veil--top::after{background:linear-gradient(180deg,#0D1013 0%,rgba(13,16,19,.96) 12%,rgba(13,16,19,.5) 48%,transparent 100%)}
+.veil--bottom::after{background:linear-gradient(0deg,#0D1013 0%,rgba(13,16,19,.97) 13%,rgba(13,16,19,.52) 48%,transparent 100%)}
 .photo-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:start}
 .pcol{display:flex;flex-direction:column;gap:26px;will-change:transform}
 .ph{position:relative;overflow:hidden;cursor:pointer;margin:0}
@@ -486,7 +491,6 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   transition:color .4s;word-break:break-all;
 }
 .contact__mail:hover{color:var(--ikb)}
-.contact__mail .at{font-family:var(--font-s);font-style:italic;font-weight:400}
 .contact__photo{
   width:clamp(180px,20vw,280px);background:#F4F6F8;padding:8px 8px 34px;rotate:0deg;
   box-shadow:0 18px 44px -14px rgba(10,14,20,.3);position:relative;
@@ -520,6 +524,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 }
 
 /* ============ RESPONSIVE ============ */
+@media (max-width:1024px){
+  .top__links{display:none}
+}
 @media (max-width:980px){
   .hero__title { padding-bottom: 5vh; }
   .research{grid-template-columns:1fr;gap:50px}
@@ -536,11 +543,13 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .darkzone .band{height:48vh}
 }
 @media (max-width:700px){
-  .hero { padding-bottom: 10vh !important; }
+  .hero { padding-top:calc(56px + 7vh); padding-bottom: 10vh !important; }
   .hero__title { padding-bottom: 0vh; }
+  .hero__kicker{margin-bottom:22px}
+  .hero__annot{margin-top:28px;font-size:19px}
+  .hero__meta{padding-top:26px;gap:24px 22px}
   .wrap{padding:0 26px}
   .top{padding:13px 22px}
-  .top__links{display:none}
   .band__cap{left:26px}
   .band__num{right:26px}
   .photo-cols{grid-template-columns:1fr}
@@ -612,20 +621,26 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
     <i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i>
     <span class="hero__frost"></span>
   </div>
-  <div class="hero__title" id="heroTitle" data-mouse="8">
+  <div class="hero__title" id="heroTitle" data-mouse="5">
     <div class="hero__kicker">Index of works · est. 2023</div>
-    <h1 class="hero__name" id="heroName">
-      <span class="ln" data-word="Cunyu"></span>
-      <span class="ln ln--outline" data-word="Yuan"></span>
-    </h1>
-    <p class="hero__annot">— a catalogue of <em>research</em>, design and photography; reading the city through millions of texts.</p>
+    <div data-mouse="9">
+      <h1 class="hero__name" id="heroName">
+        <span class="ln" data-word="Cunyu"></span>
+        <span class="ln ln--outline" data-word="Yuan"></span>
+      </h1>
+    </div>
+    <div data-mouse="4">
+      <p class="hero__annot">— a catalogue of <em>research</em>, design and photography; reading the city through millions of texts.</p>
+    </div>
   </div>
 
+  <div data-mouse="2">
   <div class="hero__meta" id="heroMeta">
     <div><span class="k">Affiliation</span>Wuhan University</div>
     <div><span class="k">Coordinates</span>30.54°N — 114.36°E</div>
     <div><span class="k">Holdings</span><span id="metaHoldings">papers · works · prints</span></div>
     <div><span class="k">Status</span>Open to PhD positions</div>
+  </div>
   </div>
 </section>
 
@@ -982,7 +997,7 @@ const PUBLICATIONS_FALLBACK = [
 
     // 保底节奏 + 强制放行时间
     const minTimer = new Promise(function(resolve) { setTimeout(resolve, 1400); });
-    const maxTimer = new Promise(function(resolve) { setTimeout(resolve, 6000); });
+    const maxTimer = new Promise(function(resolve) { setTimeout(resolve, 20000); });  /* 仅防网络彻底卡死 */
 
     Promise.all([
       minTimer,
@@ -1015,6 +1030,43 @@ const PUBLICATIONS_FALLBACK = [
       ln.appendChild(s);
     }
   });
+
+  /* ---------- CUNYU YUAN：磁性字母 —— 指针下的字母弹起，邻近字母被推开 ---------- */
+  if(fine && !reduced){
+    const nameEl=document.getElementById('heroName');
+    const chs=[].slice.call(nameEl.querySelectorAll('.ch'));
+    const st=chs.map(function(){ return {x:0,y:0,s:0}; });
+    let px=-9999,py=-9999,inside=false,nraf=null;
+    addEventListener('mousemove',function(e){
+      px=e.clientX; py=e.clientY;
+      const r=nameEl.getBoundingClientRect();
+      inside = px>r.left-150 && px<r.right+150 && py>r.top-150 && py<r.bottom+150;
+      if(inside && !nraf) nstep();
+    },{passive:true});
+    function nstep(){
+      nraf=requestAnimationFrame(function(){
+        let live=false;
+        chs.forEach(function(ch,i){
+          const r=ch.getBoundingClientRect();
+          const dx=(r.left+r.width/2)-px, dy=(r.top+r.height/2)-py;
+          const d=Math.hypot(dx,dy)||1;
+          const R=175;
+          const f=inside?Math.exp(-(d*d)/(R*R)):0;
+          const o=st[i];
+          const tx=(dx/d)*f*15;            /* 沿指针方向被推开 */
+          const ty=-f*20 + (dy/d)*f*6;     /* 同时向上弹起 */
+          const ts=f*.055;
+          o.x+=(tx-o.x)*.16; o.y+=(ty-o.y)*.16; o.s+=(ts-o.s)*.16;
+          if(Math.abs(o.x)>.05||Math.abs(o.y)>.05||o.s>.001||f>.002) live=true;
+          /* 用 translate/scale 独立属性，避开入场 transform 动画的 fill 覆盖 */
+          ch.style.translate=o.x.toFixed(2)+'px '+o.y.toFixed(2)+'px';
+          ch.style.scale=(1+o.s).toFixed(3);
+        });
+        nraf=null;
+        if(live) nstep();
+      });
+    }
+  }
 
   /* ---------- tiny CSV parser ---------- */
   function parseCSV(text){
@@ -1210,7 +1262,8 @@ const PUBLICATIONS_FALLBACK = [
           if(r.bottom<-300||r.top>vh+300) return;
           const c = (r.top - vh/2) * parseFloat(col.dataset.speed);
           const up = parseFloat(col.dataset.maxUp || '0');
-          const t = Math.max(-Math.max(0, up - 10), Math.min(110, c));
+          /* 只允许向上位移：三列始终同时压住上边界；下边界由帧高解保证 */
+          const t = Math.max(-Math.max(0, up - 10), Math.min(0, c));
           col.style.translate='0 '+t.toFixed(1)+'px';
         });
       }
@@ -1357,6 +1410,31 @@ const PUBLICATIONS_FALLBACK = [
     document.body.style.overflow='';
   }
   document.getElementById('folderClose').addEventListener('click',function(e){ e.stopPropagation(); closeFolder(); });
+
+  /* folder 内部滚动：与页面同款时间归一化阻尼，丝滑不逐格 */
+  if(fine && !reduced){
+    let ft=0, fc=0, fraf=null, flast=0;
+    function fmax(){ return Math.max(0, fScroll.scrollHeight - fScroll.clientHeight); }
+    fScroll.addEventListener('wheel',function(e){
+      if(!folder.classList.contains('is-open')) return;
+      e.preventDefault();
+      const d=e.deltaMode===1 ? e.deltaY*33 : e.deltaY;
+      ft=Math.min(fmax(), Math.max(0, ft+d));
+      if(!fraf){ flast=0; fstep(); }
+    },{passive:false});
+    function fstep(){
+      fraf=requestAnimationFrame(function(t){
+        if(!flast) flast=t;
+        const dt=Math.min((t-flast)/1000,.05); flast=t;
+        const k=1-Math.exp(-dt*6);
+        fc+=(ft-fc)*k;
+        if(Math.abs(ft-fc)<.3){ fc=ft; fScroll.scrollTop=fc; fraf=null; return; }
+        fScroll.scrollTop=fc;
+        fstep();
+      });
+    }
+    fScroll.addEventListener('scroll',function(){ if(!fraf){ ft=fc=fScroll.scrollTop; } },{passive:true});
+  }
 
   /* ---------- photography：自适应画廊（隐形矩形 + 循环补齐）---------- */
   const photoFrame=document.getElementById('photoFrame');
