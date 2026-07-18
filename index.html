@@ -21,7 +21,7 @@
   --ice:#EDF1F3;
   --ink:#0C1015;              /* blue-black */
   --ink-2:#0D1013;            /* dark zone bg */
-  --ink-soft:#59ололα;
+  --ink-soft:#5A6572;
   --line:#BAC5CD;
   --line-d:rgba(223,228,232,.14);
   --ikb:#002FA7;              /* International Klein Blue */
@@ -77,6 +77,8 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 }
 .intro__n{font-family:var(--font-s);font-style:italic;font-size:15px;color:rgba(223,228,232,.5);
   opacity:0;animation:introFade .7s .28s forwards}
+.intro__pct{font-family:var(--font-m);font-size:11px;letter-spacing:.3em;color:rgba(223,228,232,.4);
+  font-variant-numeric:tabular-nums;opacity:0;animation:introFade .7s .4s forwards;margin-top:4px}
 .intro__line{width:0;height:1px;background:var(--ember);animation:introLine .8s .22s var(--ease) forwards}
 @keyframes introFade{to{opacity:1}}
 @keyframes introLine{to{width:120px}}
@@ -87,15 +89,24 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   display:flex;justify-content:space-between;align-items:center;
   padding:14px clamp(26px,6vw,72px);
   border-bottom:1px solid var(--line);
-  background:rgba(223,228,232,.86);
-  backdrop-filter:blur(10px);
+  background:rgba(223,228,232,.82);
+  backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
   font-family:var(--font-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-  translate:0 -100%;transition:translate 1s var(--ease) 0.5s;
+  translate:0 -100%;
+  transition:translate .9s cubic-bezier(.26,1.16,.4,1) 0.5s,
+    background .55s var(--ease), border-color .55s var(--ease), color .55s var(--ease);
 }
 body.is-ready .top{translate:0 0}
+.top.top--dark{background:rgba(13,16,19,.66);border-bottom-color:rgba(223,228,232,.12);color:var(--paper)}
 .top__logo{display:flex;align-items:center;gap:12px;font-weight:500}
-.top__logo img{width:26px;height:26px;border-radius:7px}
-.top__logo b{color:var(--ikb);font-weight:500}
+.top__mark{position:relative;width:26px;height:26px;flex-shrink:0}
+.top__mark img{position:absolute;inset:0;width:26px;height:26px;border-radius:7px;transition:opacity .55s var(--ease)}
+.top__mark img.alt{opacity:0}
+.top--dark .top__mark img{opacity:0}
+.top--dark .top__mark img.alt{opacity:1}
+.top--dark .top__links a::after{background:var(--ikb-l)}
+.top--dark .top__links a:hover{color:var(--ikb-l)}
+.top--dark .top__status{color:rgba(223,228,232,.62)}
 .top__links{display:flex;gap:clamp(16px,2.6vw,32px)}
 .top a{position:relative;padding:2px 0}
 .top__links a::after{content:"";position:absolute;left:0;bottom:-2px;height:1px;width:0;background:var(--ikb);transition:width .45s var(--ease)}
@@ -110,16 +121,18 @@ body.is-ready .top{translate:0 0}
   min-height:100svh;display:flex;flex-direction:column;position:relative;
   padding-top:calc(56px + 2vh);padding-bottom:8vh;
 }
-/* quiet atmospheric field — cold light drifting behind the type */
-.hero::before{
-  content:"";position:absolute;inset:-18% -12%;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(46% 38% at 16% 20%, rgba(0,47,167,.085), transparent 72%),
-    radial-gradient(40% 34% at 88% 68%, rgba(0,47,167,.05), transparent 72%),
-    radial-gradient(52% 42% at 62% 6%, rgba(255,255,255,.55), transparent 74%);
-  animation:heroDrift 30s ease-in-out infinite alternate;
-}
-@keyframes heroDrift{to{transform:translate(-2.5%,2.2%) scale(1.03)}}
+/* aurora field — Apple-Music-like slow cold light, sealed under frosted glass */
+.hero__bg{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.hero__bg i{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform;display:block}
+.hero__bg .b1{width:48vw;height:48vw;left:-10%;top:-14%;background:radial-gradient(circle,rgba(0,47,167,.20),transparent 68%);animation:drift1 36s ease-in-out infinite alternate}
+.hero__bg .b2{width:42vw;height:42vw;right:-8%;top:22%;background:radial-gradient(circle,rgba(127,180,216,.34),transparent 66%);animation:drift2 44s ease-in-out infinite alternate}
+.hero__bg .b3{width:40vw;height:40vw;left:32%;top:-6%;background:radial-gradient(circle,rgba(255,255,255,.75),transparent 70%);animation:drift3 31s ease-in-out infinite alternate}
+.hero__bg .b4{width:34vw;height:34vw;left:14%;bottom:-12%;background:radial-gradient(circle,rgba(143,166,255,.22),transparent 66%);animation:drift4 39s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(14vw,10vh) scale(1.18)}}
+@keyframes drift2{to{transform:translate(-12vw,-8vh) scale(.9)}}
+@keyframes drift3{to{transform:translate(-9vw,12vh) scale(1.12)}}
+@keyframes drift4{to{transform:translate(11vw,-9vh) scale(1.15)}}
+.hero__frost{position:absolute;inset:0;backdrop-filter:blur(44px) saturate(1.15);-webkit-backdrop-filter:blur(44px) saturate(1.15);background:rgba(223,228,232,.26)}
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
@@ -128,6 +141,7 @@ body.is-ready .top{translate:0 0}
 }
 .hero__kicker::after{content:"";height:1px;flex:1;background:var(--line);transform-origin:left;scale:0 1;transition:scale 1.4s var(--ease) 1.55s}
 body.is-ready .hero__kicker::after{scale:1 1}
+body.is-ready .hero__kicker{animation:fadeUp .95s var(--ease-pop) .12s forwards}
 h1.hero__name{
   font-weight:900;text-transform:uppercase;letter-spacing:-.02em;
   font-size:clamp(60px, 12vw, 168px);
@@ -143,16 +157,21 @@ h1 .ln--outline .ch{color:transparent;-webkit-text-stroke:2px var(--ink)}
   color:var(--ink-soft);max-width:560px;margin-top:32px;line-height:1.42;
   opacity:0;
 }
-body.is-ready .hero__annot{animation:fadeUp 1.2s var(--ease) 0.6s forwards;}
+body.is-ready .hero__annot{animation:fadeUp 1.05s cubic-bezier(.26,1.16,.4,1) 0.55s forwards;}
 .hero__annot em{color:var(--ikb);font-style:italic}
 @keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
 .hero__meta{
   display:grid;grid-template-columns:repeat(4,1fr);gap:28px;position:relative;z-index:3;
-  border-top:1px solid var(--ink);padding-top:22px;will-change:translate;
+  padding-top:22px;will-change:translate;
   font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
 }
+.hero__meta::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:1px;background:var(--ink);
+  transform:scaleX(0);transform-origin:left;transition:transform 1.5s var(--ease) .7s;
+}
+body.is-ready .hero__meta::before{transform:scaleX(1)}
 .hero__meta > div{opacity:0;}
-body.is-ready .hero__meta > div{animation:fadeUp 1s var(--ease) forwards;}
+body.is-ready .hero__meta > div{animation:fadeUp .9s var(--ease-pop) forwards;}
 body.is-ready .hero__meta > div:nth-child(1){animation-delay:0.8s;}
 body.is-ready .hero__meta > div:nth-child(2){animation-delay:0.9s;}
 body.is-ready .hero__meta > div:nth-child(3){animation-delay:1.0s;}
@@ -199,7 +218,7 @@ section.rec{padding-top:120px; padding-bottom:100px; position:relative}
 .rec__count{color:var(--ink-soft)}
 
 /* reveal — slow and even */
-[data-reveal]{opacity:0;transform:translateY(34px);transition:opacity 1.2s var(--ease),transform 1.2s var(--ease)}
+[data-reveal]{opacity:0;transform:translateY(34px);transition:opacity 1.1s var(--ease),transform 1.1s cubic-bezier(.24,1.12,.36,1)}
 [data-reveal].is-in{opacity:1;transform:none}
 
 /* ============ 01 RESEARCH ============ */
@@ -265,7 +284,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 #rec03{padding-bottom:110px}
 .xp__item{border-bottom:1px solid var(--line)}
 .xp__btn{
-  width:100%;display:grid;grid-template-columns:64px 1fr auto;gap:26px;align-items:center;
+  width:100%;display:grid;grid-template-columns:64px 1fr auto;gap:26px;align-items:baseline;
   text-align:left;padding:32px 0;transition:translate .5s var(--ease);
 }
 .xp__btn:hover{translate:10px 0}
@@ -277,6 +296,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   width:40px;height:40px;border:1px solid var(--ink);border-radius:50%;
   display:flex;align-items:center;justify-content:center;
   font-size:17px;transition:transform .55s var(--ease-pop),background .4s,border-color .4s,color .4s;flex-shrink:0;
+  align-self:center;
 }
 .xp__btn:hover .xp__plus{border-color:var(--ikb);color:var(--ikb)}
 .xp__item.is-open .xp__plus{transform:rotate(45deg);background:var(--ink);border-color:var(--ink);color:var(--paper)}
@@ -330,14 +350,14 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   position:fixed; inset:0; z-index:110; background:var(--ink-2); color:var(--paper);
   display:flex; flex-direction:column;
   visibility:hidden; opacity:0;
-  transform:translateY(8vh) scale(0.96); /* 初始位置偏下且微缩 */
-  transition:opacity .4s var(--ease), transform .6s var(--ease-pop), visibility 0s .6s;
+  transform:scale(.9);   /* transform-origin 由 JS 设为被点击卡片的位置 */
+  transition:opacity .38s var(--ease), transform .5s var(--ease), visibility 0s .5s;
   will-change:transform, opacity;
 }
 .folder.is-open {
   visibility:visible; opacity:1;
-  transform:translateY(0) scale(1);
-  transition:opacity .45s var(--ease), transform .65s var(--ease-pop), visibility 0s;
+  transform:scale(1);
+  transition:opacity .5s var(--ease), transform .72s cubic-bezier(.3,1.18,.4,1), visibility 0s;
 }
 .folder__bar{
   display:flex;justify-content:space-between;align-items:center;gap:20px;
@@ -370,27 +390,48 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 @keyframes figIn{to{opacity:1;transform:none}}
 .folder__inner img{width:100%}
 .folder__inner figcaption{font-family:var(--font-m);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(223,228,232,.45);padding-top:10px}
+.folder__loading{display:flex;align-items:center;gap:16px;margin-top:70px;
+  font-family:var(--font-m);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:rgba(223,228,232,.5)}
+.folder__loading.is-hidden{display:none}
+.folder__loading i{width:56px;height:1px;background:rgba(223,228,232,.18);position:relative;overflow:hidden;display:block}
+.folder__loading i::after{content:"";position:absolute;inset:0;background:var(--ikb-l);
+  transform:translateX(-105%);animation:ldSweep 1.15s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes ldSweep{60%{transform:translateX(0)}100%{transform:translateX(105%)}}
 
 /* 05 PHOTOGRAPHY — adaptive gallery inside an invisible frame */
 .darkroom__note{font-family:var(--font-s);font-style:italic;font-size:clamp(18px,2vw,24px);color:rgba(223,228,232,.62);max-width:56ch;line-height:1.55;margin:-8px 0 60px}
 .darkroom__note em{color:var(--ikb-l)}
 .photo-frame{position:relative;overflow:hidden}
-.photo-frame::before,.photo-frame::after{
-  content:"";position:absolute;left:-2px;right:-2px;height:170px;z-index:4;pointer-events:none;
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-}
-.photo-frame::before{
-  top:0;
-  background:linear-gradient(180deg,var(--ink-2) 8%,rgba(13,16,19,0) 100%);
-  -webkit-mask-image:linear-gradient(180deg,#000 25%,transparent 100%);
-          mask-image:linear-gradient(180deg,#000 25%,transparent 100%);
-}
-.photo-frame::after{
-  bottom:0;
-  background:linear-gradient(0deg,var(--ink-2) 8%,rgba(13,16,19,0) 100%);
-  -webkit-mask-image:linear-gradient(0deg,#000 25%,transparent 100%);
-          mask-image:linear-gradient(0deg,#000 25%,transparent 100%);
-}
+/* Apple-style progressive blur：五层 backdrop 叠加，模糊量向边缘逐层累积，
+   截断处糊到完全不可读 —— 画廊因此看起来 infinite */
+.veil{position:absolute;left:-2px;right:-2px;z-index:4;pointer-events:none}
+.veil--top{top:0;height:290px}
+.veil--bottom{bottom:0;height:330px}
+.veil i{position:absolute;inset:0;display:block}
+.veil--top i:nth-child(1){backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 18%,transparent 40%);mask-image:linear-gradient(180deg,#000 0%,#000 18%,transparent 40%)}
+.veil--top i:nth-child(2){backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 30%,transparent 54%);mask-image:linear-gradient(180deg,#000 0%,#000 30%,transparent 54%)}
+.veil--top i:nth-child(3){backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 44%,transparent 70%);mask-image:linear-gradient(180deg,#000 0%,#000 44%,transparent 70%)}
+.veil--top i:nth-child(4){backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 86%);mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 86%)}
+.veil--top i:nth-child(5){backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 70%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 70%,transparent 100%)}
+.veil--bottom i:nth-child(1){backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 18%,transparent 40%);mask-image:linear-gradient(0deg,#000 0%,#000 18%,transparent 40%)}
+.veil--bottom i:nth-child(2){backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 30%,transparent 54%);mask-image:linear-gradient(0deg,#000 0%,#000 30%,transparent 54%)}
+.veil--bottom i:nth-child(3){backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 44%,transparent 70%);mask-image:linear-gradient(0deg,#000 0%,#000 44%,transparent 70%)}
+.veil--bottom i:nth-child(4){backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 58%,transparent 86%);mask-image:linear-gradient(0deg,#000 0%,#000 58%,transparent 86%)}
+.veil--bottom i:nth-child(5){backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 70%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,#000 70%,transparent 100%)}
+/* 压暗层：优雅地沉入墨色 */
+.veil::after{content:"";position:absolute;inset:0}
+.veil--top::after{background:linear-gradient(180deg,rgba(13,16,19,.92) 0%,rgba(13,16,19,.4) 48%,transparent 100%)}
+.veil--bottom::after{background:linear-gradient(0deg,rgba(13,16,19,.94) 0%,rgba(13,16,19,.42) 48%,transparent 100%)}
 .photo-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:start}
 .pcol{display:flex;flex-direction:column;gap:26px;will-change:transform}
 .ph{position:relative;overflow:hidden;cursor:pointer;margin:0}
@@ -416,14 +457,16 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 /* lightbox — FLIP: 从缩略图的位置来，回缩略图的位置去 */
 .lb{
-  position:fixed;inset:0;z-index:120;background:rgba(9,11,14,.95);cursor:pointer;
+  position:fixed;inset:0;z-index:120;background:rgba(9,11,14,.84);cursor:pointer;
+  backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);
   visibility:hidden;opacity:0;
-  transition:opacity .45s var(--ease),visibility 0s .45s;
+  transition:opacity .55s var(--ease),visibility 0s .55s;
 }
-.lb.is-open{visibility:visible;opacity:1;transition:opacity .45s var(--ease),visibility 0s}
+.lb.is-open{visibility:visible;opacity:1;transition:opacity .5s var(--ease),visibility 0s}
 .lb img{
   position:fixed;object-fit:cover;transform-origin:top left;will-change:transform;
-  transition:transform .58s var(--ease);
+  box-shadow:0 34px 90px -24px rgba(0,0,0,.65);
+  transition:transform .64s cubic-bezier(.3,1.1,.4,1);
 }
 .lb__cap{
   position:absolute;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);opacity:0;
@@ -434,7 +477,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 /* ============ 06 CONTACT ============ */
 .contact{padding-bottom:0;padding-top:140px}
-.contact__grid{display:grid;grid-template-columns:1fr auto;gap:60px;align-items:center;padding:10px 0 70px}
+.contact__grid{display:grid;grid-template-columns:1.4fr auto;gap:clamp(40px,6vw,90px);align-items:center;padding:10px 0 70px}
+.contact__left{display:flex;flex-direction:column;gap:38px;min-width:0}
+.contact__logo{width:clamp(60px,6.5vw,84px);mix-blend-mode:multiply;opacity:.92;-webkit-user-drag:none}
 .contact__mail{
   display:block;font-weight:900;text-transform:lowercase;letter-spacing:-.02em;
   font-size:clamp(28px,5.6vw,60px);line-height:1.05;
@@ -484,7 +529,8 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .arch__grid{grid-template-columns:1fr;row-gap:60px}
   .work:nth-child(even){margin-top:0}
   .work--full img{aspect-ratio:4/3}
-  .photo-cols{grid-template-columns:repeat(2,1fr)}
+  .photo-cols{grid-template-columns:repeat(3,1fr);gap:16px}
+  .pcol{gap:16px}
   .hero__meta{grid-template-columns:repeat(2,1fr);gap:22px}
   .band{height:44vh}
   .darkzone .band{height:48vh}
@@ -499,6 +545,14 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .band__num{right:26px}
   .photo-cols{grid-template-columns:1fr}
   .pcol{transform:none !important}
+  .veil{display:none}
+  .rec__count{display:none}
+  .pub{grid-template-columns:48px 1fr;grid-template-areas:"no title" "no venue" "no chip";row-gap:7px}
+  .chip{justify-self:start;padding-top:3px}
+  .hero__bg i{filter:blur(46px)}
+  .hero__frost{backdrop-filter:blur(28px) saturate(1.1);-webkit-backdrop-filter:blur(28px) saturate(1.1)}
+  .contact__logo{width:58px}
+  .contact__left{gap:30px}
   .xp__inner ul{padding-left:0}
   section.rec{padding-top:90px; padding-bottom:76px}
   .rec__head{margin-bottom:44px}
@@ -514,6 +568,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   h1 .ch{transform:none}
   .hero__kicker,.hero__annot,.hero__meta > div{opacity:1;animation:none}
   .hero__kicker::after{scale:1 1}
+  .hero__meta::before{transform:scaleX(1)}
   [data-reveal]{opacity:1;transform:none}
   .folder__inner figure{opacity:1;transform:none}
   .folder .folder__title,.folder .folder__meta,.folder .folder__desc{opacity:1;transform:none}
@@ -528,12 +583,16 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   <div class="intro__t">Cunyu Yuan</div>
   <div class="intro__line"></div>
   <div class="intro__n">Index of works · Wuhan, 2026</div>
+  <div class="intro__pct" id="introPct">00%</div>
 </div>
 
 <!-- ===== TOP BAR ===== -->
 <header class="top">
   <a class="top__logo" href="#top">
-    <img src="图片/logo-black.png" alt="CY monogram">
+    <span class="top__mark">
+      <img src="图片/logo-black.png" alt="CY monogram">
+      <img src="图片/logo-white.png" class="alt" alt="" aria-hidden="true">
+    </span>
     <span>Cunyu Yuan</span>
   </a>
   <nav class="top__links">
@@ -549,6 +608,10 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 <!-- ===== HERO ===== -->
 <section class="hero wrap" id="top">
+  <div class="hero__bg" aria-hidden="true">
+    <i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i>
+    <span class="hero__frost"></span>
+  </div>
   <div class="hero__title" id="heroTitle" data-mouse="8">
     <div class="hero__kicker">Index of works · est. 2023</div>
     <h1 class="hero__name" id="heroName">
@@ -569,8 +632,8 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <!-- ===== MARQUEE ===== -->
 <div class="marquee" aria-hidden="true">
   <div class="marquee__track">
-    <span>Available for PhD positions</span><span class="ast">✳</span><span>Urban studies × NLP × mental health</span><span class="ast">✳</span><span>Nature Cities — accepted in principle</span><span class="ast">✳</span>
-    <span>Available for PhD positions</span><span class="ast">✳</span><span>Urban studies × NLP × mental health</span><span class="ast">✳</span><span>Nature Cities — accepted in principle</span><span class="ast">✳</span>
+    <span>Urban studies × NLP × mental health</span><span class="ast">✳</span><span>Reading the city, line by line</span><span class="ast">✳</span><span>Urban studies × NLP × mental health</span><span class="ast">✳</span>
+    <span>Urban studies × NLP × mental health</span><span class="ast">✳</span><span>Reading the city, line by line</span><span class="ast">✳</span><span>Urban studies × NLP × mental health</span><span class="ast">✳</span>
   </div>
 </div>
 
@@ -764,6 +827,8 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
       <p class="darkroom__note" data-reveal>The darkroom — cinematic tones, natural light, and the interaction between people and <em>place</em>.</p>
       <div class="photo-frame" id="photoFrame">
         <div class="photo-cols" id="photoCols"></div>
+        <div class="veil veil--top" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="veil veil--bottom" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
       </div>
       <div class="photo-more" data-reveal><a href="https://unsplash.com/@thecunyu7" target="_blank" rel="noopener">Full collection on Unsplash ↗</a></div>
       <div style="height:50px"></div>
@@ -780,16 +845,19 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
     <span class="rec__count">Open file</span>
   </div>
   <div class="contact__grid" data-reveal>
-    <a class="contact__mail" href="mailto:thecunyu@gmail.com">thecunyu<span class="at">@</span>gmail.com</a>
+    <div class="contact__left">
+      <img class="contact__logo" src="图片/logo-black.png" alt="CY monogram">
+      <a class="contact__mail" href="mailto:thecunyu@gmail.com">thecunyu<span class="at">@</span>gmail.com</a>
+      <div class="ctable" data-stagger>
+        <a class="crow" href="https://scholar.google.com/citations?user=-O9y3XkAAAAJ" target="_blank" rel="noopener"><span>C.01</span><span>Google Scholar</span><span class="arr">↗</span></a>
+        <a class="crow" href="https://www.instagram.com/thecunyu7/" target="_blank" rel="noopener"><span>C.02</span><span>Instagram</span><span class="arr">↗</span></a>
+        <a class="crow" href="https://unsplash.com/@thecunyu7" target="_blank" rel="noopener"><span>C.03</span><span>Unsplash</span><span class="arr">↗</span></a>
+      </div>
+    </div>
     <figure class="contact__photo">
       <img src="图片/portrait-2.jpg" alt="Cunyu Yuan">
       <figcaption>Me · Wuhan, 2026</figcaption>
     </figure>
-  </div>
-  <div class="ctable" data-stagger>
-    <a class="crow" href="https://scholar.google.com/citations?user=-O9y3XkAAAAJ" target="_blank" rel="noopener"><span>C.01</span><span>Google Scholar</span><span class="arr">↗</span></a>
-    <a class="crow" href="https://www.instagram.com/thecunyu7/" target="_blank" rel="noopener"><span>C.02</span><span>Instagram</span><span class="arr">↗</span></a>
-    <a class="crow" href="https://unsplash.com/@thecunyu7" target="_blank" rel="noopener"><span>C.03</span><span>Unsplash</span><span class="arr">↗</span></a>
   </div>
   <footer class="foot">
     <span>© Cunyu Yuan 2025–2026</span>
@@ -809,6 +877,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
       <h2 class="folder__title" id="folderTitle"></h2>
       <p class="folder__meta" id="folderMeta"></p>
       <div class="folder__desc" id="folderDesc"></div>
+      <div class="folder__loading is-hidden" id="folderLoading" aria-hidden="true"><i></i><span>Loading plates</span></div>
       <div class="folder__imgs" id="folderImgs"></div>
     </div>
   </div>
@@ -837,7 +906,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
       空行分段），会以衬线字体排在标题下方作为设计说明。
    ========================================================================== */
 
-const PHOTO_SETS = ['buildings','lights','monuments','woods','summers','contrasts','atmospheres','plants'];
+const PHOTO_SETS = ['buildings','lights','monuments','woods','summers','contrasts','atmospheres','plants','grass','people','moods','grand','cat'];
 
 const PUBLICATIONS_FALLBACK = [
   {title:"CBEES: A fine-grained commercial built environment perception and evaluation based on social media.", venue:"Sustainable Cities and Society, 119", role:"First author", status:"Published", link:"https://doi.org/10.1016/j.scs.2024.106120", highlight:""},
@@ -878,16 +947,23 @@ const PUBLICATIONS_FALLBACK = [
   if (reduced) {
     document.body.classList.add('is-ready');
   } else {
-    // 关键预载图片
-    const criticalImages = [
+    /* 真·预加载：一级摄影图与建筑图纸走懒加载，其余关键资源
+       （视差大图、肖像、双色 logo、字体）全部就位后才放行进入网站 */
+    const assets = [
       '图片/band-1.jpg',
       '图片/band-2.jpg',
-      '图片/arch-1-1.jpg',
-      '图片/arch-2-1.jpg',
-      '图片/arch-3-1.jpg',
-      '图片/arch-4-1.jpg',
-      '图片/arch-5-1.jpg'
+      '图片/portrait-2.jpg',
+      '图片/logo-black.png',
+      '图片/logo-white.png'
     ];
+    const pctEl = document.getElementById('introPct');
+    const totalJobs = assets.length + 1;   /* +1 = 网页字体 */
+    let doneJobs = 0;
+    function bump() {
+      doneJobs++;
+      if (pctEl) pctEl.textContent =
+        String(Math.min(100, Math.round(doneJobs / totalJobs * 100))).padStart(2, '0') + '%';
+    }
 
     const loadImage = function(src) {
       return new Promise(function(resolve) {
@@ -898,15 +974,21 @@ const PUBLICATIONS_FALLBACK = [
       });
     };
 
-    // 设置保底和强制放行时间
-    const minTimer = new Promise(function(resolve) { setTimeout(resolve, 1500); });
-    const maxTimer = new Promise(function(resolve) { setTimeout(resolve, 5000); });
-    const loadAllImages = Promise.all(criticalImages.map(loadImage));
+    const jobs = assets.map(function(src) { return loadImage(src).then(bump); });
+    jobs.push(
+      (document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve())
+        .then(bump, bump)
+    );
+
+    // 保底节奏 + 强制放行时间
+    const minTimer = new Promise(function(resolve) { setTimeout(resolve, 1400); });
+    const maxTimer = new Promise(function(resolve) { setTimeout(resolve, 6000); });
 
     Promise.all([
       minTimer,
-      Promise.race([loadAllImages, maxTimer])
+      Promise.race([Promise.all(jobs), maxTimer])
     ]).then(function() {
+      if (pctEl) pctEl.textContent = '100%';
       // 步骤 1：图片准备就绪，幕布向上滑出
       intro.classList.add('is-done');
 
@@ -1126,8 +1208,9 @@ const PUBLICATIONS_FALLBACK = [
         cols.forEach(function(col){
           const r=col.parentElement.getBoundingClientRect();
           if(r.bottom<-300||r.top>vh+300) return;
-          const c=(r.top+r.height/2-vh/2)*parseFloat(col.dataset.speed);
-          const t=Math.max(-140,Math.min(140,c));   /* 限幅，配合上下模糊带 */
+          const c = (r.top - vh/2) * parseFloat(col.dataset.speed);
+          const up = parseFloat(col.dataset.maxUp || '0');
+          const t = Math.max(-Math.max(0, up - 10), Math.min(110, c));
           col.style.translate='0 '+t.toFixed(1)+'px';
         });
       }
@@ -1181,6 +1264,27 @@ const PUBLICATIONS_FALLBACK = [
     });
   }
 
+  /* ---------- 液态玻璃导航：随身下内容明暗切换深浅两版 ---------- */
+  (function(){
+    const bar=document.querySelector('.top');
+    const darkEls=[].slice.call(document.querySelectorAll('.marquee,.band,.darkzone'));
+    if(!bar||!darkEls.length) return;
+    let tick=false;
+    function tone(){
+      tick=false;
+      const y=bar.offsetHeight*0.6;
+      let dark=false;
+      for(let i=0;i<darkEls.length;i++){
+        const r=darkEls[i].getBoundingClientRect();
+        if(r.top<=y && r.bottom>=y){ dark=true; break; }
+      }
+      bar.classList.toggle('top--dark',dark);
+    }
+    addEventListener('scroll',function(){ if(!tick){ tick=true; requestAnimationFrame(tone); } },{passive:true});
+    addEventListener('resize',tone);
+    tone();
+  })();
+
   /* ---------- experience accordion ---------- */
   document.querySelectorAll('.xp__btn').forEach(function(btn){
     btn.addEventListener('click',function(){
@@ -1194,7 +1298,8 @@ const PUBLICATIONS_FALLBACK = [
   const folder=document.getElementById('folder');
   const fNo=document.getElementById('folderNo'), fTitle=document.getElementById('folderTitle'),
         fMeta=document.getElementById('folderMeta'), fDesc=document.getElementById('folderDesc'),
-        fImgs=document.getElementById('folderImgs'), fScroll=document.getElementById('folderScroll');
+        fImgs=document.getElementById('folderImgs'), fScroll=document.getElementById('folderScroll'),
+        fLoading=document.getElementById('folderLoading');
 
   document.querySelectorAll('.work').forEach(function(w){
     w.addEventListener('click',function(){
@@ -1205,6 +1310,12 @@ const PUBLICATIONS_FALLBACK = [
       fDesc.innerHTML='';
       fImgs.innerHTML='';
       fScroll.scrollTop=0;
+      fLoading.classList.remove('is-hidden');
+
+      /* 让 folder 从被点击的卡片位置弹出、收回 */
+      const wr=w.getBoundingClientRect();
+      folder.style.transformOrigin=((wr.left+wr.width/2)/innerWidth*100).toFixed(1)+'% '
+        +((wr.top+wr.height/2)/innerHeight*100).toFixed(1)+'%';
 
       folder.classList.add('is-open');
       document.body.style.overflow='hidden';
@@ -1227,6 +1338,7 @@ const PUBLICATIONS_FALLBACK = [
       /* 图片 */
       probeSeries('arch-'+n, 2).then(function(srcs){
         if(!folder.classList.contains('is-open')) return;
+        fLoading.classList.add('is-hidden');
         srcs.forEach(function(src,i){
           const fig=document.createElement('figure');
           fig.style.animationDelay=(0.2+Math.min(i,6)*0.09)+'s';
@@ -1249,7 +1361,7 @@ const PUBLICATIONS_FALLBACK = [
   /* ---------- photography：自适应画廊（隐形矩形 + 循环补齐）---------- */
   const photoFrame=document.getElementById('photoFrame');
   const photoCols=document.getElementById('photoCols');
-  const COL_SPEEDS=[0.16,-0.1,0.22];
+  const COL_SPEEDS=[0.14, 0.05, 0.19];
   let colEls=[];
 
   function makePhoto(set,src){
@@ -1264,9 +1376,26 @@ const PUBLICATIONS_FALLBACK = [
   }
   function sizeFrame(){
     if(!colEls.length) return;
-    if(matchMedia('(max-width:700px)').matches){ photoFrame.style.height=''; return; }
-    const mh=Math.min.apply(null,colEls.map(function(c){return c.offsetHeight;}));
-    if(mh>0) photoFrame.style.height=(mh-12)+'px';
+    if(matchMedia('(max-width:700px)').matches){
+      photoFrame.style.height='';
+      colEls.forEach(function(c){ c.dataset.maxUp='0'; });
+      return;
+    }
+    /* 解不动点：帧高 H 满足每列在最大视差位移之后仍然盖满取景框，
+       从而“无论滚到哪儿都不见底”——配合边缘的渐进模糊即得 infinite 感 */
+    const vh=innerHeight;
+    const hs=colEls.map(function(c){ return c.offsetHeight; });
+    let H=Math.min.apply(null,hs)-12;
+    for(let it=0;it<6;it++){
+      let m=Infinity;
+      colEls.forEach(function(c,k){
+        m=Math.min(m, hs[k]-parseFloat(c.dataset.speed)*(H+vh/2));
+      });
+      H=Math.min(H, m);
+    }
+    H=Math.max(420, Math.round(H));
+    photoFrame.style.height=H+'px';
+    colEls.forEach(function(c,k){ c.dataset.maxUp=String(Math.max(0, hs[k]-H)); });
   }
 
   Promise.all(PHOTO_SETS.map(function(set){ return probeSeries('photo-'+set); }))
@@ -1285,6 +1414,10 @@ const PUBLICATIONS_FALLBACK = [
       return;
     }
     const h=[0,0,0];
+    /* 速度快的列会被视差推得更远，需要更长的“底料”。
+       已知全部照片数，用列速加权做贪心分配：快列多排、慢列少排，
+       一张不重复也能把取景框盖满 */
+    const weights=COL_SPEEDS.map(function(sp){ return 1 + sp*1.6; });
     for(let i=0;i<3;i++){
       const c=document.createElement('div');
       c.className='pcol';
@@ -1292,7 +1425,14 @@ const PUBLICATIONS_FALLBACK = [
       photoCols.appendChild(c);
       colEls.push(c);
     }
-    function shortest(){ return h.indexOf(Math.min.apply(null,h)); }
+    function shortest(){
+      let k=0,best=Infinity;
+      for(let i=0;i<3;i++){
+        const v=(h[i]+0.001)/weights[i];
+        if(v<best){ best=v; k=i; }
+      }
+      return k;
+    }
     let wordCount=0;
     /* 每个类别：小标题和它的第一张照片绑定放进同一列，杜绝标题错位 */
     sets.forEach(function(g){
@@ -1309,20 +1449,6 @@ const PUBLICATIONS_FALLBACK = [
         h[k]+=1;
       }
     });
-    /* 循环补齐：矮的列用已有照片接着排，底部不再空一块；多出的被矩形裁掉 */
-    if (window.innerWidth > 700) {
-      const maxH = Math.max.apply(null, h);
-      let rec = 0;
-      for (let k = 0; k < 3; k++) {
-        while (h[k] < maxH - 0.01) {
-          const p = flat[rec++ % flat.length];
-          colEls[k].appendChild(makePhoto(p.set, p.src));
-          h[k] += 1;
-        }
-        const p = flat[rec++ % flat.length];      /* 每列再多垫一张，给视差留余量 */
-        colEls[k].appendChild(makePhoto(p.set, p.src));
-      }
-    }
     const pc=document.getElementById('phCount');
     if(pc) pc.textContent=printTotal+' prints · since 2018';
     updateHoldings();
