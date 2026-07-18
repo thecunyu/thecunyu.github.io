@@ -133,10 +133,12 @@ body.is-ready .top{translate:0 0}
 .hero__bg .b2{width:42vw;height:42vw;right:-8%;top:22%;background:radial-gradient(circle,rgba(127,180,216,.52),transparent 66%);animation:drift2 44s ease-in-out infinite alternate}
 .hero__bg .b3{width:40vw;height:40vw;left:32%;top:-6%;background:radial-gradient(circle,rgba(255,255,255,.9),transparent 70%);animation:drift3 31s ease-in-out infinite alternate}
 .hero__bg .b4{width:34vw;height:34vw;left:14%;bottom:-12%;background:radial-gradient(circle,rgba(143,166,255,.38),transparent 66%);animation:drift4 39s ease-in-out infinite alternate}
-@keyframes drift1{to{transform:translate(14vw,10vh) scale(1.18)}}
-@keyframes drift2{to{transform:translate(-12vw,-8vh) scale(.9)}}
-@keyframes drift3{to{transform:translate(-9vw,12vh) scale(1.12)}}
-@keyframes drift4{to{transform:translate(11vw,-9vh) scale(1.15)}}
+.hero__bg .b5{width:30vw;height:30vw;left:58%;top:52%;background:radial-gradient(circle,rgba(132,112,255,.26),transparent 66%);animation:drift5 34s ease-in-out infinite alternate}
+@keyframes drift1{to{transform:translate(22vw,15vh) scale(1.22)}}
+@keyframes drift2{to{transform:translate(-19vw,-13vh) scale(.86)}}
+@keyframes drift3{to{transform:translate(-15vw,18vh) scale(1.16)}}
+@keyframes drift4{to{transform:translate(17vw,-14vh) scale(1.2)}}
+@keyframes drift5{to{transform:translate(-14vw,11vh) scale(1.14)}}
 .hero__frost{position:absolute;inset:0;backdrop-filter:blur(36px) saturate(1.2);-webkit-backdrop-filter:blur(36px) saturate(1.2);background:rgba(223,228,232,.15)}
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
 .hero__kicker{
@@ -153,6 +155,7 @@ h1.hero__name{
   line-height:.9;
 }
 h1 .ln{display:block;overflow:hidden;padding-bottom:.04em;margin-bottom:-.04em}
+.hero__name.is-live .ln{overflow:visible}   /* 入场结束后解除裁切，字母可自由弹出 */
 h1 .ch{display:inline-block;transform:translateY(115%) rotate(4deg);}
 body.is-ready h1 .ch{animation:chRise 1.25s var(--ease) forwards;}
 h1 .ln--outline .ch{color:transparent;-webkit-text-stroke:2px var(--ink)}
@@ -214,7 +217,7 @@ body.is-ready .hero__meta > div:nth-child(4){animation-delay:1.1s;}
 /* ============ SECTION SCAFFOLD ============ */
 section.rec{padding-top:120px; padding-bottom:100px; position:relative}
 .rec__head{
-  display:flex;align-items:baseline;gap:26px;border-bottom:1px solid var(--ink);
+  display:flex;align-items:flex-end;gap:26px;border-bottom:1px solid var(--ink);
   padding-bottom:18px;margin-bottom:64px;
   font-family:var(--font-m);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
 }
@@ -384,12 +387,11 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .folder.is-open .folder__desc{opacity:1;transform:none;transition-delay:.38s}
 .folder__title{font-weight:900;font-size:clamp(30px,5vw,58px);text-transform:uppercase;letter-spacing:-.01em;line-height:1.02}
 .folder__meta{font-family:var(--font-s);font-style:italic;font-size:17px;color:var(--ikb-l);margin:16px 0 0}
-.folder__desc{margin:44px 0 16px;max-width:64ch}
+.folder__desc{margin:44px 0 16px}
 .folder__desc p{
-  font-family:var(--font-s);font-size:17.5px;line-height:1.85;color:rgba(223,228,232,.78);
-  margin-bottom:1.3em;
+  font-family:var(--font-d);font-size:15.5px;line-height:1.75;color:rgba(223,228,232,.78);
+  margin-bottom:1.25em;text-align:justify;text-justify:inter-word;hyphens:auto;
 }
-.folder__desc p:first-child::first-letter{color:var(--ikb-l)}
 .folder__imgs{margin-top:60px}
 .folder__inner figure{margin:0 0 46px;opacity:0;transform:translateY(34px);animation:figIn .9s var(--ease) forwards}
 @keyframes figIn{to{opacity:1;transform:none}}
@@ -486,11 +488,13 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .contact__left{display:flex;flex-direction:column;gap:38px;min-width:0}
 .contact__logo{width:clamp(60px,6.5vw,84px);mix-blend-mode:multiply;opacity:.92;-webkit-user-drag:none}
 .contact__mail{
-  display:block;font-weight:900;text-transform:lowercase;letter-spacing:-.02em;
-  font-size:clamp(28px,5.6vw,60px);line-height:1.05;
-  transition:color .4s;word-break:break-all;
+  display:inline-flex;align-items:center;gap:.45em;
+  font-weight:900;text-transform:lowercase;letter-spacing:-.02em;
+  font-size:clamp(21px,3.2vw,38px);line-height:1.1;
+  transition:color .4s;white-space:nowrap;
 }
 .contact__mail:hover{color:var(--ikb)}
+.contact__mail .mailico{width:1em;height:1em;flex-shrink:0;display:block}
 .contact__photo{
   width:clamp(180px,20vw,280px);background:#F4F6F8;padding:8px 8px 34px;rotate:0deg;
   box-shadow:0 18px 44px -14px rgba(10,14,20,.3);position:relative;
@@ -543,10 +547,13 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .darkzone .band{height:48vh}
 }
 @media (max-width:700px){
-  .hero { padding-top:calc(56px + 7vh); padding-bottom: 10vh !important; }
+  .hero {
+    min-height:calc(100lvh + 72px);   /* iOS 26 底部液态玻璃栏是半透明的，多留一截 */
+    padding-top:calc(56px + 7vh); padding-bottom: 12vh !important;
+  }
   .hero__title { padding-bottom: 0vh; }
-  .hero__kicker{margin-bottom:22px}
-  .hero__annot{margin-top:28px;font-size:19px}
+  .hero__kicker{margin-bottom:24px}
+  .hero__annot{margin-top:46px;font-size:19px}
   .hero__meta{padding-top:26px;gap:24px 22px}
   .wrap{padding:0 26px}
   .top{padding:13px 22px}
@@ -618,23 +625,23 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <!-- ===== HERO ===== -->
 <section class="hero wrap" id="top">
   <div class="hero__bg" aria-hidden="true">
-    <i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i>
+    <i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i>
     <span class="hero__frost"></span>
   </div>
-  <div class="hero__title" id="heroTitle" data-mouse="5">
+  <div class="hero__title" id="heroTitle" data-mouse="3">
     <div class="hero__kicker">Index of works · est. 2023</div>
-    <div data-mouse="9">
+    <div data-mouse="20">
       <h1 class="hero__name" id="heroName">
         <span class="ln" data-word="Cunyu"></span>
         <span class="ln ln--outline" data-word="Yuan"></span>
       </h1>
     </div>
-    <div data-mouse="4">
+    <div data-mouse="5">
       <p class="hero__annot">— a catalogue of <em>research</em>, design and photography; reading the city through millions of texts.</p>
     </div>
   </div>
 
-  <div data-mouse="2">
+  <div data-mouse="1">
   <div class="hero__meta" id="heroMeta">
     <div><span class="k">Affiliation</span>Wuhan University</div>
     <div><span class="k">Coordinates</span>30.54°N — 114.36°E</div>
@@ -862,7 +869,10 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   <div class="contact__grid" data-reveal>
     <div class="contact__left">
       <img class="contact__logo" src="图片/logo-black.png" alt="CY monogram">
-      <a class="contact__mail" href="mailto:thecunyu@gmail.com">thecunyu<span class="at">@</span>gmail.com</a>
+      <a class="contact__mail" href="mailto:thecunyu@gmail.com">
+        <svg class="mailico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M3.2 6.6 12 13l8.8-6.4"/></svg>
+        <span>thecunyu<span class="at">@</span>gmail.com</span>
+      </a>
       <div class="ctable" data-stagger>
         <a class="crow" href="https://scholar.google.com/citations?user=-O9y3XkAAAAJ" target="_blank" rel="noopener"><span>C.01</span><span>Google Scholar</span><span class="arr">↗</span></a>
         <a class="crow" href="https://www.instagram.com/thecunyu7/" target="_blank" rel="noopener"><span>C.02</span><span>Instagram</span><span class="arr">↗</span></a>
@@ -961,6 +971,7 @@ const PUBLICATIONS_FALLBACK = [
   const intro = document.getElementById('intro');
   if (reduced) {
     document.body.classList.add('is-ready');
+    document.getElementById('heroName').classList.add('is-live');
   } else {
     /* 真·预加载：一级摄影图与建筑图纸走懒加载，其余关键资源
        （视差大图、肖像、双色 logo、字体）全部就位后才放行进入网站 */
@@ -1012,12 +1023,30 @@ const PUBLICATIONS_FALLBACK = [
         document.body.classList.add('is-ready');
       }, 400);
 
+      // 入场字母动画结束后，解除 .ln 的 overflow 裁切，让磁性弹起不被切头
+      setTimeout(function() {
+        document.getElementById('heroName').classList.add('is-live');
+      }, 2600);
+
       // 步骤 3：等幕布彻底飞出屏幕，将它的 DOM 隐藏释放性能
       setTimeout(function() {
         intro.style.display = 'none';
       }, 1200);
     });
   }
+
+  /* ---------- aurora：每次进入网页随机洗牌光斑的位置、周期与相位 ---------- */
+  (function(){
+    if(reduced) return;
+    document.querySelectorAll('.hero__bg i').forEach(function(b){
+      b.style.left=(-14+Math.random()*82)+'%';
+      b.style.top=(-16+Math.random()*78)+'%';
+      b.style.right='auto'; b.style.bottom='auto';
+      const dur=17+Math.random()*11;               /* 17–28s，可感知的缓慢流动 */
+      b.style.animationDuration=dur.toFixed(1)+'s';
+      b.style.animationDelay=(-Math.random()*dur).toFixed(1)+'s';  /* 负延迟 = 随机相位 */
+    });
+  })();
 
   /* ---------- hero name: per-letter rise ---------- */
   document.querySelectorAll('#heroName .ln').forEach(function(ln,li){
@@ -1456,7 +1485,10 @@ const PUBLICATIONS_FALLBACK = [
     if(!colEls.length) return;
     if(matchMedia('(max-width:700px)').matches){
       photoFrame.style.height='';
-      colEls.forEach(function(c){ c.dataset.maxUp='0'; });
+      colEls.forEach(function(c){
+        c.dataset.maxUp='0';
+        [].slice.call(c.querySelectorAll('.pword')).forEach(function(wd){ wd.style.visibility=''; });
+      });
       return;
     }
     /* 解不动点：帧高 H 满足每列在最大视差位移之后仍然盖满取景框，
@@ -1474,6 +1506,18 @@ const PUBLICATIONS_FALLBACK = [
     H=Math.max(420, Math.round(H));
     photoFrame.style.height=H+'px';
     colEls.forEach(function(c,k){ c.dataset.maxUp=String(Math.max(0, hs[k]-H)); });
+    /* 处在上/下模糊带里的类别小标题整段隐藏，避免“糊了一半没对齐”的观感 */
+    colEls.forEach(function(c,k){
+      const up=Math.max(0, hs[k]-H-10);
+      const cTop=c.getBoundingClientRect().top;
+      [].slice.call(c.querySelectorAll('.pword')).forEach(function(wd){
+        const r=wd.getBoundingClientRect();
+        const y=r.top-cTop;                       /* 相对列顶的位置，不受列位移影响 */
+        const alwaysTop = (y + r.height) < 185;   /* 全程处于上模糊带 */
+        const alwaysBottom = (y - up) > H - 215;  /* 全程处于下模糊带 */
+        wd.style.visibility = (alwaysTop || alwaysBottom) ? 'hidden' : '';
+      });
+    });
   }
 
   Promise.all(PHOTO_SETS.map(function(set){ return probeSeries('photo-'+set); }))
@@ -1518,8 +1562,14 @@ const PUBLICATIONS_FALLBACK = [
       const d=document.createElement('div');
       d.className='pword'+((wordCount++%2)?' pword--r':'');
       d.textContent=g.set+'.';
-      colEls[k].appendChild(d);
-      colEls[k].appendChild(makePhoto(g.set,g.srcs[0]));
+      if(h[k]<0.5){
+        /* 列顶不放小标题：先图后题，标题落到第一张图下面 */
+        colEls[k].appendChild(makePhoto(g.set,g.srcs[0]));
+        colEls[k].appendChild(d);
+      }else{
+        colEls[k].appendChild(d);
+        colEls[k].appendChild(makePhoto(g.set,g.srcs[0]));
+      }
       h[k]+=1.22;
       for(let i=1;i<g.srcs.length;i++){
         k=shortest();
