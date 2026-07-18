@@ -3,33 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cunyu Yuan — Archive</title>
+<title>Cunyu Yuan</title>
 <meta name="description" content="Cunyu Yuan — researcher exploring urban environments and mental health through NLP and spatial data. Wuhan University. Open to PhD positions.">
 <meta property="og:title" content="Cunyu Yuan — Archive">
 <meta property="og:description" content="An indexed archive of research, architecture and photographs. Urban studies × NLP × mental health.">
 <meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="图片/logo-black.png" media="(prefers-color-scheme: light)">
+<link rel="icon" type="image/png" href="图片/logo-white.png" media="(prefers-color-scheme: dark)">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;900&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <style>
 /* ============ TOKENS ============ */
 :root{
-  --paper:#E6E0D2;            /* warm bone — archive folder, not office grey */
-  --paper-2:#DDD6C4;
-  --ice:#F0EBDF;
-  --ink:#1A1611;              /* warm near-black */
-  --ink-2:#161310;            /* dark zone bg */
-  --ink-soft:#6E6455;
-  --line:#C7BEA9;
-  --line-d:rgba(230,224,210,.14);
-  --ikb:#082CA6;              /* International Klein Blue */
-  --ikb-l:#8FA6FF;            /* IKB for dark backgrounds */
+  --paper:#DFE4E8;            /* cold fog — deeper than plain grey, still quiet */
+  --paper-2:#D4DBE0;
+  --ice:#EDF1F3;
+  --ink:#0C1015;              /* blue-black */
+  --ink-2:#0D1013;            /* dark zone bg */
+  --ink-soft:#59ололα;
+  --line:#BAC5CD;
+  --line-d:rgba(223,228,232,.14);
+  --ikb:#002FA7;              /* International Klein Blue */
+  --ikb-l:#8FA6FF;
   --ember:#E23B12;            /* vermilion punctuation */
   --font-d:'Archivo',sans-serif;
   --font-m:'IBM Plex Mono',monospace;
   --font-s:'Instrument Serif',serif;
   --ease:cubic-bezier(.16,1,.3,1);       /* slow expo-out — big movements */
-  --ease-pop:cubic-bezier(.3,1.4,.45,1); /* gentle spring — small pops, unified */
+  --ease-pop:cubic-bezier(.3,1.4,.45,1); /* gentle spring — small pops */
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -41,12 +43,12 @@ body{
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
   cursor:default;
-  -webkit-user-select:none;user-select:none;   /* 全站禁止选中文字 */
+  -webkit-user-select:none;user-select:none;
 }
 img{display:block;max-width:100%;-webkit-user-drag:none}
 a{color:inherit;text-decoration:none;cursor:pointer}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
-.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(24px,6vw,72px)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 clamp(30px,6vw,72px)}
 
 /* ============ INTRO CURTAIN ============ */
 .intro{
@@ -57,7 +59,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .intro.is-done{transform:translateY(-100%)}
 .intro__t{font-family:var(--font-m);font-size:12px;letter-spacing:.34em;text-transform:uppercase;
   opacity:0;animation:introFade .7s .1s forwards}
-.intro__n{font-family:var(--font-s);font-style:italic;font-size:15px;color:rgba(230,224,210,.5);
+.intro__n{font-family:var(--font-s);font-style:italic;font-size:15px;color:rgba(223,228,232,.5);
   opacity:0;animation:introFade .7s .28s forwards}
 .intro__line{width:0;height:1px;background:var(--ember);animation:introLine .8s .22s var(--ease) forwards}
 @keyframes introFade{to{opacity:1}}
@@ -67,15 +69,16 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .top{
   position:fixed;top:0;left:0;right:0;z-index:50;
   display:flex;justify-content:space-between;align-items:center;
-  padding:16px clamp(24px,6vw,72px);
+  padding:14px clamp(26px,6vw,72px);
   border-bottom:1px solid var(--line);
-  background:rgba(230,224,210,.86);
+  background:rgba(223,228,232,.86);
   backdrop-filter:blur(10px);
   font-family:var(--font-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
   translate:0 -100%;transition:translate 1s var(--ease) 1.25s;
 }
 body.is-ready .top{translate:0 0}
-.top__logo{font-weight:500}
+.top__logo{display:flex;align-items:center;gap:12px;font-weight:500}
+.top__logo img{width:26px;height:26px;border-radius:7px}
 .top__logo b{color:var(--ikb);font-weight:500}
 .top__links{display:flex;gap:clamp(16px,2.6vw,32px)}
 .top a{position:relative;padding:2px 0}
@@ -89,9 +92,19 @@ body.is-ready .top{translate:0 0}
 /* ============ HERO ============ */
 .hero{
   min-height:100svh;display:flex;flex-direction:column;position:relative;
-  padding-top:calc(56px + 4vh);padding-bottom:5vh;
+  padding-top:calc(56px + 2vh);padding-bottom:8vh;
 }
-.hero__title{position:relative;z-index:3;margin:auto 0;padding:2vh 0 3vh}
+/* quiet atmospheric field — cold light drifting behind the type */
+.hero::before{
+  content:"";position:absolute;inset:-18% -12%;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(46% 38% at 16% 20%, rgba(0,47,167,.085), transparent 72%),
+    radial-gradient(40% 34% at 88% 68%, rgba(0,47,167,.05), transparent 72%),
+    radial-gradient(52% 42% at 62% 6%, rgba(255,255,255,.55), transparent 74%);
+  animation:heroDrift 30s ease-in-out infinite alternate;
+}
+@keyframes heroDrift{to{transform:translate(-2.5%,2.2%) scale(1.03)}}
+.hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
   margin-bottom:26px;display:flex;align-items:center;gap:16px;
@@ -115,32 +128,9 @@ h1 .ln--outline .ch{color:transparent;-webkit-text-stroke:2px var(--ink)}
 }
 .hero__annot em{color:var(--ikb);font-style:italic}
 @keyframes fadeUp{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
-
-/* the survey rule — quiet signature on the right edge */
-.hero__rule{
-  position:absolute;top:50%;right:clamp(4px,3vw,40px);translate:0 -50%;z-index:1;
-  height:min(52vh,460px);width:34px;
-  border-right:1px solid var(--ink);
-  background:
-    repeating-linear-gradient(to bottom, var(--ink) 0 1px, transparent 1px 12.5%) right 0 top 0/8px 100% no-repeat,
-    repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 2.5%) right 0 top 0/4px 100% no-repeat;
-  opacity:0;animation:fadeUp 1.4s var(--ease) 2s forwards;
-  pointer-events:none;
-}
-.hero__rule span{
-  position:absolute;right:14px;
-  font-family:var(--font-m);font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);
-  writing-mode:vertical-rl;
-}
-.hero__rule span:first-child{top:0}
-.hero__rule span:last-child{bottom:0}
-.hero__rule i{
-  position:absolute;right:-4px;top:38%;width:7px;height:7px;border-radius:50%;
-  background:var(--ember);font-style:normal;
-}
 .hero__meta{
   display:grid;grid-template-columns:repeat(4,1fr);gap:28px;position:relative;z-index:3;
-  border-top:1px solid var(--ink);padding-top:22px;
+  border-top:1px solid var(--ink);padding-top:22px;will-change:translate;
   font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
 }
 .hero__meta > div{opacity:0;animation:fadeUp 1s var(--ease) forwards}
@@ -149,37 +139,30 @@ h1 .ln--outline .ch{color:transparent;-webkit-text-stroke:2px var(--ink)}
 .hero__meta > div:nth-child(3){animation-delay:2.05s}
 .hero__meta > div:nth-child(4){animation-delay:2.15s}
 .hero__meta .k{display:block;color:var(--ink-soft);margin-bottom:6px;font-size:10px}
-.hero__scroll{
-  position:absolute;left:50%;bottom:14px;translate:-50% 0;z-index:3;
-  font-family:var(--font-m);font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--ink-soft);
-  opacity:0;animation:fadeUp 1s var(--ease) 2.5s forwards;
-}
-.hero__scroll::after{content:"";display:block;width:1px;height:30px;background:var(--ink-soft);margin:8px auto 0;animation:drip 2.2s var(--ease) infinite}
-@keyframes drip{0%{scale:1 0;transform-origin:top}45%{scale:1 1;transform-origin:top}55%{scale:1 1;transform-origin:bottom}100%{scale:1 0;transform-origin:bottom}}
 
-/* ============ MARQUEE ============ */
-.marquee{background:var(--ikb);color:#F0EBDF;overflow:hidden}
+/* ============ MARQUEE — monochrome ============ */
+.marquee{background:var(--ink);color:var(--paper);overflow:hidden}
 .marquee__track{display:flex;width:max-content;animation:mq 38s linear infinite;font-family:var(--font-m);font-size:12px;letter-spacing:.22em;text-transform:uppercase;padding:13px 0}
 .marquee__track span{padding:0 30px;white-space:nowrap}
-.marquee__track .ast{color:#FF7A50}
+.marquee__track .ast{color:rgba(223,228,232,.4)}
 @keyframes mq{to{transform:translateX(-50%)}}
 
 /* ============ PARALLAX BANDS ============ */
 .band{position:relative;height:58vh;overflow:hidden}
 .band img{width:100%;height:150%;object-fit:cover;will-change:transform;filter:saturate(.85)}
 .band__cap{
-  position:absolute;left:clamp(24px,6vw,72px);bottom:24px;z-index:2;
+  position:absolute;left:clamp(30px,6vw,72px);bottom:24px;z-index:2;
   font-family:var(--font-m);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
   color:#fff;mix-blend-mode:difference;
 }
 .band__num{
-  position:absolute;right:clamp(24px,6vw,72px);bottom:14px;z-index:2;
+  position:absolute;right:clamp(30px,6vw,72px);bottom:14px;z-index:2;
   font-family:var(--font-s);font-style:italic;font-size:clamp(38px,5.5vw,68px);line-height:1;
   color:#fff;mix-blend-mode:difference;
 }
 
 /* ============ SECTION SCAFFOLD ============ */
-section.rec{padding:120px 0 100px;position:relative}
+section.rec{padding-top:120px; padding-bottom:100px; position:relative}
 .rec__head{
   display:flex;align-items:baseline;gap:26px;border-bottom:1px solid var(--ink);
   padding-bottom:18px;margin-bottom:64px;
@@ -238,8 +221,7 @@ section.rec{padding:120px 0 100px;position:relative}
   color:var(--ink-soft);justify-self:end;white-space:nowrap;
 }
 .chip--live{color:var(--ember)}
-/* 有链接的条目：明显的“可跳转”动效 */
-a.pub{cursor:pointer}
+/* linked entries — an unmistakable "this goes somewhere" */
 a.pub .pub__arr{
   display:inline-block;margin-left:10px;color:var(--ikb);font-weight:400;
   opacity:0;transform:translate(-8px,8px) scale(.7);
@@ -287,15 +269,15 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .darkzone{background:var(--ink-2);color:var(--paper)}
 .darkzone .rec__head{border-bottom-color:var(--paper)}
 .darkzone .rec__no{color:var(--ikb-l)}
-.darkzone .rec__count{color:rgba(230,224,210,.5)}
+.darkzone .rec__count{color:rgba(223,228,232,.5)}
 .darkzone .band{height:62vh}
 
-/* 04 ARCHITECTURE — 2+2+1 的秩序错位 */
-.arch__note{font-family:var(--font-s);font-style:italic;font-size:clamp(18px,2vw,24px);color:rgba(230,224,210,.62);max-width:54ch;line-height:1.55;margin-bottom:90px}
+/* 04 ARCHITECTURE — 2+2+1 ordered stagger */
+.arch__note{font-family:var(--font-s);font-style:italic;font-size:clamp(18px,2vw,24px);color:rgba(223,228,232,.62);max-width:54ch;line-height:1.55;margin-bottom:90px}
 .arch__note em{color:var(--ikb-l)}
 .arch__grid{display:grid;grid-template-columns:1fr 1fr;column-gap:clamp(26px,5vw,64px);row-gap:110px}
 .work{position:relative;cursor:pointer}
-.work:nth-child(even){margin-top:16vh}          /* 右列统一下沉，形成稳定的错位节奏 */
+.work:nth-child(even){margin-top:16vh}
 .work--full{grid-column:1/-1;margin-top:2vh !important}
 .work__frame{overflow:hidden}
 .work img{
@@ -308,24 +290,21 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .work:hover img{filter:grayscale(0) brightness(1);transform:scale(1.01)}
 .work__cap{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-top:14px;font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
 .work__cap b{font-family:var(--font-d);font-weight:600;font-size:15.5px;letter-spacing:0;text-transform:none}
-.work__cap .open{color:rgba(230,224,210,.45);transition:color .4s,transform .55s var(--ease-pop)}
+.work__cap .open{color:rgba(223,228,232,.45);transition:color .4s,transform .55s var(--ease-pop)}
 .work:hover .open{color:var(--ikb-l);transform:translateX(4px)}
 .work__award{margin-top:6px;font-family:var(--font-s);font-style:italic;font-size:14px;color:var(--ikb-l)}
 
-/* architecture folder overlay — dark, animated in & out */
+/* architecture folder overlay — expands out of the card, returns into it */
 .folder{
   position:fixed;inset:0;z-index:110;background:var(--ink-2);color:var(--paper);
-  display:flex;flex-direction:column;
-  visibility:hidden;opacity:0;transform:translateY(5vh) scale(.985);
-  transition:opacity .45s var(--ease),transform .55s var(--ease),visibility 0s .55s;
+  display:flex;flex-direction:column;visibility:hidden;
+  transition:clip-path .68s var(--ease);
+  will-change:clip-path;
 }
-.folder.is-open{
-  visibility:visible;opacity:1;transform:none;
-  transition:opacity .6s var(--ease),transform .8s var(--ease-pop),visibility 0s;
-}
+.folder.is-open,.folder.is-closing{visibility:visible}
 .folder__bar{
   display:flex;justify-content:space-between;align-items:center;gap:20px;
-  padding:16px clamp(24px,6vw,72px);border-bottom:1px solid var(--line-d);
+  padding:16px clamp(26px,6vw,72px);border-bottom:1px solid var(--line-d);
   font-family:var(--font-m);font-size:11px;letter-spacing:.16em;text-transform:uppercase;flex-shrink:0;
 }
 .folder__bar .no{color:var(--ikb-l)}
@@ -335,24 +314,49 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   transition:background .4s,color .4s,transform .55s var(--ease-pop);
 }
 .folder__close:hover{background:var(--paper);color:var(--ink);transform:rotate(90deg)}
-.folder__scroll{overflow-y:auto;flex:1;padding:60px clamp(24px,6vw,72px) 100px;overscroll-behavior:contain}
+.folder__scroll{overflow-y:auto;flex:1;padding:60px clamp(26px,6vw,72px) 100px;overscroll-behavior:contain}
 .folder__inner{max-width:920px;margin:0 auto}
-.folder__title,.folder__meta{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
-.folder.is-open .folder__title{opacity:1;transform:none;transition-delay:.18s}
-.folder.is-open .folder__meta{opacity:1;transform:none;transition-delay:.28s}
+.folder__title,.folder__meta,.folder__desc{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.folder.is-open .folder__title{opacity:1;transform:none;transition-delay:.2s}
+.folder.is-open .folder__meta{opacity:1;transform:none;transition-delay:.3s}
+.folder.is-open .folder__desc{opacity:1;transform:none;transition-delay:.38s}
 .folder__title{font-weight:900;font-size:clamp(30px,5vw,58px);text-transform:uppercase;letter-spacing:-.01em;line-height:1.02}
-.folder__meta{font-family:var(--font-s);font-style:italic;font-size:17px;color:var(--ikb-l);margin:16px 0 60px}
+.folder__meta{font-family:var(--font-s);font-style:italic;font-size:17px;color:var(--ikb-l);margin:16px 0 0}
+.folder__desc{margin:44px 0 16px;max-width:64ch}
+.folder__desc p{
+  font-family:var(--font-s);font-size:17.5px;line-height:1.85;color:rgba(223,228,232,.78);
+  margin-bottom:1.3em;
+}
+.folder__desc p:first-child::first-letter{color:var(--ikb-l)}
+.folder__imgs{margin-top:60px}
 .folder__inner figure{margin:0 0 46px;opacity:0;transform:translateY(34px);animation:figIn .9s var(--ease) forwards}
 @keyframes figIn{to{opacity:1;transform:none}}
 .folder__inner img{width:100%}
-.folder__inner figcaption{font-family:var(--font-m);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(230,224,210,.45);padding-top:10px}
+.folder__inner figcaption{font-family:var(--font-m);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(223,228,232,.45);padding-top:10px}
 
-/* 05 PHOTOGRAPHY — 自适应画廊 */
-.darkroom__note{font-family:var(--font-s);font-style:italic;font-size:clamp(18px,2vw,24px);color:rgba(230,224,210,.62);max-width:56ch;line-height:1.55;margin:-8px 0 80px}
+/* 05 PHOTOGRAPHY — adaptive gallery inside an invisible frame */
+.darkroom__note{font-family:var(--font-s);font-style:italic;font-size:clamp(18px,2vw,24px);color:rgba(223,228,232,.62);max-width:56ch;line-height:1.55;margin:-8px 0 60px}
 .darkroom__note em{color:var(--ikb-l)}
+.photo-frame{position:relative;overflow:hidden}
+.photo-frame::before,.photo-frame::after{
+  content:"";position:absolute;left:-2px;right:-2px;height:170px;z-index:4;pointer-events:none;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.photo-frame::before{
+  top:0;
+  background:linear-gradient(180deg,var(--ink-2) 8%,rgba(13,16,19,0) 100%);
+  -webkit-mask-image:linear-gradient(180deg,#000 25%,transparent 100%);
+          mask-image:linear-gradient(180deg,#000 25%,transparent 100%);
+}
+.photo-frame::after{
+  bottom:0;
+  background:linear-gradient(0deg,var(--ink-2) 8%,rgba(13,16,19,0) 100%);
+  -webkit-mask-image:linear-gradient(0deg,#000 25%,transparent 100%);
+          mask-image:linear-gradient(0deg,#000 25%,transparent 100%);
+}
 .photo-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:start}
 .pcol{display:flex;flex-direction:column;gap:26px;will-change:transform}
-.ph{position:relative;overflow:hidden;cursor:zoom-in;margin:0}
+.ph{position:relative;overflow:hidden;cursor:pointer;margin:0}
 .ph img{width:100%;aspect-ratio:3/4;object-fit:cover;transition:transform 1.2s var(--ease)}
 .ph:hover img{transform:scale(1.05)}
 .ph__tag{
@@ -363,34 +367,31 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .ph:hover .ph__tag{opacity:1;transform:none}
 .pword{
   font-family:var(--font-s);font-style:italic;font-size:clamp(34px,4.5vw,56px);
-  color:transparent;-webkit-text-stroke:1px rgba(230,224,210,.4);line-height:1;padding:10px 0;
+  color:transparent;-webkit-text-stroke:1px rgba(223,228,232,.4);line-height:1;padding:10px 0;
 }
 .pword--r{text-align:right}
-.photo-more{margin-top:80px;text-align:center}
+.photo-more{margin-top:60px;text-align:center}
 .photo-more a{
   font-family:var(--font-m);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
-  color:rgba(230,224,210,.6);border-bottom:1px solid rgba(230,224,210,.3);padding-bottom:4px;transition:color .4s,border-color .4s;
+  color:rgba(223,228,232,.6);border-bottom:1px solid rgba(223,228,232,.3);padding-bottom:4px;transition:color .4s,border-color .4s;
 }
 .photo-more a:hover{color:#fff;border-color:#fff}
 
-/* lightbox — animated zoom in & out */
+/* lightbox — FLIP: 从缩略图的位置来，回缩略图的位置去 */
 .lb{
-  position:fixed;inset:0;z-index:120;background:rgba(16,13,10,.95);
-  display:flex;align-items:center;justify-content:center;padding:5vmin;cursor:zoom-out;
+  position:fixed;inset:0;z-index:120;background:rgba(9,11,14,.95);cursor:pointer;
   visibility:hidden;opacity:0;
   transition:opacity .45s var(--ease),visibility 0s .45s;
 }
 .lb.is-open{visibility:visible;opacity:1;transition:opacity .45s var(--ease),visibility 0s}
 .lb img{
-  max-width:92vw;max-height:86vh;
-  opacity:0;transform:scale(.86) translateY(16px);
-  transition:opacity .4s var(--ease),transform .6s var(--ease-pop);
+  position:fixed;object-fit:cover;transform-origin:top left;will-change:transform;
+  transition:transform .58s var(--ease);
 }
-.lb.is-open img{opacity:1;transform:none}
 .lb__cap{
   position:absolute;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);opacity:0;
-  font-family:var(--font-m);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(230,224,210,.7);
-  transition:opacity .5s .15s,transform .6s .15s var(--ease-pop);
+  font-family:var(--font-m);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(223,228,232,.7);
+  transition:opacity .5s .2s,transform .6s .2s var(--ease-pop);
 }
 .lb.is-open .lb__cap{opacity:1;transform:translateX(-50%)}
 
@@ -399,14 +400,14 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .contact__grid{display:grid;grid-template-columns:1fr auto;gap:60px;align-items:center;padding:10px 0 70px}
 .contact__mail{
   display:block;font-weight:900;text-transform:lowercase;letter-spacing:-.02em;
-  font-size:clamp(28px,5.6vw,80px);line-height:1.05;
+  font-size:clamp(28px,5.6vw,60px);line-height:1.05;
   transition:color .4s;word-break:break-all;
 }
 .contact__mail:hover{color:var(--ikb)}
 .contact__mail .at{font-family:var(--font-s);font-style:italic;font-weight:400}
 .contact__photo{
-  width:clamp(140px,16vw,210px);background:#F5F1E6;padding:8px 8px 34px;rotate:-3deg;
-  box-shadow:0 18px 44px -14px rgba(20,16,10,.3);position:relative;
+  width:clamp(180px,20vw,280px);background:#F4F6F8;padding:8px 8px 34px;rotate:0deg;
+  box-shadow:0 18px 44px -14px rgba(10,14,20,.3);position:relative;
 }
 .contact__photo img{width:100%;aspect-ratio:4/5;object-fit:cover;filter:saturate(.9)}
 .contact__photo figcaption{position:absolute;left:10px;bottom:9px;font-family:var(--font-m);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
@@ -438,6 +439,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 /* ============ RESPONSIVE ============ */
 @media (max-width:980px){
+  .hero__title { padding-bottom: 5vh; }
   .research{grid-template-columns:1fr;gap:50px}
   .pub{grid-template-columns:48px 1fr 90px;grid-template-areas:"no title chip" "no venue chip";row-gap:8px}
   .pub__no{grid-area:no}.pub__title{grid-area:title}.pub__venue{grid-area:venue}.chip{grid-area:chip}
@@ -451,28 +453,34 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .darkzone .band{height:48vh}
 }
 @media (max-width:700px){
-  .top{padding:12px 20px}
+  .hero { padding-bottom: 10vh !important; }
+  .hero__title { padding-bottom: 0vh; }
+  .wrap{padding:0 26px}
+  .top{padding:13px 22px}
   .top__links{display:none}
+  .band__cap{left:26px}
+  .band__num{right:26px}
   .photo-cols{grid-template-columns:1fr}
   .pcol{transform:none !important}
   .xp__inner ul{padding-left:0}
-  .hero__rule{display:none}
-  .hero__scroll{display:none}
-  section.rec{padding:90px 0 76px}
+  section.rec{padding-top:90px; padding-bottom:76px}
   .rec__head{margin-bottom:44px}
   .contact__grid{grid-template-columns:1fr;gap:40px}
-  .contact__photo{rotate:-2deg}
+  .contact__photo{width: 360px; rotate: 0deg}
+  .folder__bar{padding:14px 22px}
+  .folder__scroll{padding:44px 22px 80px}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important;transition:none !important}
   .intro{display:none}
   .top{translate:0 0}
   h1 .ch{transform:none}
-  .hero__kicker,.hero__annot,.hero__meta > div,.hero__scroll,.hero__rule{opacity:1;animation:none}
+  .hero__kicker,.hero__annot,.hero__meta > div{opacity:1;animation:none}
   .hero__kicker::after{scale:1 1}
   [data-reveal]{opacity:1;transform:none}
   .folder__inner figure{opacity:1;transform:none}
-  .folder,.lb{transition:none}
+  .folder .folder__title,.folder .folder__meta,.folder .folder__desc{opacity:1;transform:none}
+  .folder,.lb,.lb img{transition:none}
 }
 </style>
 </head>
@@ -480,14 +488,17 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 <!-- ===== INTRO CURTAIN ===== -->
 <div class="intro" id="intro" aria-hidden="true">
-  <div class="intro__t">Cunyu Yuan — Archive</div>
+  <div class="intro__t">Cunyu Yuan</div>
   <div class="intro__line"></div>
   <div class="intro__n">Index of works · Wuhan, 2026</div>
 </div>
 
 <!-- ===== TOP BAR ===== -->
 <header class="top">
-  <a class="top__logo" href="#top">Cunyu Yuan <b>— Archive</b></a>
+  <a class="top__logo" href="#top">
+    <img src="图片/logo-black.png" alt="CY monogram">
+    <span>Cunyu Yuan <b>— Archive</b></span>
+  </a>
   <nav class="top__links">
     <a href="#rec01">Research</a>
     <a href="#rec02">Publications</a>
@@ -501,11 +512,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 <!-- ===== HERO ===== -->
 <section class="hero wrap" id="top">
-  <div class="hero__rule" data-mouse="12" aria-hidden="true">
-    <span>30.54°N</span><i></i><span>114.36°E</span>
-  </div>
-
-  <div class="hero__title" data-mouse="8">
+  <div class="hero__title" id="heroTitle" data-mouse="8">
     <div class="hero__kicker">Index of works · est. 2023</div>
     <h1 class="hero__name" id="heroName">
       <span class="ln" data-word="Cunyu"></span>
@@ -514,14 +521,12 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
     <p class="hero__annot">— a catalogue of <em>research</em>, buildings &amp; photographs; reading the city through 2.78 million lines of text.</p>
   </div>
 
-  <div class="hero__meta">
+  <div class="hero__meta" id="heroMeta">
     <div><span class="k">Affiliation</span>Wuhan University</div>
     <div><span class="k">Coordinates</span>30.54°N — 114.36°E</div>
     <div><span class="k">Holdings</span><span id="metaHoldings">papers · works · prints</span></div>
     <div><span class="k">Status</span>Open to PhD positions</div>
   </div>
-
-  <div class="hero__scroll"></div>
 </section>
 
 <!-- ===== MARQUEE ===== -->
@@ -535,7 +540,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <!-- ===== PARALLAX BAND I ===== -->
 <div class="band">
   <img src="图片/band-1.jpg" alt="City establishing shot" data-band>
-  <div class="band__cap">currently based in wuhan</div>
+  <div class="band__cap">the city, read line by line</div>
   <div class="band__num">i.</div>
 </div>
 
@@ -548,7 +553,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   </div>
   <div class="research">
     <div class="research__lede" data-reveal>
-      I study how the built environment shapes human <em>well-being</em> — combining text analysis, spatial data and deep learning to map mental health at the scale of whole cities.
+      I study how the built environment affects human <em>well-being</em> — combining text analysis, spatial data and deep learning to map mental health at the scale of cities.
       <span class="sm">By treating millions of social-media posts as field notes, I try to uncover the systemic dynamics hidden in everyday human–environment interactions.</span>
     </div>
     <div class="fields" data-stagger>
@@ -580,7 +585,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
     <span class="rec__count" id="pubCount"></span>
   </div>
   <div class="pubtable" id="pubtable" data-stagger></div>
-  <p class="pub-note" data-reveal>A note to myself — my Nature Cities manuscript offers the first large-scale, fine-grained quantification of the link between depressive states and perceived urban places in China. Fingers crossed.</p>
+  <p class="pub-note" data-reveal>My current study offers the first large-scale, fine-grained quantification of the link between depressive states and perceived urban places in China.</p>
 </section>
 
 <!-- ===== 03 EXPERIENCE ===== -->
@@ -659,17 +664,17 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   </div>
 </section>
 
-<!-- ============ DARK ZONE：从这里开始进入深色（建筑 + 摄影）============ -->
+<!-- ============ DARK ZONE（建筑 + 摄影）============ -->
 <div class="darkzone">
 
-  <!-- PARALLAX BAND II — 深色区的开场 -->
+  <!-- PARALLAX BAND II -->
   <div class="band">
     <img src="图片/band-2.jpg" alt="Architectural detail" data-band>
     <div class="band__cap">from data back to matter</div>
     <div class="band__num">ii.</div>
   </div>
 
-  <!-- ===== 04 ARCHITECTURE（每个项目的图片数量自动探测：arch-N-1.jpg 起，连续编号）===== -->
+  <!-- ===== 04 ARCHITECTURE ===== -->
   <section class="rec wrap" id="rec04">
     <div class="rec__head" data-reveal>
       <span class="rec__no">REC 04</span>
@@ -679,37 +684,39 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
     <p class="arch__note" data-reveal>Where it began — my undergraduate design work, and the competition entry that quietly turned me from a designer into a <em>researcher</em>.</p>
     <div class="arch__grid">
       <figure class="work" data-reveal data-parallax="0.05" data-folder="1"
-        data-title="Art Gallery, Weihai" data-meta="W.01 · YAC competition — honorable mention · jury incl. David Chipperfield Architects">
-        <div class="work__frame"><img src="图片/arch-1-1.jpg" alt="Art gallery design, Weihai — cover" loading="lazy"></div>
-        <figcaption class="work__cap"><b>Art Gallery, Weihai</b><span class="open">W.01 — open ＋</span></figcaption>
-        <div class="work__award">Honorable mention · jury incl. David Chipperfield Architects</div>
+        data-title="ECO ECHO" data-meta="W.01 · Weihai Art Gallery — YAC competition, honorable mention">
+        <div class="work__frame"><img src="图片/arch-1-1.jpg" alt="ECO ECHO — cover" loading="lazy"></div>
+        <figcaption class="work__cap"><b>ECO ECHO</b><span class="open">W.01 — open ＋</span></figcaption>
+        <div class="work__award">Honorable Mention · Weihai Art Gallery</div>
       </figure>
       <figure class="work" data-reveal data-parallax="-0.06" data-folder="2"
         data-title="“Play with Wheels”" data-meta="W.02 · concept — 47th Nisshin Kogyo competition, Japan">
         <div class="work__frame"><img src="图片/arch-2-1.jpg" alt="Play with wheels — cover" loading="lazy"></div>
         <figcaption class="work__cap"><b>“Play with Wheels”</b><span class="open">W.02 — open ＋</span></figcaption>
-        <div class="work__award">47th Nisshin Kogyo competition, Japan</div>
+        <div class="work__award">47th Nisshin Kogyo Competition, Japan</div>
       </figure>
       <figure class="work" data-reveal data-parallax="0.05" data-folder="3"
-        data-title="Observation Tower" data-meta="W.03 · academic design work">
+        data-title="Observation Tower" data-meta="W.03 · CUICOCHA Lookout — academic design work">
         <div class="work__frame"><img src="图片/arch-3-1.jpg" alt="Observation tower — cover" loading="lazy"></div>
         <figcaption class="work__cap"><b>Observation Tower</b><span class="open">W.03 — open ＋</span></figcaption>
+        <div class="work__award">CUICOCHA Lookout</div>
       </figure>
       <figure class="work" data-reveal data-parallax="-0.06" data-folder="4"
         data-title="Community Center" data-meta="W.04 · Zhonglian Cup — excellence award · survey-driven programme">
         <div class="work__frame"><img src="图片/arch-4-1.jpg" alt="Community center — cover" loading="lazy"></div>
         <figcaption class="work__cap"><b>Community Center</b><span class="open">W.04 — open ＋</span></figcaption>
-        <div class="work__award">Excellence award · survey-driven programme design</div>
+        <div class="work__award">Excellence Award · Survey-driven Programme Design</div>
       </figure>
       <figure class="work work--full" data-reveal data-parallax="0.04" data-folder="5"
-        data-title="Museum" data-meta="W.05 · academic design work">
+        data-title="Museum" data-meta="W.05 · Imperial Kiln Museum — academic design work">
         <div class="work__frame"><img src="图片/arch-5-1.jpg" alt="Museum — cover" loading="lazy"></div>
         <figcaption class="work__cap"><b>Museum</b><span class="open">W.05 — open ＋</span></figcaption>
+        <div class="work__award">Imperial Kiln Museum</div>
       </figure>
     </div>
   </section>
 
-  <!-- ===== 05 PHOTOGRAPHY（画廊全自动生成：photo-类别-序号.jpg）===== -->
+  <!-- ===== 05 PHOTOGRAPHY（全自动画廊：photo-类别-序号.jpg）===== -->
   <section class="rec" id="rec05" style="padding-top:60px">
     <div class="wrap">
       <div class="rec__head" data-reveal>
@@ -718,7 +725,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
         <span class="rec__count" id="phCount">since 2018</span>
       </div>
       <p class="darkroom__note" data-reveal>The darkroom — cinematic tones, natural light, and the interaction between people and <em>place</em>.</p>
-      <div class="photo-cols" id="photoCols"></div>
+      <div class="photo-frame" id="photoFrame">
+        <div class="photo-cols" id="photoCols"></div>
+      </div>
       <div class="photo-more" data-reveal><a href="https://unsplash.com/@thecunyu7" target="_blank" rel="noopener">Full collection on Unsplash ↗</a></div>
       <div style="height:50px"></div>
     </div>
@@ -762,7 +771,8 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
     <div class="folder__inner">
       <h2 class="folder__title" id="folderTitle"></h2>
       <p class="folder__meta" id="folderMeta"></p>
-      <div id="folderImgs"></div>
+      <div class="folder__desc" id="folderDesc"></div>
+      <div class="folder__imgs" id="folderImgs"></div>
     </div>
   </div>
 </div>
@@ -777,31 +787,28 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 /* ==========================================================================
    ★ 内容维护说明 ★
    --------------------------------------------------------------------------
-   1) 出版物：改仓库根目录的 publications.csv（和 index.html 放在一起）。
-      列：title, venue, role, status, link, highlight
-      · link 留空 = 不可点击；填了网址 = 整行可点、hover 有跳转动效
-      · highlight 填 yes = 状态显示为橙红色（用于最想突出的一条）
-      · 编号 P.01、P.02… 与数量统计都会自动生成
-      （如果 csv 读取失败——例如直接双击 html 用 file:// 打开——
-        会退回到下面 PUBLICATIONS_FALLBACK 里的内容。）
+   1) 出版物：改根目录 publications.csv（列：title, venue, role, status, link,
+      highlight）。link 填网址 = 整行可点；highlight 填 yes = 状态橙红。
+      编号与数量自动生成。file:// 打开时退回下方 PUBLICATIONS_FALLBACK。
 
-   2) 摄影：图片放进 图片/ 文件夹，命名 photo-类别-序号.jpg
-      例如 photo-plants-1.jpg, photo-plants-2.jpg, photo-lights-1.jpg …
-      每个类别有多少张会自动探测，画廊自动排成 3 列并保持平衡。
-      新增一个「类别」时，把类别名加进下面 PHOTO_SETS 数组即可（一个单词）。
+   2) 摄影：图片放 图片/ 文件夹，命名 photo-类别-序号.jpg（每类从 1 连续编号）。
+      数量自动探测；三列自动平衡；短的列会用已有照片循环补齐；
+      新「类别」加进 PHOTO_SETS 数组即可。
 
-   3) 建筑：每个项目的图片命名 arch-项目号-序号.jpg（arch-5-1.jpg 起连续编号），
-      点开文件夹时会自动探测到最后一张，多少张放多少张。
+   3) 建筑：arch-项目号-序号.jpg。-1 是封面，点开后从 -2 起展示，自动探测到
+      最后一张。若存在 arch-项目号.txt（放根目录或 图片/ 均可，UTF-8，
+      空行分段），会以衬线字体排在标题下方作为设计说明。
    ========================================================================== */
 
 const PHOTO_SETS = ['buildings','lights','monuments','woods','summers','contrasts','atmospheres','plants'];
 
 const PUBLICATIONS_FALLBACK = [
-  {title:"CBEES: fine-grained commercial built-environment perception & evaluation from social media", venue:"Sustainable Cities and Society, 119", role:"First author", status:"Published", link:"https://scholar.google.com/citations?user=-O9y3XkAAAAJ", highlight:""},
-  {title:"Depression risk looms in idealized sentiment towards urban places on social media", venue:"Nature Cities", role:"First author", status:"In principle", link:"", highlight:"yes"},
-  {title:"Public sentiment effects of the built environment: nine commercial projects in Wuhan", venue:"Modern Urban Research (CN)", role:"First author", status:"Forthcoming", link:"", highlight:""},
-  {title:"Environmental & behavioral factors of emotional experience in themed shopping malls", venue:"Buildings, 16(13)", role:"Third author", status:"Published", link:"", highlight:""},
-  {title:"Experiential factors of subjective well-being in urban waterfront environments", venue:"Ecological Indicators", role:"Sixth author", status:"In review", link:"", highlight:""}
+  {title:"CBEES: A fine-grained commercial built environment perception and evaluation based on social media.", venue:"Sustainable Cities and Society, 119", role:"First author", status:"Published", link:"https://doi.org/10.1016/j.scs.2024.106120", highlight:""},
+  {title:"Depression risk looms in idealized sentiment towards urban places on social media.", venue:"Nature Cities", role:"First author", status:"Accept in principle", link:"", highlight:"yes"},
+  {title:"A case study on the public sentiment effects of the built environment based on natural language processing: nine commercial projects in Wuhan.", venue:"Modern Urban Research (CN)", role:"First author", status:"Published", link:"https://doi.org/10.3969/j.issn.1009-6000.2026.03.010", highlight:""},
+  {title:"Exploring the Impact of Environmental and Behavioral Factors on Emotional Experience in Themed Shopping Malls Using Social Media Data and Interpretable Machine Learning.", venue:"Buildings, 16(13)", role:"Third author", status:"Published", link:"https://doi.org/10.3390/buildings16132499", highlight:""},
+  {title:"Experiential pathways linking urban waterfronts and public happiness: Evidence from social media data in Wuhan, China.", venue:"Ecological Indicators", role:"Sixth author", status:"Under review", link:"", highlight:""},
+  {title:"Why market is appealing? Insights from Natural Language Processing and Deep Learning.", venue:"URBAN DESIGN International", role:"Fourth author", status:"Under review", link:"", highlight:""}
 ];
 
 (function(){
@@ -809,7 +816,22 @@ const PUBLICATIONS_FALLBACK = [
   const fine = matchMedia('(pointer: fine)').matches;
   const IMG_DIR = '图片/';
 
-  /* ---------- 每次刷新都回到最上面 ---------- */
+  /* ---------- favicon 跟随浏览器深浅模式 ---------- */
+  (function(){
+    const links=document.querySelectorAll('link[rel="icon"]');
+    const mq=matchMedia('(prefers-color-scheme: dark)');
+    function setIcon(){
+      links.forEach(function(l){ l.remove(); });
+      const l=document.createElement('link');
+      l.rel='icon'; l.type='image/png';
+      l.href=mq.matches?'图片/logo-white.png':'图片/logo-black.png';
+      document.head.appendChild(l);
+    }
+    setIcon();
+    if(mq.addEventListener) mq.addEventListener('change',setIcon);
+  })();
+
+  /* ---------- 每次刷新回到最上面 ---------- */
   if('scrollRestoration' in history) history.scrollRestoration='manual';
   scrollTo(0,0);
   addEventListener('pageshow',function(){ scrollTo(0,0); });
@@ -837,7 +859,7 @@ const PUBLICATIONS_FALLBACK = [
     }
   });
 
-  /* ---------- tiny CSV parser（支持引号和逗号）---------- */
+  /* ---------- tiny CSV parser ---------- */
   function parseCSV(text){
     const rows=[];let row=[],cur='',q=false;
     for(let i=0;i<text.length;i++){
@@ -860,9 +882,9 @@ const PUBLICATIONS_FALLBACK = [
     return rows;
   }
 
-  /* ---------- 探测连续编号的图片：base-1.jpg, base-2.jpg… 直到缺号 ---------- */
-  function probeSeries(base, cap){
-    cap = cap || 40;
+  /* ---------- 探测连续编号图片（可指定起始序号）---------- */
+  function probeSeries(base, start, cap){
+    start=start||1; cap=cap||60;
     return new Promise(function(res){
       const srcs=[];
       (function next(i){
@@ -872,13 +894,20 @@ const PUBLICATIONS_FALLBACK = [
         im.onload=function(){ srcs.push(src); next(i+1); };
         im.onerror=function(){ res(srcs); };
         im.src=src;
-      })(1);
+      })(start);
     });
   }
 
-  /* ---------- publications：读取 publications.csv，失败则退回内置清单 ---------- */
+  /* ---------- publications ---------- */
   const pt=document.getElementById('pubtable');
-  let pubTotal=0;
+  let pubTotal=0, printTotal=0;
+
+  function updateHoldings(){
+    const m=document.getElementById('metaHoldings');
+    if(!m) return;
+    const works=document.querySelectorAll('.work').length;
+    m.textContent=(pubTotal||'—')+' papers · '+works+' works · '+(printTotal||'—')+' prints';
+  }
 
   function renderPubs(list){
     pt.innerHTML='';
@@ -908,7 +937,6 @@ const PUBLICATIONS_FALLBACK = [
     });
     const pc=document.getElementById('pubCount');
     if(pc) pc.textContent=list.length+' entries';
-    /* 让新加入的行也进入 stagger reveal */
     [].slice.call(pt.children).forEach(function(child,i){
       child.setAttribute('data-reveal','');
       child.style.transitionDelay=(i*110)+'ms';
@@ -932,15 +960,6 @@ const PUBLICATIONS_FALLBACK = [
       renderPubs(list);
     })
     .catch(function(){ renderPubs(PUBLICATIONS_FALLBACK); });
-
-  /* ---------- hero「Holdings」自动统计 ---------- */
-  let printTotal=0;
-  function updateHoldings(){
-    const m=document.getElementById('metaHoldings');
-    if(!m) return;
-    const works=document.querySelectorAll('.work').length;
-    m.textContent=(pubTotal||'—')+' papers · '+works+' works · '+(printTotal||'—')+' prints';
-  }
 
   /* ---------- missing-image placeholders ---------- */
   document.addEventListener('error',function(e){
@@ -995,16 +1014,24 @@ const PUBLICATIONS_FALLBACK = [
     }
   }
 
-  /* ---------- scroll parallax（视差整体加强）---------- */
+  /* ---------- scroll parallax（含 hero 离场视差）---------- */
+  const heroTitle=document.getElementById('heroTitle');
+  const heroMeta=document.getElementById('heroMeta');
   if(!reduced){
     const pEls=[].slice.call(document.querySelectorAll('[data-parallax]'));
+    const bands=[].slice.call(document.querySelectorAll('[data-band]'));
     let cols=[];
     window.__refreshPcols=function(){ cols=[].slice.call(document.querySelectorAll('.pcol')); };
     window.__refreshPcols();
-    const bands=[].slice.call(document.querySelectorAll('[data-band]'));
     let ticking=false;
     function frame(){
-      const vh=innerHeight;
+      const vh=innerHeight, sy=scrollY;
+      /* hero recedes slower than the page — depth on the way out */
+      if(sy<vh*1.3){
+        heroTitle.style.translate='0 '+(sy*0.18).toFixed(1)+'px';
+        heroTitle.style.opacity=Math.max(0,1-sy/(vh*0.85)).toFixed(3);
+        heroMeta.style.translate='0 '+(sy*0.06).toFixed(1)+'px';
+      }
       pEls.forEach(function(el){
         const r=el.getBoundingClientRect();
         if(r.bottom<-300||r.top>vh+300) return;
@@ -1024,8 +1051,9 @@ const PUBLICATIONS_FALLBACK = [
         cols.forEach(function(col){
           const r=col.parentElement.getBoundingClientRect();
           if(r.bottom<-300||r.top>vh+300) return;
-          const c=(r.top+r.height/2-vh/2);
-          col.style.translate='0 '+(c*parseFloat(col.dataset.speed)).toFixed(1)+'px';
+          const c=(r.top+r.height/2-vh/2)*parseFloat(col.dataset.speed);
+          const t=Math.max(-140,Math.min(140,c));   /* 限幅，配合上下模糊带 */
+          col.style.translate='0 '+t.toFixed(1)+'px';
         });
       }
       ticking=false;
@@ -1037,33 +1065,34 @@ const PUBLICATIONS_FALLBACK = [
     window.__parallaxTick=onScroll;
   }
 
-  /* ---------- 平滑滚轮：用惯性插值消除“一格一格”的生硬感 ---------- */
+  /* ---------- 阻尼滚轮：时间归一化的指数衰减，消除逐格跳动 ---------- */
   if(fine && !reduced){
     document.documentElement.style.scrollBehavior='auto';
-    let target=scrollY, cur=scrollY, raf=null;
+    let target=scrollY, cur=scrollY, raf=null, last=0;
     function maxScroll(){ return Math.max(0, document.documentElement.scrollHeight-innerHeight); }
     function overlaysOpen(){
       return document.getElementById('folder').classList.contains('is-open')
           || document.getElementById('lb').classList.contains('is-open');
     }
     addEventListener('wheel',function(e){
-      if(overlaysOpen() || e.ctrlKey) return;              /* 浮层内 & 捏合缩放走原生 */
+      if(overlaysOpen() || e.ctrlKey) return;
       e.preventDefault();
       const d=e.deltaMode===1 ? e.deltaY*33 : e.deltaY;
       target=Math.min(maxScroll(), Math.max(0, target+d));
-      if(!raf) loop();
+      if(!raf){ last=0; step(); }
     },{passive:false});
-    function loop(){
-      raf=requestAnimationFrame(function(){
-        cur+=(target-cur)*0.1;
-        if(Math.abs(target-cur)<.4){ cur=target; scrollTo(0,cur); raf=null; return; }
+    function step(){
+      raf=requestAnimationFrame(function(t){
+        if(!last) last=t;
+        const dt=Math.min((t-last)/1000,.05); last=t;
+        const k=1-Math.exp(-dt*6);           /* 时间常数 ≈166ms 的阻尼 */
+        cur+=(target-cur)*k;
+        if(Math.abs(target-cur)<.3){ cur=target; scrollTo(0,cur); raf=null; return; }
         scrollTo(0,cur);
-        loop();
+        step();
       });
     }
-    /* 键盘 / 拖动滚动条等其他方式滚动时，重新对齐目标位置 */
     addEventListener('scroll',function(){ if(!raf){ target=cur=scrollY; } },{passive:true});
-    /* 锚点链接也走同一套惯性滚动，手感统一 */
     document.querySelectorAll('a[href^="#"]').forEach(function(a){
       a.addEventListener('click',function(e){
         const id=a.getAttribute('href');
@@ -1072,7 +1101,7 @@ const PUBLICATIONS_FALLBACK = [
         if(!el) return;
         e.preventDefault();
         target=Math.min(maxScroll(), Math.max(0, el.getBoundingClientRect().top+scrollY-70));
-        if(!raf) loop();
+        if(!raf){ last=0; step(); }
       });
     });
   }
@@ -1086,26 +1115,72 @@ const PUBLICATIONS_FALLBACK = [
     });
   });
 
-  /* ---------- architecture folder（图片数量自动探测 + 进出场动画）---------- */
+  /* ---------- architecture folder：从卡片处展开，回卡片处收起 ---------- */
   const folder=document.getElementById('folder');
   const fNo=document.getElementById('folderNo'), fTitle=document.getElementById('folderTitle'),
-        fMeta=document.getElementById('folderMeta'), fImgs=document.getElementById('folderImgs'),
-        fScroll=document.getElementById('folderScroll');
+        fMeta=document.getElementById('folderMeta'), fDesc=document.getElementById('folderDesc'),
+        fImgs=document.getElementById('folderImgs'), fScroll=document.getElementById('folderScroll');
+  let folderSrc=null, folderTimer=null;
+
+  function rectInset(r){
+    return 'inset('+Math.max(0,r.top)+'px '+Math.max(0,innerWidth-r.right)+'px '
+      +Math.max(0,innerHeight-r.bottom)+'px '+Math.max(0,r.left)+'px)';
+  }
+
   document.querySelectorAll('.work').forEach(function(w){
     w.addEventListener('click',function(){
+      clearTimeout(folderTimer);
+      folder.classList.remove('is-closing');
+      folderSrc=w;
       const n=w.dataset.folder;
       fNo.textContent='W.0'+n;
       fTitle.textContent=w.dataset.title;
       fMeta.textContent=w.dataset.meta;
+      fDesc.innerHTML='';
       fImgs.innerHTML='';
-      folder.classList.add('is-open');
       fScroll.scrollTop=0;
+
+      /* 展开动画：clip-path 从卡片矩形张开至全屏 */
+      if(!reduced){
+        const fr=w.querySelector('.work__frame')||w;
+        folder.style.transition='none';
+        folder.style.clipPath=rectInset(fr.getBoundingClientRect());
+      }
+      folder.classList.add('is-open');
       document.body.style.overflow='hidden';
-      probeSeries('arch-'+n).then(function(srcs){
+      if(!reduced){
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){
+          folder.style.transition='';
+          folder.style.clipPath='inset(0px 0px 0px 0px)';
+        });});
+      }
+
+      /* 设计说明：arch-N.txt（先找根目录，再找 图片/）*/
+      (function loadDesc(){
+        function render(t){
+          const parts=t.replace(/\r/g,'').split(/\n\s*\n/).map(function(s){return s.trim();}).filter(Boolean);
+          if(!parts.length) return;
+          parts.forEach(function(s){
+            const p=document.createElement('p');
+            p.textContent=s;
+            fDesc.appendChild(p);
+          });
+        }
+        fetch('arch-'+n+'.txt',{cache:'no-store'})
+          .then(function(r){ if(!r.ok) throw 0; return r.text(); }).then(render)
+          .catch(function(){
+            fetch(IMG_DIR+'arch-'+n+'.txt',{cache:'no-store'})
+              .then(function(r){ if(!r.ok) throw 0; return r.text(); }).then(render)
+              .catch(function(){});
+          });
+      })();
+
+      /* 图片：-1 是封面，从 -2 开始展示，自动探测到最后一张 */
+      probeSeries('arch-'+n, 2).then(function(srcs){
         if(!folder.classList.contains('is-open')) return;
         srcs.forEach(function(src,i){
           const fig=document.createElement('figure');
-          fig.style.animationDelay=(0.25+Math.min(i,6)*0.09)+'s';
+          fig.style.animationDelay=(0.3+Math.min(i,6)*0.09)+'s';
           const im=document.createElement('img');
           im.src=src;
           im.alt=w.dataset.title+' — fig. '+(i+1);
@@ -1117,84 +1192,173 @@ const PUBLICATIONS_FALLBACK = [
       });
     });
   });
-  function closeFolder(){ folder.classList.remove('is-open'); document.body.style.overflow=''; }
-  document.getElementById('folderClose').addEventListener('click',closeFolder);
 
-  /* ---------- photography：自适应画廊（3 列平衡分配）---------- */
+  function closeFolder(){
+    if(!folder.classList.contains('is-open')) return;
+    folder.classList.remove('is-open');
+    document.body.style.overflow='';
+    if(reduced){ folder.style.clipPath=''; return; }
+    folder.classList.add('is-closing');
+    let cp='inset(48% 48% 48% 48%)';
+    if(folderSrc){
+      const fr=folderSrc.querySelector('.work__frame')||folderSrc;
+      const r=fr.getBoundingClientRect();
+      if(r.bottom>-100 && r.top<innerHeight+100) cp=rectInset(r);
+    }
+    folder.style.clipPath=cp;
+    folderTimer=setTimeout(function(){
+      folder.classList.remove('is-closing');
+      folder.style.transition='none';
+      folder.style.clipPath='';
+      requestAnimationFrame(function(){ folder.style.transition=''; });
+    },720);
+  }
+  document.getElementById('folderClose').addEventListener('click',function(e){
+    e.stopPropagation(); closeFolder();
+  });
+
+  /* ---------- photography：自适应画廊（隐形矩形 + 循环补齐）---------- */
+  const photoFrame=document.getElementById('photoFrame');
   const photoCols=document.getElementById('photoCols');
-  const COL_SPEEDS=[0.16,-0.1,0.22];   /* 三列不同流速，视差更明显 */
+  const COL_SPEEDS=[0.16,-0.1,0.22];
+  let colEls=[];
+
+  function makePhoto(set,src){
+    const fig=document.createElement('figure');
+    fig.className='ph';
+    const im=document.createElement('img');
+    im.src=src; im.alt=set+' — photograph'; im.loading='lazy';
+    const tag=document.createElement('figcaption');
+    tag.className='ph__tag'; tag.textContent=set+'.';
+    fig.appendChild(im); fig.appendChild(tag);
+    return fig;
+  }
+  function sizeFrame(){
+    if(!colEls.length) return;
+    if(matchMedia('(max-width:700px)').matches){ photoFrame.style.height=''; return; }
+    const mh=Math.min.apply(null,colEls.map(function(c){return c.offsetHeight;}));
+    if(mh>0) photoFrame.style.height=(mh-12)+'px';
+  }
 
   Promise.all(PHOTO_SETS.map(function(set){ return probeSeries('photo-'+set); }))
   .then(function(all){
-    /* 组装条目流：每个类别前插入描边小标题（pword），随后是它的照片 */
-    const items=[];
+    const sets=[];
+    const flat=[];
     PHOTO_SETS.forEach(function(set,si){
       const srcs=all[si];
       if(!srcs.length) return;
-      items.push({type:'word',set:set});
-      srcs.forEach(function(src){ items.push({type:'ph',set:set,src:src}); });
+      sets.push({set:set,srcs:srcs});
+      srcs.forEach(function(src){ flat.push({set:set,src:src}); });
       printTotal+=srcs.length;
     });
-    if(!items.length){
+    if(!flat.length){
       photoCols.innerHTML='<div class="img-missing" style="grid-column:1/-1">待添加 → 图片/photo-类别-1.jpg …</div>';
       return;
     }
-    /* 三列：每次把条目放进当前最矮的一列，保证底部齐平 */
-    const cols=[],h=[0,0,0];
+    const h=[0,0,0];
     for(let i=0;i<3;i++){
       const c=document.createElement('div');
       c.className='pcol';
       c.dataset.speed=COL_SPEEDS[i];
       photoCols.appendChild(c);
-      cols.push(c);
+      colEls.push(c);
     }
+    function shortest(){ return h.indexOf(Math.min.apply(null,h)); }
     let wordCount=0;
-    items.forEach(function(item){
-      const k=h.indexOf(Math.min.apply(null,h));
-      if(item.type==='word'){
-        const d=document.createElement('div');
-        d.className='pword'+((wordCount++%2)?' pword--r':'');
-        d.textContent=item.set+'.';
-        cols[k].appendChild(d);
-        h[k]+=0.22;                       /* 标题的高度权重 */
-      }else{
-        const fig=document.createElement('figure');
-        fig.className='ph';
-        fig.setAttribute('data-reveal','');
-        const im=document.createElement('img');
-        im.src=item.src; im.alt=item.set+' — photograph'; im.loading='lazy';
-        const tag=document.createElement('figcaption');
-        tag.className='ph__tag'; tag.textContent=item.set+'.';
-        fig.appendChild(im); fig.appendChild(tag);
-        cols[k].appendChild(fig);
-        revealObserve(fig);
-        h[k]+=1;                          /* 照片统一 3:4，权重为 1 */
+    /* 每个类别：小标题和它的第一张照片绑定放进同一列，杜绝标题错位 */
+    sets.forEach(function(g){
+      let k=shortest();
+      const d=document.createElement('div');
+      d.className='pword'+((wordCount++%2)?' pword--r':'');
+      d.textContent=g.set+'.';
+      colEls[k].appendChild(d);
+      colEls[k].appendChild(makePhoto(g.set,g.srcs[0]));
+      h[k]+=1.22;
+      for(let i=1;i<g.srcs.length;i++){
+        k=shortest();
+        colEls[k].appendChild(makePhoto(g.set,g.srcs[i]));
+        h[k]+=1;
       }
     });
+    /* 循环补齐：矮的列用已有照片接着排，底部不再空一块；多出的被矩形裁掉 */
+    const maxH=Math.max.apply(null,h);
+    let rec=0;
+    for(let k=0;k<3;k++){
+      while(h[k]<maxH-0.01){
+        const p=flat[rec++%flat.length];
+        colEls[k].appendChild(makePhoto(p.set,p.src));
+        h[k]+=1;
+      }
+      const p=flat[rec++%flat.length];      /* 每列再多垫一张，给视差留余量 */
+      colEls[k].appendChild(makePhoto(p.set,p.src));
+    }
     const pc=document.getElementById('phCount');
     if(pc) pc.textContent=printTotal+' prints · since 2018';
     updateHoldings();
+    requestAnimationFrame(sizeFrame);
+    addEventListener('resize',function(){ requestAnimationFrame(sizeFrame); });
     if(window.__refreshPcols) window.__refreshPcols();
     if(window.__parallaxTick) window.__parallaxTick();
   });
 
-  /* ---------- lightbox（事件委托：动态图片也能点；带缩放动画）---------- */
+  /* ---------- lightbox：FLIP，从缩略图飞出、回缩略图收起 ---------- */
   const lb=document.getElementById('lb'), lbImg=document.getElementById('lbImg'), lbCap=document.getElementById('lbCap');
+  let lbSrcImg=null;
+
+  function lbTargetRect(){
+    const vw=innerWidth, vh=innerHeight;
+    const W=Math.min(vw*0.9, vh*0.86*0.75);
+    const H=W*4/3;
+    return {x:(vw-W)/2, y:(vh-H)/2, w:W, h:H};
+  }
   photoCols.addEventListener('click',function(e){
     const f=e.target.closest('.ph');
     if(!f) return;
     const im=f.querySelector('img');
     if(!im||!im.src) return;
+    lbSrcImg=im;
     lbImg.src=im.src; lbImg.alt=im.alt;
     const tag=f.querySelector('.ph__tag');
     lbCap.textContent=tag?tag.textContent:'';
+    const t=lbTargetRect();
+    lbImg.style.width=t.w+'px'; lbImg.style.height=t.h+'px';
+    lbImg.style.left=t.x+'px'; lbImg.style.top=t.y+'px';
+    if(!reduced){
+      const r=im.getBoundingClientRect();
+      lbImg.style.transition='none';
+      lbImg.style.transform='translate('+(r.left-t.x)+'px,'+(r.top-t.y)+'px) '
+        +'scale('+(r.width/t.w)+','+(r.height/t.h)+')';
+    }
     lb.classList.add('is-open');
     document.body.style.overflow='hidden';
+    if(!reduced){
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){
+        lbImg.style.transition='';
+        lbImg.style.transform='none';
+      });});
+    }
   });
   function closeLb(){
+    if(!lb.classList.contains('is-open')) return;
+    if(!reduced && lbSrcImg && lbSrcImg.isConnected){
+      const r=lbSrcImg.getBoundingClientRect();
+      if(r.bottom>-100 && r.top<innerHeight+100){
+        const t={x:parseFloat(lbImg.style.left),y:parseFloat(lbImg.style.top),
+                 w:parseFloat(lbImg.style.width),h:parseFloat(lbImg.style.height)};
+        lbImg.style.transform='translate('+(r.left-t.x)+'px,'+(r.top-t.y)+'px) '
+          +'scale('+(r.width/t.w)+','+(r.height/t.h)+')';
+      }else{
+        lbImg.style.transform='scale(.9)';
+      }
+    }
     lb.classList.remove('is-open');
     document.body.style.overflow='';
-    setTimeout(function(){ if(!lb.classList.contains('is-open')) lbImg.removeAttribute('src'); },500);
+    setTimeout(function(){
+      if(!lb.classList.contains('is-open')){
+        lbImg.removeAttribute('src');
+        lbImg.style.transform='';
+      }
+    },620);
   }
   lb.addEventListener('click',closeLb);
   addEventListener('keydown',function(e){
