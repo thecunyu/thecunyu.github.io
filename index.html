@@ -598,7 +598,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <div class="intro" id="intro" aria-hidden="true">
   <div class="intro__t">Cunyu Yuan</div>
   <div class="intro__line"></div>
-  <div class="intro__n">Index of works · Wuhan, 2026</div>
+  <div class="intro__n">Index of works · 2026</div>
   <div class="intro__pct" id="introPct">00%</div>
 </div>
 
@@ -965,7 +965,7 @@ const PUBLICATIONS_FALLBACK = [
   /* ---------- 每次刷新回到最上面 ---------- */
   if('scrollRestoration' in history) history.scrollRestoration='manual';
   scrollTo(0,0);
-  addEventListener('pageshow',function(){ scrollTo(0,0); });
+  addEventListener('pageshow',function(e){ if(e.persisted) scrollTo(0,0); });  /* 只在前进/后退缓存恢复时归位，避免懒加载图下完把人踹回顶部 */
 
   /* ---------- intro curtain (呼吸 Loading + 顺序入场) ---------- */
   const intro = document.getElementById('intro');
@@ -985,11 +985,25 @@ const PUBLICATIONS_FALLBACK = [
     const pctEl = document.getElementById('introPct');
     const totalJobs = assets.length + 1;   /* +1 = 网页字体 */
     let doneJobs = 0;
-    function bump() {
-      doneJobs++;
-      if (pctEl) pctEl.textContent =
-        String(Math.min(100, Math.round(doneJobs / totalJobs * 100))).padStart(2, '0') + '%';
+    /* 连续进度：真实进度之间用 rAF 缓慢爬行填充，不再 0% 直跳 33% */
+    const chunk = 100 / totalJobs;
+    let shownPct = 0, pctRaf = null;
+    function renderPct(v) {
+      if (pctEl) pctEl.textContent = String(Math.min(100, Math.round(v))).padStart(2, '0') + '%';
     }
+    function tickPct() {
+      pctRaf = requestAnimationFrame(function() {
+        const real = doneJobs * chunk;                                    /* 已确认完成的进度 */
+        const cap  = doneJobs >= totalJobs ? 100 : Math.min(real + chunk * .85, 99);  /* 等待期最多爬到下一格的 85% */
+        if (shownPct < real)      shownPct = Math.min(real, shownPct + (real - shownPct) * .10 + .3);  /* 追赶真实进度 */
+        else if (shownPct < cap)  shownPct = Math.min(cap, shownPct + .07);                            /* 下载期间缓慢爬行 */
+        renderPct(shownPct);
+        if (doneJobs >= totalJobs && shownPct >= 99.5) { renderPct(100); pctRaf = null; return; }
+        tickPct();
+      });
+    }
+    tickPct();
+    function bump() { doneJobs++; }
 
     const loadImage = function(src) {
       return new Promise(function(resolve) {
@@ -1006,33 +1020,45 @@ const PUBLICATIONS_FALLBACK = [
         .then(bump, bump)
     );
 
-    // 保底节奏 + 强制放行时间
-    const minTimer = new Promise(function(resolve) { setTimeout(resolve, 1400); });
-    const maxTimer = new Promise(function(resolve) { setTimeout(resolve, 20000); });  /* 仅防网络彻底卡死 */
+    // 保底节奏（无上限：预载全部完成才放行；onerror 已兜底，不会卡死）
+    const minTimer = new Promise(function(resolve) { setTimeout(resolve, 900); });
 
     Promise.all([
       minTimer,
-      Promise.race([Promise.all(jobs), maxTimer])
+      Promise.all(jobs)
     ]).then(function() {
-      if (pctEl) pctEl.textContent = '100%';
+      /* 等计数器连续爬满 100%（约 0.2–0.4s），再滑出幕布，避免数字瞬间跳变 */
+      (function waitPct() {
+        if (pctRaf) { setTimeout(waitPct, 40); return; }
+        release();
+      })();
+    });
+
+    function release() {
       // 步骤 1：图片准备就绪，幕布向上滑出
       intro.classList.add('is-done');
 
-      // 步骤 2：等幕布滑出 400 毫秒后（正好露出了首页空间），触发首页入场排版动画！
+      // 步骤 2：等幕布滑出 280 毫秒后（正好露出了首页空间），触发首页入场排版动画！
       setTimeout(function() {
         document.body.classList.add('is-ready');
-      }, 400);
+      }, 280);
 
-      // 入场字母动画结束后，解除 .ln 的 overflow 裁切，让磁性弹起不被切头
-      setTimeout(function() {
-        document.getElementById('heroName').classList.add('is-live');
-      }, 2600);
+      // 最后一个字母升完立刻解除 .ln 的 overflow 裁切，不再靠固定时间死等
+      (function() {
+        const nameEl = document.getElementById('heroName');
+        const chs = nameEl.querySelectorAll('.ch');
+        const lastCh = chs[chs.length - 1];
+        let unlocked = false;
+        function unlock() { if (unlocked) return; unlocked = true; nameEl.classList.add('is-live'); }
+        if (lastCh) lastCh.addEventListener('animationend', unlock, { once: true });
+        setTimeout(unlock, 3000);   /* 兜底：动画被浏览器跳过时也能解锁 */
+      })();
 
       // 步骤 3：等幕布彻底飞出屏幕，将它的 DOM 隐藏释放性能
       setTimeout(function() {
         intro.style.display = 'none';
       }, 1200);
-    });
+    }
   }
 
   /* ---------- aurora：每次进入网页随机洗牌光斑的位置、周期与相位 ---------- */
