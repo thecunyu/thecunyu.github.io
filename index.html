@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Cunyu Yuan</title>
 <meta name="description" content="Cunyu Yuan — researcher exploring urban environments and mental health through NLP and spatial data. Wuhan University. Open to PhD positions.">
 <meta property="og:title" content="Cunyu Yuan — Archive">
@@ -34,18 +34,26 @@
   --ease-pop:cubic-bezier(.3,1.4,.45,1); /* gentle spring — small pops */
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;overflow-x: hidden}
-body{
-  background:var(--paper);
-  color:var(--ink);
-  font-family:var(--font-d);
-  font-size:16px;line-height:1.65;
-  -webkit-font-smoothing:antialiased;
-  -webkit-text-size-adjust:100%;
-  overflow-x:hidden;
-  width:100%;
-  cursor:default;
-  -webkit-user-select:none;user-select:none;
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  background: var(--paper); /* 给最底层的画布上色，防止拖拽缩放时漏出白边 */
+}
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-d);
+  font-size: 16px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: none; /* 改用更暴力的 none */
+  text-size-adjust: none;
+  overflow-x: hidden;
+  position: relative; /* 配合 overflow 彻底锁死子元素 */
+  width: 100%;
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
 }
 img{display:block;max-width:100%;-webkit-user-drag:none}
 a{color:inherit;text-decoration:none;cursor:pointer}
@@ -145,7 +153,14 @@ h1 .ln--outline .ch{color:transparent;-webkit-text-stroke:2px var(--ink)}
 /* ============ MARQUEE — monochrome ============ */
 .marquee{background:var(--ink);color:var(--paper);overflow:hidden}
 .marquee__track{display:flex;width:max-content;animation:mq 38s linear infinite;font-family:var(--font-m);font-size:12px;letter-spacing:.22em;text-transform:uppercase;padding:13px 0}
-.marquee__track span{padding:0 30px;white-space:nowrap}
+.marquee__track span {
+  padding: 0 30px;
+  white-space: nowrap;
+  display: inline-block;
+  -webkit-text-size-adjust: none; /* 直接在文字节点上暴力禁用缩放 */
+  text-size-adjust: none;
+  max-height: 1000px; /* 专门针对 Safari Font Boosting 的魔法 Hack */
+}
 .marquee__track .ast{color:rgba(223,228,232,.4)}
 @keyframes mq{to{transform:translateX(-50%)}}
 
