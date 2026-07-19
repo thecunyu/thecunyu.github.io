@@ -95,7 +95,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   display:flex;justify-content:space-between;align-items:center;
   padding:14px clamp(26px,6vw,72px);
   border-bottom:1px solid var(--line);
-  background:rgba(223,228,232,.55);
+  background:rgba(223,228,232,.4);
   backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
   font-family:var(--font-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
   translate:0 -100%;
@@ -103,7 +103,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     background .55s var(--ease), border-color .55s var(--ease), color .55s var(--ease);
 }
 body.is-ready .top{translate:0 0}
-.top.top--dark{background:rgba(13,16,19,.48);border-bottom-color:rgba(223,228,232,.12);color:var(--paper)}
+.top.top--dark{background:rgba(13,16,19,.36);border-bottom-color:rgba(223,228,232,.12);color:var(--paper)}
 .top__logo{display:flex;align-items:center;gap:12px;font-weight:500}
 .top__logo .top__mark{transition:scale .55s var(--ease-pop)}
 .top__logo > span:last-child{transition:color .35s}
@@ -218,9 +218,11 @@ h1 .ln{display:block;overflow:hidden;padding-bottom:.04em;margin-bottom:-.04em}
 .hero__name.is-live .ln{overflow:visible}   /* 入场结束后解除裁切，字母可自由弹出 */
 h1 .ch{display:inline-block;transform:translateY(115%) rotate(4deg);}
 body.is-ready h1 .ch{animation:chRise 1.25s var(--ease) forwards;}
-/* 填充近乎不透明的浅色：字腔不再透出身后的 text-shadow（否则内部会发黑）。
-   保留 6% 透明度，字腔仍能沾一点背景的冷光，不至于死板 */
-h1 .ln--outline .ch{color:transparent;-webkit-text-fill-color:rgba(234,239,242,.94);-webkit-text-stroke:2px var(--ink)}
+/* YUAN 描边字：内部保持完全透明，直接透出身后的毛玻璃背景。
+   抬起时的阴影不再用 text-shadow（它投的是实心字形，会从镂空的字腔里透出来），
+   改用 filter:drop-shadow —— 它只跟随实际绘制的像素（即描边本身），
+   相当于自带"字形蒙版"：阴影只出现在字母外侧，字腔内部永远干净 */
+h1 .ln--outline .ch{color:transparent;-webkit-text-fill-color:transparent;-webkit-text-stroke:2px var(--ink)}
 @keyframes chRise{to{transform:translateY(0) rotate(0)}}
 .hero__annot{
   font-family:var(--font-s);font-style:italic;font-size:clamp(20px,2.3vw,29px);
@@ -417,18 +419,18 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 /* architecture folder overlay — expands out of the card, returns into it */
 .folder {
-  position:fixed; top:0; left:0; right:0; bottom:-70px;  /* 多出的 70px 兜住回弹超调，不露底 */
+  position:fixed; top:0; left:0; right:0; bottom:-110px;  /* 多出的 110px 兜住加强后的回弹超调，不露底 */
   z-index:110; background:var(--ink-2); color:var(--paper);
   display:flex; flex-direction:column;
   visibility:hidden;
   transform:translateY(103%);
-  transition:transform .42s cubic-bezier(.5,0,.75,.35), visibility 0s .42s;
+  transition:transform .32s cubic-bezier(.5,0,.75,.35), visibility 0s .32s;  /* 飞出提速 ~1.3× */
   will-change:transform;
 }
 .folder.is-open {
   visibility:visible;
   transform:translateY(0);
-  transition:transform .62s cubic-bezier(.18,1.02,.32,1), visibility 0s;  /* 先快后慢 + 轻回弹 */
+  transition:transform .66s cubic-bezier(.22,1.2,.32,1), visibility 0s;  /* 先快后慢 + 明显回弹 */
 }
 .folder__bar{
   display:flex;justify-content:space-between;align-items:center;gap:20px;
@@ -504,6 +506,16 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 60%,rgba(0,0,0,.72) 74%,rgba(0,0,0,.24) 84%,transparent 93%);mask-image:linear-gradient(0deg,#000 0%,#000 60%,rgba(0,0,0,.72) 74%,rgba(0,0,0,.24) 84%,transparent 93%)}
 .veil--bottom i:nth-child(6){backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px);
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 72%,rgba(0,0,0,.6) 86%,rgba(0,0,0,.18) 94%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,#000 72%,rgba(0,0,0,.6) 86%,rgba(0,0,0,.18) 94%,transparent 100%)}
+/* 抗色彩断层：渐进模糊 + 压暗渐变叠在一起，8-bit 屏上容易在平缓过渡处
+   显出等值色带。叠一层极细灰噪点（抖动/磨砂）并随渐变同向淡出，
+   把相邻色阶打散 —— iOS 毛玻璃材质同款思路 */
+.veil::before{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:140px 140px;opacity:.05;mix-blend-mode:overlay;
+}
+.veil--top::before{-webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%)}
+.veil--bottom::before{-webkit-mask-image:linear-gradient(0deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%)}
 /* 压暗层：多停靠点的平滑坠入墨色 */
 .veil::after{content:"";position:absolute;inset:0}
 .veil--top::after{background:linear-gradient(180deg,#0D1013 0%,rgba(13,16,19,.96) 9%,rgba(13,16,19,.82) 22%,rgba(13,16,19,.55) 42%,rgba(13,16,19,.28) 64%,rgba(13,16,19,.1) 84%,transparent 100%)}
@@ -538,23 +550,37 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .lb{
   position:fixed;inset:0;z-index:120;cursor:pointer;
   visibility:hidden;
-  transition:visibility 0s .42s;
+  transition:visibility 0s .32s;
 }
 .lb.is-open{visibility:visible;transition:visibility 0s}
+/* 玻璃层不再原地淡入淡出，而是当成一整块毛玻璃，和照片同节奏从底部飞入 / 飞出。
+   底部多出 120px 兜住回弹超调，不露缝 */
 .lb__bg{
-  position:absolute;inset:0;background:rgba(9,11,14,.84);
+  position:absolute;left:0;right:0;top:0;bottom:-120px;
+  background:rgba(9,11,14,.84);
   backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);
-  opacity:0;transition:opacity .42s var(--ease);
+  transform:translateY(103%);will-change:transform;
+  transition:transform .32s cubic-bezier(.5,0,.75,.35);
 }
-.lb.is-open .lb__bg{opacity:1;transition:opacity .38s var(--ease)}
+.lb.is-open .lb__bg{
+  transform:translateY(0);
+  transition:transform .66s cubic-bezier(.22,1.2,.32,1);
+}
+/* 抗色彩断层：在玻璃上叠一层极细的灰噪点（抖动/磨砂），
+   打散模糊 + 压暗渐变在 8-bit 屏幕上留下的等值色带 —— iOS 毛玻璃同款思路 */
+.lb__bg::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:140px 140px;opacity:.045;mix-blend-mode:overlay;
+}
 .lb img{
   position:fixed;object-fit:cover;will-change:transform;
   transform:translateY(114%);
-  transition:transform .42s cubic-bezier(.5,0,.75,.35);   /* 关闭：先快后慢地落下去 */
+  transition:transform .32s cubic-bezier(.5,0,.75,.35);   /* 关闭：先快后慢地落下去（提速 ~1.3×） */
 }
 .lb.is-open img{
   transform:translateY(0);
-  transition:transform .62s cubic-bezier(.18,1.02,.32,1); /* 打开：飞上来，落点带一点回弹 */
+  transition:transform .66s cubic-bezier(.22,1.2,.32,1); /* 打开：飞上来，落点带明显回弹 */
 }
 .lb__cap{
   position:absolute;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);opacity:0;
@@ -638,7 +664,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .hero__annot{margin-top:46px;font-size:19px}
   /* 相对定位偏移：只把这一组（含顶上的横线）视觉上抬起来，
      不占布局、不改变 hero 高度 —— 横幅依旧藏在首屏之外 */
-  .hero__meta{padding-top:26px;gap:24px 22px;margin-bottom:4vh}   /* 只抬这 4 组和横线；hero 总高由 min-height 锁死，横幅不动 */
+  .hero__meta{padding-top:26px;gap:24px 22px;margin-bottom:8vh}   /* 只抬这 4 组和横线；hero 总高由 min-height 锁死，横幅不动 */
   .wrap{padding:0 26px}
   .top{padding:13px 22px}
   .band__cap{left:26px}
@@ -683,7 +709,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   [data-reveal]{opacity:1;transform:none}
   .folder__inner figure{opacity:1;transform:none}
   .folder .folder__title,.folder .folder__meta,.folder .folder__desc{opacity:1;transform:none}
-  .folder,.lb,.lb img{transition:none}
+  .folder,.lb,.lb img,.lb__bg{transition:none}
 }
 </style>
 </head>
@@ -1123,10 +1149,11 @@ const PUBLICATIONS_FALLBACK = [
       minTimer,
       Promise.all(jobs)
     ]).then(function() {
-      /* 等计数器连续爬满 100%（约 0.2–0.4s），再滑出幕布，避免数字瞬间跳变 */
+      /* 等计数器连续爬满 100%（约 0.2–0.4s），在 100% 上停留 0.6s 再滑出幕布，
+         避免数字刚跳满就立刻开门显得太仓促 */
       (function waitPct() {
         if (pctRaf) { setTimeout(waitPct, 40); return; }
-        release();
+        setTimeout(release, 600);
       })();
     });
 
@@ -1284,19 +1311,21 @@ const PUBLICATIONS_FALLBACK = [
           /* 用 translate/scale 独立属性，避开入场 transform 动画的 fill 覆盖 */
           ch.style.translate=o.x.toFixed(2)+'px '+o.y.toFixed(2)+'px';
           ch.style.scale=(1+o.s).toFixed(3);
-          /* 单层外阴影：text-shadow 投的是实心字形轮廓。
-             数值量化到 0.05 步进后才写入 DOM —— 逐帧改样式会引起重绘闪烁。
-             描边字（YUAN）内部是透明的，后面的影子会从镂空处透出来；
-             所以抬起时让内部同步渐显纸面色（像字母接住了光），把影子挡在外面，
-             落回后恢复透明 */
+          /* 外阴影。数值量化到 0.05 步进后才写入 DOM —— 逐帧改样式会引起重绘闪烁。
+             实心字（CUNYU）：text-shadow，投完整字形。
+             描边字（YUAN）：drop-shadow，只投描边像素 —— 阴影天然只落在字母外侧，
+             字腔保持透明干净；描边只有 2px，故阴影加浓一点补偿视觉分量 */
           const q=Math.round(o.f*20)/20;
-          const sh = q>0.05
-            ? '0 '+(q*9).toFixed(1)+'px '+(q*11).toFixed(1)+'px rgba(10,14,21,'+(q*.3).toFixed(2)+')'
-            : 'none';
-          if(ch.style.textShadow!==sh) ch.style.textShadow=sh;
           if(isOut[i]){
-            const fill = q>0.05 ? 'rgba(223,228,232,'+Math.min(1,q*1.3).toFixed(2)+')' : '';
-            if(ch.style.color!==fill) ch.style.color=fill;
+            const fl = q>0.05
+              ? 'drop-shadow(0 '+(q*8).toFixed(1)+'px '+(q*6).toFixed(1)+'px rgba(10,14,21,'+(q*.55).toFixed(2)+'))'
+              : 'none';
+            if(ch.style.filter!==fl) ch.style.filter=fl;
+          }else{
+            const sh = q>0.05
+              ? '0 '+(q*9).toFixed(1)+'px '+(q*11).toFixed(1)+'px rgba(10,14,21,'+(q*.3).toFixed(2)+')'
+              : 'none';
+            if(ch.style.textShadow!==sh) ch.style.textShadow=sh;
           }
         });
         nraf=null;
@@ -1858,7 +1887,7 @@ const PUBLICATIONS_FALLBACK = [
     document.body.style.overflow='';
     setTimeout(function(){
       if(!lb.classList.contains('is-open')) lbImg.removeAttribute('src');
-    },480);
+    },380);
   }
   lb.addEventListener('click',closeLb);
   addEventListener('keydown',function(e){
