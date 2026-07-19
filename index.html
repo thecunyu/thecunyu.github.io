@@ -33,7 +33,7 @@
   --ease:cubic-bezier(.16,1,.3,1);       /* slow expo-out — big movements */
   --ease-pop:cubic-bezier(.3,1.4,.45,1); /* gentle spring — small pops */
 }
-*{margin:0;padding:0;box-sizing:border-box}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
@@ -58,7 +58,7 @@ body {
   -webkit-user-select: none;
   user-select: none;
 }
-img{display:block;max-width:100%;-webkit-user-drag:none}
+img{display:block;max-width:100%;-webkit-user-drag:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 a{color:inherit;text-decoration:none;cursor:pointer}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 .wrap{max-width:1180px;margin:0 auto;padding:0 clamp(30px,6vw,72px)}
@@ -102,6 +102,11 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 body.is-ready .top{translate:0 0}
 .top.top--dark{background:rgba(13,16,19,.66);border-bottom-color:rgba(223,228,232,.12);color:var(--paper)}
 .top__logo{display:flex;align-items:center;gap:12px;font-weight:500}
+.top__logo .top__mark{transition:transform .6s var(--ease-pop)}
+.top__logo:hover .top__mark{transform:scale(1.15) rotate(-6deg)}
+.top__logo>span:last-child{transition:color .4s}
+.top__logo:hover>span:last-child{color:var(--ikb)}
+.top--dark .top__logo:hover>span:last-child{color:var(--ikb-l)}
 .top__mark{position:relative;width:26px;height:26px;flex-shrink:0}
 .top__mark img{position:absolute;inset:0;width:26px;height:26px;border-radius:7px;transition:opacity .55s var(--ease)}
 .top__mark img.alt{opacity:0}
@@ -128,18 +133,46 @@ body.is-ready .top{translate:0 0}
 /* aurora field — Apple-Music-like slow cold light, sealed under frosted glass */
 .hero__bg{position:absolute;left:50%;top:0;bottom:0;width:100vw;transform:translateX(-50%);
   z-index:0;overflow:hidden;pointer-events:none}
-.hero__bg i{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform;display:block}
-.hero__bg .b1{width:48vw;height:48vw;left:-10%;top:-14%;background:radial-gradient(circle,rgba(0,47,167,.34),transparent 68%);animation:drift1 36s ease-in-out infinite alternate}
-.hero__bg .b2{width:42vw;height:42vw;right:-8%;top:22%;background:radial-gradient(circle,rgba(127,180,216,.52),transparent 66%);animation:drift2 44s ease-in-out infinite alternate}
-.hero__bg .b3{width:40vw;height:40vw;left:32%;top:-6%;background:radial-gradient(circle,rgba(255,255,255,.9),transparent 70%);animation:drift3 31s ease-in-out infinite alternate}
-.hero__bg .b4{width:34vw;height:34vw;left:14%;bottom:-12%;background:radial-gradient(circle,rgba(143,166,255,.38),transparent 66%);animation:drift4 39s ease-in-out infinite alternate}
-.hero__bg .b5{width:30vw;height:30vw;left:58%;top:52%;background:radial-gradient(circle,rgba(132,112,255,.26),transparent 66%);animation:drift5 34s ease-in-out infinite alternate}
-@keyframes drift1{to{transform:translate(22vw,15vh) scale(1.22)}}
-@keyframes drift2{to{transform:translate(-19vw,-13vh) scale(.86)}}
-@keyframes drift3{to{transform:translate(-15vw,18vh) scale(1.16)}}
-@keyframes drift4{to{transform:translate(17vw,-14vh) scale(1.2)}}
-@keyframes drift5{to{transform:translate(-14vw,11vh) scale(1.14)}}
-.hero__frost{position:absolute;inset:0;backdrop-filter:blur(36px) saturate(1.2);-webkit-backdrop-filter:blur(36px) saturate(1.2);background:rgba(223,228,232,.15)}
+.hero__bg i{position:absolute;border-radius:50%;filter:blur(64px);will-change:transform,opacity;display:block}
+/* 拉长的椭圆 + 旋转 + 各向异性缩放呼吸 —— 更接近 Apple Music 的丝带流体，而非圆形光斑 */
+.hero__bg .b1{width:58vw;height:27vw;left:-10%;top:-14%;background:radial-gradient(closest-side,rgba(0,47,167,.36),transparent 72%);animation:flow1 36s ease-in-out infinite alternate}
+.hero__bg .b2{width:50vw;height:22vw;right:-8%;top:22%;background:radial-gradient(closest-side,rgba(127,180,216,.5),transparent 70%);animation:flow2 44s ease-in-out infinite alternate}
+.hero__bg .b3{width:44vw;height:24vw;left:32%;top:-6%;background:radial-gradient(closest-side,rgba(255,255,255,.85),transparent 72%);animation:flow3 31s ease-in-out infinite alternate}
+.hero__bg .b4{width:40vw;height:18vw;left:14%;bottom:-12%;background:radial-gradient(closest-side,rgba(143,166,255,.4),transparent 70%);animation:flow4 39s ease-in-out infinite alternate}
+.hero__bg .b5{width:34vw;height:16vw;left:58%;top:52%;background:radial-gradient(closest-side,rgba(132,112,255,.3),transparent 70%);animation:flow5 34s ease-in-out infinite alternate}
+/* 深蓝丝带：周期性浮现又隐去，给色彩以"变化感" */
+.hero__bg .b6{width:48vw;height:19vw;left:22%;top:34%;background:radial-gradient(closest-side,rgba(0,22,96,.46),transparent 70%);opacity:0;animation:flowDeep 30s ease-in-out infinite}
+@keyframes flow1{
+  0%{transform:translate(0,0) rotate(-10deg) scale(1,.92)}
+  45%{transform:translate(13vw,8vh) rotate(16deg) scale(1.26,.7)}
+  100%{transform:translate(23vw,15vh) rotate(-22deg) scale(.82,1.18)}
+}
+@keyframes flow2{
+  0%{transform:translate(0,0) rotate(14deg) scale(1,1)}
+  40%{transform:translate(-11vw,-6vh) rotate(-12deg) scale(.68,1.3)}
+  100%{transform:translate(-20vw,-13vh) rotate(26deg) scale(1.22,.78)}
+}
+@keyframes flow3{
+  0%{transform:translate(0,0) rotate(6deg) scale(1,1)}
+  50%{transform:translate(-9vw,10vh) rotate(-16deg) scale(1.3,.72)}
+  100%{transform:translate(-16vw,18vh) rotate(10deg) scale(.86,1.2)}
+}
+@keyframes flow4{
+  0%{transform:translate(0,0) rotate(-18deg) scale(1,1)}
+  45%{transform:translate(10vw,-8vh) rotate(8deg) scale(.74,1.26)}
+  100%{transform:translate(18vw,-14vh) rotate(-26deg) scale(1.24,.8)}
+}
+@keyframes flow5{
+  0%{transform:translate(0,0) rotate(20deg) scale(1,1)}
+  55%{transform:translate(-8vw,7vh) rotate(-8deg) scale(1.28,.74)}
+  100%{transform:translate(-15vw,12vh) rotate(24deg) scale(.8,1.22)}
+}
+@keyframes flowDeep{
+  0%,100%{opacity:0;transform:translate(-6vw,4vh) rotate(-14deg) scale(.8,1)}
+  35%{opacity:.75;transform:translate(4vw,-3vh) rotate(6deg) scale(1.24,.72)}
+  70%{opacity:.35;transform:translate(11vw,2vh) rotate(20deg) scale(.9,1.14)}
+}
+.hero__frost{position:absolute;inset:0;backdrop-filter:blur(30px) saturate(1.2);-webkit-backdrop-filter:blur(30px) saturate(1.2);background:rgba(223,228,232,.12)}
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
@@ -159,6 +192,18 @@ h1 .ln{display:block;overflow:hidden;padding-bottom:.04em;margin-bottom:-.04em}
 h1 .ch{display:inline-block;transform:translateY(115%) rotate(4deg);}
 body.is-ready h1 .ch{animation:chRise 1.25s var(--ease) forwards;}
 h1 .ln--outline .ch{color:transparent;-webkit-text-stroke:2px var(--ink)}
+/* 指针最近的字母：CUNYU 描白边，YUAN 加粗黑边，并给一层很浅的投影，像被轻轻抬起 */
+h1 .ch{transition:text-shadow .45s var(--ease),filter .45s var(--ease)}
+h1 .ln:not(.ln--outline) .ch.is-near{
+  text-shadow:
+    0 1.6px 0 #fff,0 -1.6px 0 #fff,1.6px 0 0 #fff,-1.6px 0 0 #fff,
+    1.2px 1.2px 0 #fff,-1.2px -1.2px 0 #fff,1.2px -1.2px 0 #fff,-1.2px 1.2px 0 #fff;
+  filter:drop-shadow(0 14px 16px rgba(12,16,21,.22));
+}
+h1 .ln--outline .ch.is-near{
+  -webkit-text-stroke-width:3px;
+  filter:drop-shadow(0 14px 16px rgba(12,16,21,.25));
+}
 @keyframes chRise{to{transform:translateY(0) rotate(0)}}
 .hero__annot{
   font-family:var(--font-s);font-style:italic;font-size:clamp(20px,2.3vw,29px);
@@ -358,8 +403,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   position:fixed; inset:0; z-index:110; background:var(--ink-2); color:var(--paper);
   display:flex; flex-direction:column;
   visibility:hidden; opacity:0;
-  transform:scale(.9);   /* transform-origin 由 JS 设为被点击卡片的位置 */
-  transition:opacity .38s var(--ease), transform .5s var(--ease), visibility 0s .5s;
+  transform:scale(.86) translateY(10px);   /* transform-origin 由 JS 设为被点击卡片的位置 */
+  /* 关闭时：先看得见地收缩回卡片（.66s），透明度延迟 .14s 才开始跟进 —— 不再是干巴巴的淡出 */
+  transition:opacity .5s var(--ease) .14s, transform .66s var(--ease), visibility 0s .66s;
   will-change:transform, opacity;
 }
 .folder.is-open {
@@ -415,30 +461,31 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .veil--top{top:-1px;height:175px}
 .veil--bottom{bottom:-1px;height:200px}
 .veil i{position:absolute;inset:0;display:block}
+/* mask 用四段缓入缓出停靠点，避免两段式渐变在暗部产生可见的色彩断层 */
 .veil--top i:nth-child(1){backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 18%,transparent 40%);mask-image:linear-gradient(180deg,#000 0%,#000 18%,transparent 40%)}
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 15%,rgba(0,0,0,.6) 26%,rgba(0,0,0,.24) 34%,transparent 42%);mask-image:linear-gradient(180deg,#000 0%,#000 15%,rgba(0,0,0,.6) 26%,rgba(0,0,0,.24) 34%,transparent 42%)}
 .veil--top i:nth-child(2){backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 30%,transparent 54%);mask-image:linear-gradient(180deg,#000 0%,#000 30%,transparent 54%)}
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 27%,rgba(0,0,0,.6) 39%,rgba(0,0,0,.24) 47%,transparent 55%);mask-image:linear-gradient(180deg,#000 0%,#000 27%,rgba(0,0,0,.6) 39%,rgba(0,0,0,.24) 47%,transparent 55%)}
 .veil--top i:nth-child(3){backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 44%,transparent 70%);mask-image:linear-gradient(180deg,#000 0%,#000 44%,transparent 70%)}
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 41%,rgba(0,0,0,.6) 53%,rgba(0,0,0,.24) 62%,transparent 71%);mask-image:linear-gradient(180deg,#000 0%,#000 41%,rgba(0,0,0,.6) 53%,rgba(0,0,0,.24) 62%,transparent 71%)}
 .veil--top i:nth-child(4){backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 86%);mask-image:linear-gradient(180deg,#000 0%,#000 58%,transparent 86%)}
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 55%,rgba(0,0,0,.6) 68%,rgba(0,0,0,.24) 77%,transparent 87%);mask-image:linear-gradient(180deg,#000 0%,#000 55%,rgba(0,0,0,.6) 68%,rgba(0,0,0,.24) 77%,transparent 87%)}
 .veil--top i:nth-child(5){backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
-  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 70%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 70%,transparent 100%)}
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 67%,rgba(0,0,0,.6) 79%,rgba(0,0,0,.24) 90%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 67%,rgba(0,0,0,.6) 79%,rgba(0,0,0,.24) 90%,transparent 100%)}
 .veil--bottom i:nth-child(1){backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 18%,transparent 40%);mask-image:linear-gradient(0deg,#000 0%,#000 18%,transparent 40%)}
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 15%,rgba(0,0,0,.6) 26%,rgba(0,0,0,.24) 34%,transparent 42%);mask-image:linear-gradient(0deg,#000 0%,#000 15%,rgba(0,0,0,.6) 26%,rgba(0,0,0,.24) 34%,transparent 42%)}
 .veil--bottom i:nth-child(2){backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 30%,transparent 54%);mask-image:linear-gradient(0deg,#000 0%,#000 30%,transparent 54%)}
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 27%,rgba(0,0,0,.6) 39%,rgba(0,0,0,.24) 47%,transparent 55%);mask-image:linear-gradient(0deg,#000 0%,#000 27%,rgba(0,0,0,.6) 39%,rgba(0,0,0,.24) 47%,transparent 55%)}
 .veil--bottom i:nth-child(3){backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 44%,transparent 70%);mask-image:linear-gradient(0deg,#000 0%,#000 44%,transparent 70%)}
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 41%,rgba(0,0,0,.6) 53%,rgba(0,0,0,.24) 62%,transparent 71%);mask-image:linear-gradient(0deg,#000 0%,#000 41%,rgba(0,0,0,.6) 53%,rgba(0,0,0,.24) 62%,transparent 71%)}
 .veil--bottom i:nth-child(4){backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);
-  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 58%,transparent 86%);mask-image:linear-gradient(0deg,#000 0%,#000 58%,transparent 86%)}
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 55%,rgba(0,0,0,.6) 68%,rgba(0,0,0,.24) 77%,transparent 87%);mask-image:linear-gradient(0deg,#000 0%,#000 55%,rgba(0,0,0,.6) 68%,rgba(0,0,0,.24) 77%,transparent 87%)}
 .veil--bottom i:nth-child(5){backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
-  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 70%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,#000 70%,transparent 100%)}
-/* 压暗层：优雅地沉入墨色 */
+  -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 67%,rgba(0,0,0,.6) 79%,rgba(0,0,0,.24) 90%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,#000 67%,rgba(0,0,0,.6) 79%,rgba(0,0,0,.24) 90%,transparent 100%)}
+/* 压暗层：六段停靠点缓缓沉入墨色，减少梯度断层 */
 .veil::after{content:"";position:absolute;inset:0}
-.veil--top::after{background:linear-gradient(180deg,#0D1013 0%,rgba(13,16,19,.96) 12%,rgba(13,16,19,.5) 48%,transparent 100%)}
-.veil--bottom::after{background:linear-gradient(0deg,#0D1013 0%,rgba(13,16,19,.97) 13%,rgba(13,16,19,.52) 48%,transparent 100%)}
+.veil--top::after{background:linear-gradient(180deg,#0D1013 0%,rgba(13,16,19,.95) 10%,rgba(13,16,19,.78) 24%,rgba(13,16,19,.52) 44%,rgba(13,16,19,.26) 66%,rgba(13,16,19,.09) 85%,transparent 100%)}
+.veil--bottom::after{background:linear-gradient(0deg,#0D1013 0%,rgba(13,16,19,.95) 10%,rgba(13,16,19,.78) 24%,rgba(13,16,19,.52) 44%,rgba(13,16,19,.26) 66%,rgba(13,16,19,.09) 85%,transparent 100%)}
 .photo-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:start}
 .pcol{display:flex;flex-direction:column;gap:26px;will-change:transform}
 .ph{position:relative;overflow:hidden;cursor:pointer;margin:0}
@@ -472,7 +519,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .lb.is-open{visibility:visible;opacity:1;transition:opacity .5s var(--ease),visibility 0s}
 .lb img{
   position:fixed;object-fit:cover;transform-origin:top left;will-change:transform;
-  box-shadow:0 34px 90px -24px rgba(0,0,0,.65);
+  box-shadow:0 18px 48px -12px rgba(0,0,0,.38);
   transition:transform .64s cubic-bezier(.3,1.1,.4,1);
 }
 .lb__cap{
@@ -549,7 +596,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 @media (max-width:700px){
   .hero {
     min-height:calc(100lvh + 72px);   /* iOS 26 底部液态玻璃栏是半透明的，多留一截 */
-    padding-top:calc(56px + 7vh); padding-bottom: 12vh !important;
+    padding-top:calc(56px + 7vh); padding-bottom: 16vh !important;   /* 上抬底部 meta，远离地址栏 */
   }
   .hero__title { padding-bottom: 0vh; }
   .hero__kicker{margin-bottom:24px}
@@ -565,8 +612,8 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .rec__count{display:none}
   .pub{grid-template-columns:48px 1fr;grid-template-areas:"no title" "no venue" "no chip";row-gap:7px}
   .chip{justify-self:start;padding-top:3px}
-  .hero__bg i{filter:blur(46px)}
-  .hero__frost{backdrop-filter:blur(28px) saturate(1.1);-webkit-backdrop-filter:blur(28px) saturate(1.1)}
+  .hero__bg i{filter:blur(42px)}
+  .hero__frost{backdrop-filter:blur(23px) saturate(1.1);-webkit-backdrop-filter:blur(23px) saturate(1.1)}
   .contact__logo{width:58px}
   .contact__left{gap:30px}
   .xp__inner ul{padding-left:0}
@@ -625,7 +672,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <!-- ===== HERO ===== -->
 <section class="hero wrap" id="top">
   <div class="hero__bg" aria-hidden="true">
-    <i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i>
+    <i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i><i class="b6"></i>
     <span class="hero__frost"></span>
   </div>
   <div class="hero__title" id="heroTitle" data-mouse="3">
@@ -1068,7 +1115,7 @@ const PUBLICATIONS_FALLBACK = [
       b.style.left=(-14+Math.random()*82)+'%';
       b.style.top=(-16+Math.random()*78)+'%';
       b.style.right='auto'; b.style.bottom='auto';
-      const dur=17+Math.random()*11;               /* 17–28s，可感知的缓慢流动 */
+      const dur=13+Math.random()*9;                /* 13–22s，可感知的流动（约 25/100 强度）*/
       b.style.animationDuration=dur.toFixed(1)+'s';
       b.style.animationDelay=(-Math.random()*dur).toFixed(1)+'s';  /* 负延迟 = 随机相位 */
     });
@@ -1086,27 +1133,44 @@ const PUBLICATIONS_FALLBACK = [
     }
   });
 
-  /* ---------- CUNYU YUAN：磁性字母 —— 指针下的字母弹起，邻近字母被推开 ---------- */
-  if(fine && !reduced){
+  /* ---------- CUNYU YUAN：磁性字母 —— 指针/手指下的字母弹起，邻近字母被推开 ---------- */
+  if(!reduced){
     const nameEl=document.getElementById('heroName');
     const chs=[].slice.call(nameEl.querySelectorAll('.ch'));
     const st=chs.map(function(){ return {x:0,y:0,s:0}; });
-    let px=-9999,py=-9999,inside=false,nraf=null;
-    addEventListener('mousemove',function(e){
-      px=e.clientX; py=e.clientY;
+    let px=-9999,py=-9999,inside=false,nraf=null,nearIdx=-1;
+    function setPointer(x,y){
+      px=x; py=y;
       const r=nameEl.getBoundingClientRect();
       inside = px>r.left-150 && px<r.right+150 && py>r.top-150 && py<r.bottom+150;
       if(inside && !nraf) nstep();
-    },{passive:true});
+    }
+    if(fine){
+      addEventListener('mousemove',function(e){ setPointer(e.clientX,e.clientY); },{passive:true});
+    }
+    /* 触屏：passive 监听不拦截默认滚动，手指划过字母同样触发挤压 */
+    function touchPointer(e){
+      const t=e.touches[0];
+      if(t) setPointer(t.clientX,t.clientY);
+    }
+    function touchOff(){
+      inside=false; px=py=-9999;
+      if(!nraf) nstep();               /* 手指离开后字母缓缓回位 */
+    }
+    addEventListener('touchstart',touchPointer,{passive:true});
+    addEventListener('touchmove',touchPointer,{passive:true});
+    addEventListener('touchend',touchOff,{passive:true});
+    addEventListener('touchcancel',touchOff,{passive:true});
     function nstep(){
       nraf=requestAnimationFrame(function(){
-        let live=false;
+        let live=false, bi=-1, bf=0;
         chs.forEach(function(ch,i){
           const r=ch.getBoundingClientRect();
           const dx=(r.left+r.width/2)-px, dy=(r.top+r.height/2)-py;
           const d=Math.hypot(dx,dy)||1;
           const R=175;
           const f=inside?Math.exp(-(d*d)/(R*R)):0;
+          if(f>bf){ bf=f; bi=i; }
           const o=st[i];
           const tx=(dx/d)*f*15;            /* 沿指针方向被推开 */
           const ty=-f*20 + (dy/d)*f*6;     /* 同时向上弹起 */
@@ -1117,6 +1181,13 @@ const PUBLICATIONS_FALLBACK = [
           ch.style.translate=o.x.toFixed(2)+'px '+o.y.toFixed(2)+'px';
           ch.style.scale=(1+o.s).toFixed(3);
         });
+        /* 最近的那个字母：描边 + 浅阴影，像被轻轻抬起 */
+        const want=(inside && bf>.3)?bi:-1;
+        if(want!==nearIdx){
+          if(nearIdx>-1 && chs[nearIdx]) chs[nearIdx].classList.remove('is-near');
+          if(want>-1) chs[want].classList.add('is-near');
+          nearIdx=want;
+        }
         nraf=null;
         if(live) nstep();
       });
