@@ -136,17 +136,31 @@ body.is-ready .top{translate:0 0}
 /* aurora field — Apple-Music-like slow cold light, sealed under frosted glass */
 .hero__bg{position:absolute;left:50%;top:0;bottom:0;width:100vw;transform:translateX(-50%);
   z-index:0;overflow:hidden;pointer-events:none}
-/* 丝带体：拉长的椭圆 + 旋转 + 非均匀缩放形变，宽窄浓淡随时间呼吸；
-   尺寸用 vmax —— 竖屏手机上也够大，流动可见 */
 /* 丝带体：拉长的双色线性渐变长条（非径向圆斑），旋转 + 非均匀缩放形变；
-   --ca/--cb 经 @property 注册为 <color>，JS 定期换色时可以 6s 线性互相流变 */
+   --ca/--cb 经 @property 注册为 <color>，JS 定期换色时可以 8s 线性互相流变 */
 @property --ca{syntax:'<color>';inherits:false;initial-value:rgba(0,47,167,.4)}
-@property --cb{syntax:'<color>';inherits:false;initial-value:rgba(122,92,235,.3)}
+@property --cb{syntax:'<color>';inherits:false;initial-value:rgba(64,86,200,.3)}
+/* 连续基底：铺满并大幅超出取景框的多停靠点蓝色渐变，缓慢旋转缩放。
+   有了它，画面任何位置都始终有底色 —— 丝带不再显出「几坨孤立的团」，
+   而是在一片连续的场里此消彼长 */
+.hero__base{
+  position:absolute;left:-30%;top:-30%;width:160%;height:160%;
+  background:linear-gradient(112deg,
+    rgba(0,47,167,.5) 0%, rgba(12,32,120,.44) 17%, rgba(64,86,200,.42) 33%,
+    rgba(96,178,222,.38) 49%, rgba(143,166,255,.4) 65%, rgba(122,92,235,.38) 82%, rgba(0,47,167,.48) 100%);
+  filter:blur(74px);will-change:transform;
+  animation:baseSwirl 46s ease-in-out infinite alternate;
+}
+@keyframes baseSwirl{
+  0%{transform:rotate(0deg) scale(1.02) translate(0,0)}
+  50%{transform:rotate(11deg) scale(1.16) translate(-4%,3%)}
+  100%{transform:rotate(-8deg) scale(1.08) translate(3%,-3%)}
+}
 .hero__bg i{
   position:absolute;width:46vmax;height:18vmax;border-radius:50%;
-  filter:blur(62px);will-change:transform,opacity;display:block;
-  background:linear-gradient(var(--ang,105deg),var(--ca) 6%,var(--cb) 52%,transparent 84%);
-  transition:--ca 6s linear,--cb 6s linear;
+  filter:blur(66px);will-change:transform,opacity;display:block;
+  background:linear-gradient(var(--ang,105deg),var(--ca) 4%,var(--cb) 48%,transparent 88%);
+  transition:--ca 8s linear,--cb 8s linear;
 }
 @keyframes fl1{
   0%{transform:translate(0,0) rotate(10deg) scale(1,.85)}
@@ -185,7 +199,7 @@ body.is-ready .top{translate:0 0}
   100%{transform:translate(10%,20%) rotate(16deg) scale(1.15,.75)}
 }
 @keyframes navyBreathe{0%,28%{opacity:0}50%{opacity:.9}72%,100%{opacity:.08}}
-.hero__frost{position:absolute;inset:0;backdrop-filter:blur(30px) saturate(1.18);-webkit-backdrop-filter:blur(30px) saturate(1.18);background:rgba(223,228,232,.12)}
+.hero__frost{position:absolute;inset:0;backdrop-filter:blur(36px) saturate(1.18);-webkit-backdrop-filter:blur(36px) saturate(1.18);background:rgba(223,228,232,.16)}
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
@@ -406,13 +420,13 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   display:flex; flex-direction:column;
   visibility:hidden;
   transform:translateY(103%);
-  transition:transform .58s cubic-bezier(.52,.02,.72,.42), visibility 0s .58s;
+  transition:transform .42s cubic-bezier(.5,0,.75,.35), visibility 0s .42s;
   will-change:transform;
 }
 .folder.is-open {
   visibility:visible;
   transform:translateY(0);
-  transition:transform .85s cubic-bezier(.3,1.09,.36,1), visibility 0s;  /* 底部飞入 + 轻回弹 */
+  transition:transform .62s cubic-bezier(.18,1.02,.32,1), visibility 0s;  /* 先快后慢 + 轻回弹 */
 }
 .folder__bar{
   display:flex;justify-content:space-between;align-items:center;gap:20px;
@@ -429,9 +443,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .folder__scroll{overflow-y:auto;flex:1;padding:60px clamp(26px,6vw,72px) 170px;overscroll-behavior:contain}
 .folder__inner{max-width:920px;margin:0 auto}
 .folder__title,.folder__meta,.folder__desc{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
-.folder.is-open .folder__title{opacity:1;transform:none;transition-delay:.3s}
-.folder.is-open .folder__meta{opacity:1;transform:none;transition-delay:.38s}
-.folder.is-open .folder__desc{opacity:1;transform:none;transition-delay:.46s}
+.folder.is-open .folder__title{opacity:1;transform:none;transition-delay:.2s}
+.folder.is-open .folder__meta{opacity:1;transform:none;transition-delay:.27s}
+.folder.is-open .folder__desc{opacity:1;transform:none;transition-delay:.34s}
 .folder__title{font-weight:900;font-size:clamp(30px,5vw,58px);text-transform:uppercase;letter-spacing:-.01em;line-height:1.02}
 .folder__meta{font-family:var(--font-s);font-style:italic;font-size:17px;color:var(--ikb-l);margin:16px 0 0}
 .folder__desc{margin:44px 0 16px}
@@ -494,7 +508,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .veil--bottom::after{background:linear-gradient(0deg,#0D1013 0%,rgba(13,16,19,.97) 10%,rgba(13,16,19,.83) 23%,rgba(13,16,19,.56) 43%,rgba(13,16,19,.28) 65%,rgba(13,16,19,.1) 85%,transparent 100%)}
 .photo-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:start}
 .pcol{display:flex;flex-direction:column;gap:26px;will-change:transform}
-.ph{position:relative;overflow:hidden;cursor:pointer;margin:0}
+/* 与 lightbox 同级的阴影：放大/缩回的交接瞬间不会突然出现或消失。
+   挂在 .ph 上而非 img —— .ph 有 overflow:hidden，挂 img 上会被自己裁掉 */
+.ph{position:relative;overflow:hidden;cursor:pointer;margin:0;box-shadow:0 9px 22px rgba(0,0,0,.34)}
 .ph img{width:100%;aspect-ratio:3/4;object-fit:cover;transition:transform 1.2s var(--ease)}
 .ph:hover img{transform:scale(1.05)}
 .ph__tag{
@@ -516,23 +532,23 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .photo-more a:hover{color:#fff;border-color:#fff}
 
 /* lightbox — FLIP: 从缩略图的位置来，回缩略图的位置去。
-   背景与照片分离：关闭时只有背景淡出，照片本体全程不透明地飞回原位（哪里来回哪里去），
-   曲线先快后慢、落点带一点回弹 */
+   背景不用 backdrop-filter：大半径背景模糊在 Chrome 上会沿照片边缘出现色带、
+   在 Safari 上关闭时会闪白，改用近乎不透明的墨色底，两个问题一起消失。
+   阴影收紧（小半径），与缩略图的阴影同级，缩回去时不会“突然消失”。 */
 .lb{
   position:fixed;inset:0;z-index:120;cursor:pointer;
   visibility:hidden;
-  transition:visibility 0s .6s;
+  transition:visibility 0s .62s;
 }
 .lb.is-open{visibility:visible;transition:visibility 0s}
 .lb__bg{
-  position:absolute;inset:0;background:rgba(9,11,14,.84);
-  backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);
+  position:absolute;inset:0;background:rgba(9,11,14,.93);
   opacity:0;transition:opacity .5s var(--ease);
 }
 .lb.is-open .lb__bg{opacity:1;transition:opacity .38s var(--ease)}
 .lb img{
   position:fixed;object-fit:cover;transform-origin:top left;will-change:transform;
-  box-shadow:0 18px 48px rgba(0,0,0,.38), 0 5px 16px rgba(0,0,0,.26);
+  box-shadow:0 9px 22px rgba(0,0,0,.34);
   transition:transform .58s cubic-bezier(.3,1.16,.36,1), opacity .42s var(--ease);   /* 先快后慢 + 明显回弹，双向共用 */
 }
 .lb__wm{
@@ -614,10 +630,10 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 }
 @media (max-width:700px){
   .hero {
-    min-height:calc(100lvh + 12px);   /* 铺满整屏：地址栏收起后横幅仍压在首屏之外 */
-    padding-top:calc(56px + 6vh); padding-bottom:16vh !important;   /* meta 与横线离底约 16vh：避开地址栏，又比上一版低一点 */
+    min-height:calc(100lvh + 80px);   /* 彻底把横幅顶到首屏之外（iOS 底部液态玻璃栏是半透明的，多留一截） */
+    padding-top:calc(56px + 12vh); padding-bottom:10vh !important;   /* 上边距加大 + 下边距缩小 = 所有元素整体下移 */
   }
-  .hero__title { padding-bottom:0; padding-top:7vh; }   /* 标题组整体下沉一点，视觉更平衡 */
+  .hero__title { padding-bottom:0; padding-top:5vh; }
   h1.hero__name{font-size:clamp(66px,19.5vw,92px)}      /* 手机上名字放大，大小字对比更利落 */
   .hero__kicker{margin-bottom:24px}
   .hero__annot{margin-top:46px;font-size:19px}
@@ -627,13 +643,15 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .band__cap{left:26px}
   .band__num{right:26px}
   .photo-cols{grid-template-columns:1fr}
+  .ph{cursor:default}   /* 手机不提供点击放大 */
   .pcol{transform:none !important}
   .veil{display:none}
   .rec__count{display:none}
   .pub{grid-template-columns:48px 1fr;grid-template-areas:"no title" "no venue" "no chip";row-gap:7px}
   .chip{justify-self:start;padding-top:3px}
-  .hero__bg i{filter:blur(44px)}
-  .hero__frost{backdrop-filter:blur(22px) saturate(1.1);-webkit-backdrop-filter:blur(22px) saturate(1.1)}
+  .hero__bg i{filter:blur(48px)}
+  .hero__base{filter:blur(54px)}
+  .hero__frost{backdrop-filter:blur(27px) saturate(1.1);-webkit-backdrop-filter:blur(27px) saturate(1.1)}
   .contact__logo{width:58px}
   .contact__left{gap:30px}
   .xp__inner ul{padding-left:0}
@@ -701,6 +719,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <!-- ===== HERO ===== -->
 <section class="hero wrap" id="top">
   <div class="hero__bg" aria-hidden="true">
+    <div class="hero__base"></div>
     <span class="hero__frost"></span>
   </div>
   <div class="hero__title" id="heroTitle" data-mouse="3">
@@ -1139,78 +1158,92 @@ const PUBLICATIONS_FALLBACK = [
   }
 
   /* ---------- aurora：概率调色的丝带流体 ----------
-     每条丝带随机抽两端颜色：克莱因蓝为主（约 60%），青蓝/紫次之（约 26%），
-     橙/红作为稀有暖色偶尔出现（约 14%）；每 7–13 秒重抽一次目标色，
-     颜色经注册的 --ca/--cb 以 6 秒线性过渡互相流变 —— 丝带在游走中不断变色变形 */
+     色相权重压在光谱的蓝端：克莱因蓝 / 深蓝 / 青蓝 / 长春花 / 靛蓝合计约 84%，
+     紫约 14%，橙红合计约 2%（另有一条独立的暖色点缀带，只有 30% 概率出现，
+     且尺寸小、透明度低）。每 8–14 秒重抽目标色，经 --ca/--cb 以 8 秒线性流变。
+     丝带尺寸远大于取景框并彼此重叠，叠在连续基底之上 —— 不再聚成孤立的几团 */
   (function(){
     const bg=document.querySelector('.hero__bg');
     if(!bg) return;
     const frost=bg.querySelector('.hero__frost');
     [].slice.call(bg.querySelectorAll('i')).forEach(function(n){ n.remove(); });
 
-    const PAL=[
-      {c:'0,47,167',    a:.44, w:30},  /* IKB 主色 */
-      {c:'64,110,235',  a:.4,  w:13},  /* 亮蓝 */
-      {c:'96,178,222',  a:.42, w:13},  /* 青蓝 */
-      {c:'143,166,255', a:.36, w:9},   /* 长春花 */
-      {c:'122,92,235',  a:.36, w:13},  /* 紫 */
-      {c:'167,139,250', a:.3,  w:6},   /* 浅紫 */
-      {c:'255,158,96',  a:.3,  w:9},   /* 橙 — 稀有 */
-      {c:'226,72,38',   a:.24, w:5}    /* 朱红 — 稀有 */
+    const COOL=[
+      {c:'0,47,167',    a:.46, w:32},  /* IKB 主色 */
+      {c:'12,32,120',   a:.42, w:14},  /* 深蓝 */
+      {c:'96,178,222',  a:.4,  w:14},  /* 青蓝 */
+      {c:'143,166,255', a:.36, w:12},  /* 长春花 */
+      {c:'64,86,200',   a:.42, w:12},  /* 靛蓝 */
+      {c:'122,92,235',  a:.34, w:9},   /* 紫 */
+      {c:'167,139,250', a:.28, w:5},   /* 浅紫 */
+      {c:'255,158,96',  a:.24, w:1.5}, /* 橙 — 罕见 */
+      {c:'226,72,38',   a:.2,  w:.5}   /* 朱红 — 罕见 */
     ];
-    const W=PAL.reduce(function(s,p){return s+p.w;},0);
+    const W=COOL.reduce(function(s,p){return s+p.w;},0);
     function pick(){
       let r=Math.random()*W;
-      for(let i=0;i<PAL.length;i++){ if((r-=PAL[i].w)<0) return PAL[i]; }
-      return PAL[0];
+      for(let i=0;i<COOL.length;i++){ if((r-=COOL[i].w)<0) return COOL[i]; }
+      return COOL[0];
     }
     function paint(el,force){
       const a=force||pick(), b=pick();
       el.style.setProperty('--ca','rgba('+a.c+','+a.a+')');
       el.style.setProperty('--cb','rgba('+b.c+','+b.a+')');
     }
-    function place(el){
-      el.style.left=(-14+Math.random()*82)+'%';
-      el.style.top=(-16+Math.random()*78)+'%';
-      el.style.setProperty('--ang',Math.round(Math.random()*360)+'deg');
-    }
     const KF=['fl1','fl2','fl3','fl4','fl5','fl6'];
     function animate(el,extra){
       if(reduced) return;
       const kf=KF[Math.floor(Math.random()*KF.length)];
-      const dur=13+Math.random()*8;
+      const dur=15+Math.random()*9;
       el.style.animation=kf+' '+dur.toFixed(1)+'s ease-in-out '+(-Math.random()*dur).toFixed(1)+'s infinite alternate'
         +(extra?','+extra+' '+dur.toFixed(1)+'s ease-in-out '+(-Math.random()*dur).toFixed(1)+'s infinite alternate':'');
     }
     function cycle(el){
       if(reduced) return;
-      setTimeout(function(){ paint(el); cycle(el); }, 7000+Math.random()*6000);
+      setTimeout(function(){ paint(el); cycle(el); }, 8000+Math.random()*6000);
     }
-    /* 6 条彩色丝带（第一条强制以 IKB 起手，保住主色调） */
-    for(let k=0;k<6;k++){
+    function add(el){ bg.insertBefore(el,frost); }
+
+    /* 5 条巨型冷色丝带：宽 70–100vmax、彼此大幅交叠，融成一整片流动的场 */
+    for(let k=0;k<5;k++){
       const el=document.createElement('i');
-      el.style.width=(38+Math.random()*24).toFixed(0)+'vmax';
-      el.style.height=(12+Math.random()*12).toFixed(0)+'vmax';
-      place(el); paint(el, k===0?PAL[0]:null); animate(el); cycle(el);
-      bg.insertBefore(el,frost);
+      el.style.width=(70+Math.random()*30).toFixed(0)+'vmax';
+      el.style.height=(26+Math.random()*16).toFixed(0)+'vmax';
+      el.style.left=(-38+Math.random()*66)+'%';
+      el.style.top=(-34+Math.random()*68)+'%';
+      el.style.setProperty('--ang',Math.round(Math.random()*360)+'deg');
+      paint(el, k===0?COOL[0]:null);
+      animate(el); cycle(el);
+      add(el);
     }
-    /* 白色高光带：保持画面里那一道亮光（参考图的高光核） */
+    /* 白色高光带：画面里那一道亮光核 */
     const wh=document.createElement('i');
-    wh.style.width='34vmax'; wh.style.height='15vmax';
-    wh.style.left=(12+Math.random()*48)+'%'; wh.style.top=(Math.random()*46)+'%';
+    wh.style.width='46vmax'; wh.style.height='20vmax';
+    wh.style.left=(4+Math.random()*52)+'%'; wh.style.top=(-6+Math.random()*46)+'%';
     wh.style.setProperty('--ang',Math.round(60+Math.random()*120)+'deg');
-    wh.style.setProperty('--ca','rgba(255,255,255,.78)');
-    wh.style.setProperty('--cb','rgba(214,228,255,.22)');
-    animate(wh);
-    bg.insertBefore(wh,frost);
+    wh.style.setProperty('--ca','rgba(255,255,255,.72)');
+    wh.style.setProperty('--cb','rgba(206,224,255,.2)');
+    animate(wh); add(wh);
     /* 深蓝丝带：周期性浮现又退去 */
     const nv=document.createElement('i');
-    nv.style.width='44vmax'; nv.style.height='14vmax';
-    place(nv);
-    nv.style.setProperty('--ca','rgba(6,20,86,.55)');
-    nv.style.setProperty('--cb','rgba(28,44,140,.3)');
-    animate(nv,'navyBreathe');
-    bg.insertBefore(nv,frost);
+    nv.style.width='72vmax'; nv.style.height='22vmax';
+    nv.style.left=(-30+Math.random()*56)+'%'; nv.style.top=(-24+Math.random()*60)+'%';
+    nv.style.setProperty('--ang',Math.round(Math.random()*360)+'deg');
+    nv.style.setProperty('--ca','rgba(6,20,86,.5)');
+    nv.style.setProperty('--cb','rgba(28,44,140,.26)');
+    animate(nv,'navyBreathe'); add(nv);
+    /* 暖色点缀：只有 30% 概率出现，尺寸小、透明度低，且始终在呼吸中若隐若现 */
+    if(Math.random()<.3){
+      const wm=document.createElement('i');
+      const warm=Math.random()<.7?'255,158,96':'226,72,38';
+      wm.style.width=(24+Math.random()*10).toFixed(0)+'vmax';
+      wm.style.height=(9+Math.random()*5).toFixed(0)+'vmax';
+      wm.style.left=(6+Math.random()*58)+'%'; wm.style.top=(2+Math.random()*56)+'%';
+      wm.style.setProperty('--ang',Math.round(Math.random()*360)+'deg');
+      wm.style.setProperty('--ca','rgba('+warm+',.26)');
+      wm.style.setProperty('--cb','rgba(143,166,255,.16)');
+      animate(wm,'navyBreathe'); add(wm);
+    }
   })();
 
   /* ---------- hero name: per-letter rise ---------- */
@@ -1230,7 +1263,6 @@ const PUBLICATIONS_FALLBACK = [
     const nameEl=document.getElementById('heroName');
     const chs=[].slice.call(nameEl.querySelectorAll('.ch'));
     const st=chs.map(function(){ return {x:0,y:0,s:0,f:0}; });
-    const isOut=chs.map(function(ch){ return ch.parentElement.classList.contains('ln--outline'); });
     let px=-9999,py=-9999,inside=false,nraf=null;
     function wake(){ if(!nraf) nstep(); }
     function nstep(){
@@ -1251,14 +1283,14 @@ const PUBLICATIONS_FALLBACK = [
           /* 用 translate/scale 独立属性，避开入场 transform 动画的 fill 覆盖 */
           ch.style.translate=o.x.toFixed(2)+'px '+o.y.toFixed(2)+'px';
           ch.style.scale=(1+o.s).toFixed(3);
-          /* 被抬起的字母投下影子：近处一层实、远处一层柔；
-             描边字（YUAN）笔画覆盖面小，强度 ×1.9 补偿，否则几乎看不见 */
-          if(o.f>.01){
-            const amp=isOut[i]?1.9:1.15;
-            ch.style.filter=
-              'drop-shadow(0 '+(o.f*12).toFixed(1)+'px '+(o.f*16).toFixed(1)+'px rgba(10,14,21,'+Math.min(.55,o.f*.4*amp).toFixed(3)+')) '
-              +'drop-shadow(0 '+(o.f*3).toFixed(1)+'px '+(o.f*5).toFixed(1)+'px rgba(10,14,21,'+Math.min(.32,o.f*.22*amp).toFixed(3)+'))';
-          }else ch.style.filter='';
+          /* 单层外阴影：text-shadow 投的是实心字形轮廓，
+             所以描边的 YUAN 也是「字下面一点影子」，不会变成环形内阴影。
+             数值量化到 0.05 步进后才写入 DOM —— 逐帧改 filter 会引起重绘闪烁 */
+          const q=Math.round(o.f*20)/20;
+          const sh = q>0.05
+            ? '0 '+(q*9).toFixed(1)+'px '+(q*11).toFixed(1)+'px rgba(10,14,21,'+(q*.3).toFixed(2)+')'
+            : 'none';
+          if(ch.style.textShadow!==sh) ch.style.textShadow=sh;
         });
         nraf=null;
         if(live) nstep();
@@ -1800,6 +1832,7 @@ const PUBLICATIONS_FALLBACK = [
     return {x:(vw-W)/2, y:(vh-H)/2, w:W, h:H};
   }
   photoCols.addEventListener('click',function(e){
+    if(matchMedia('(max-width:700px)').matches) return;   /* 手机不放大 */
     const f=e.target.closest('.ph');
     if(!f) return;
     const im=f.querySelector('img');
@@ -1845,14 +1878,22 @@ const PUBLICATIONS_FALLBACK = [
     }
     lb.classList.remove('is-open');
     document.body.style.overflow='';
-    setTimeout(function(){
+    /* 图层交接：等 transform 真正落位的那一帧再把原缩略图放回来。
+       靠定时器猜时间会出现「还压着顶栏就突然跳到下层」的错位 */
+    let done=false;
+    function land(){
+      if(done) return; done=true;
+      lbImg.removeEventListener('transitionend',onEnd);
       if(!lb.classList.contains('is-open')){
-        if(lbSrcImg) lbSrcImg.style.visibility='';   /* 落地瞬间把原图放回去，无缝衔接 */
+        if(lbSrcImg) lbSrcImg.style.visibility='';
         lbImg.removeAttribute('src');
         lbImg.style.transform='';
         lbImg.style.opacity='';
       }
-    },600);
+    }
+    function onEnd(ev){ if(ev.propertyName==='transform') land(); }
+    lbImg.addEventListener('transitionend',onEnd);
+    setTimeout(land,700);   /* 兜底：transitionend 被浏览器跳过时也能收尾 */
   }
   lb.addEventListener('click',closeLb);
   addEventListener('keydown',function(e){
