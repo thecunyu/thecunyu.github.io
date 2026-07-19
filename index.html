@@ -95,7 +95,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
   display:flex;justify-content:space-between;align-items:center;
   padding:14px clamp(26px,6vw,72px);
   border-bottom:1px solid var(--line);
-  background:rgba(223,228,232,.82);
+  background:rgba(223,228,232,.55);
   backdrop-filter:blur(16px) saturate(1.2);-webkit-backdrop-filter:blur(16px) saturate(1.2);
   font-family:var(--font-m);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
   translate:0 -100%;
@@ -103,7 +103,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
     background .55s var(--ease), border-color .55s var(--ease), color .55s var(--ease);
 }
 body.is-ready .top{translate:0 0}
-.top.top--dark{background:rgba(13,16,19,.66);border-bottom-color:rgba(223,228,232,.12);color:var(--paper)}
+.top.top--dark{background:rgba(13,16,19,.48);border-bottom-color:rgba(223,228,232,.12);color:var(--paper)}
 .top__logo{display:flex;align-items:center;gap:12px;font-weight:500}
 .top__logo .top__mark{transition:scale .55s var(--ease-pop)}
 .top__logo > span:last-child{transition:color .35s}
@@ -218,7 +218,9 @@ h1 .ln{display:block;overflow:hidden;padding-bottom:.04em;margin-bottom:-.04em}
 .hero__name.is-live .ln{overflow:visible}   /* 入场结束后解除裁切，字母可自由弹出 */
 h1 .ch{display:inline-block;transform:translateY(115%) rotate(4deg);}
 body.is-ready h1 .ch{animation:chRise 1.25s var(--ease) forwards;}
-h1 .ln--outline .ch{color:transparent;-webkit-text-stroke:2px var(--ink)}
+/* 填充近乎不透明的浅色：字腔不再透出身后的 text-shadow（否则内部会发黑）。
+   保留 6% 透明度，字腔仍能沾一点背景的冷光，不至于死板 */
+h1 .ln--outline .ch{color:transparent;-webkit-text-fill-color:rgba(234,239,242,.94);-webkit-text-stroke:2px var(--ink)}
 @keyframes chRise{to{transform:translateY(0) rotate(0)}}
 .hero__annot{
   font-family:var(--font-s);font-style:italic;font-size:clamp(20px,2.3vw,29px);
@@ -510,7 +512,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .pcol{display:flex;flex-direction:column;gap:26px;will-change:transform}
 /* 与 lightbox 同级的阴影：放大/缩回的交接瞬间不会突然出现或消失。
    挂在 .ph 上而非 img —— .ph 有 overflow:hidden，挂 img 上会被自己裁掉 */
-.ph{position:relative;overflow:hidden;cursor:pointer;margin:0;box-shadow:0 9px 22px rgba(0,0,0,.34)}
+.ph{position:relative;overflow:hidden;cursor:pointer;margin:0}
 .ph img{width:100%;aspect-ratio:3/4;object-fit:cover;transition:transform 1.2s var(--ease)}
 .ph:hover img{transform:scale(1.05)}
 .ph__tag{
@@ -531,32 +533,29 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 }
 .photo-more a:hover{color:#fff;border-color:#fff}
 
-/* lightbox — FLIP: 从缩略图的位置来，回缩略图的位置去。
-   背景不用 backdrop-filter：大半径背景模糊在 Chrome 上会沿照片边缘出现色带、
-   在 Safari 上关闭时会闪白，改用近乎不透明的墨色底，两个问题一起消失。
-   阴影收紧（小半径），与缩略图的阴影同级，缩回去时不会“突然消失”。 */
+/* lightbox — 与建筑 folder 同款：从下方飞入，关闭时原路飞下去。
+   无阴影（阴影在模糊背景上会出现色带并在交接时闪烁），只压暗并模糊背景 */
 .lb{
   position:fixed;inset:0;z-index:120;cursor:pointer;
   visibility:hidden;
-  transition:visibility 0s .62s;
+  transition:visibility 0s .42s;
 }
 .lb.is-open{visibility:visible;transition:visibility 0s}
 .lb__bg{
-  position:absolute;inset:0;background:rgba(9,11,14,.93);
-  opacity:0;transition:opacity .5s var(--ease);
+  position:absolute;inset:0;background:rgba(9,11,14,.84);
+  backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);
+  opacity:0;transition:opacity .42s var(--ease);
 }
 .lb.is-open .lb__bg{opacity:1;transition:opacity .38s var(--ease)}
 .lb img{
-  position:fixed;object-fit:cover;transform-origin:top left;will-change:transform;
-  box-shadow:0 9px 22px rgba(0,0,0,.34);
-  transition:transform .58s cubic-bezier(.3,1.16,.36,1), opacity .42s var(--ease);   /* 先快后慢 + 明显回弹，双向共用 */
+  position:fixed;object-fit:cover;will-change:transform;
+  transform:translateY(114%);
+  transition:transform .42s cubic-bezier(.5,0,.75,.35);   /* 关闭：先快后慢地落下去 */
 }
-.lb__wm{
-  position:absolute;top:18px;right:24px;pointer-events:none;
-  font-family:var(--font-m);font-size:10px;letter-spacing:.24em;text-transform:uppercase;
-  color:rgba(223,228,232,.42);opacity:0;transition:opacity .5s .25s;
+.lb.is-open img{
+  transform:translateY(0);
+  transition:transform .62s cubic-bezier(.18,1.02,.32,1); /* 打开：飞上来，落点带一点回弹 */
 }
-.lb.is-open .lb__wm{opacity:1}
 .lb__cap{
   position:absolute;bottom:24px;left:50%;transform:translateX(-50%) translateY(8px);opacity:0;
   font-family:var(--font-m);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(223,228,232,.7);
@@ -637,7 +636,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   h1.hero__name{font-size:clamp(66px,19.5vw,92px)}      /* 手机上名字放大，大小字对比更利落 */
   .hero__kicker{margin-bottom:24px}
   .hero__annot{margin-top:46px;font-size:19px}
-  .hero__meta{padding-top:26px;gap:24px 22px}
+  /* 相对定位偏移：只把这一组（含顶上的横线）视觉上抬起来，
+     不占布局、不改变 hero 高度 —— 横幅依旧藏在首屏之外 */
+  .hero__meta{padding-top:26px;gap:24px 22px;margin-bottom:4vh}   /* 只抬这 4 组和横线；hero 总高由 min-height 锁死，横幅不动 */
   .wrap{padding:0 26px}
   .top{padding:13px 22px}
   .band__cap{left:26px}
@@ -1007,7 +1008,6 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   <div class="lb__bg" aria-hidden="true"></div>
   <img id="lbImg" alt="">
   <div class="lb__cap" id="lbCap"></div>
-  <div class="lb__wm" aria-hidden="true">© Cunyu Yuan</div>
 </div>
 
 <script>
@@ -1263,6 +1263,7 @@ const PUBLICATIONS_FALLBACK = [
     const nameEl=document.getElementById('heroName');
     const chs=[].slice.call(nameEl.querySelectorAll('.ch'));
     const st=chs.map(function(){ return {x:0,y:0,s:0,f:0}; });
+    const isOut=chs.map(function(ch){ return ch.parentElement.classList.contains('ln--outline'); });
     let px=-9999,py=-9999,inside=false,nraf=null;
     function wake(){ if(!nraf) nstep(); }
     function nstep(){
@@ -1283,14 +1284,20 @@ const PUBLICATIONS_FALLBACK = [
           /* 用 translate/scale 独立属性，避开入场 transform 动画的 fill 覆盖 */
           ch.style.translate=o.x.toFixed(2)+'px '+o.y.toFixed(2)+'px';
           ch.style.scale=(1+o.s).toFixed(3);
-          /* 单层外阴影：text-shadow 投的是实心字形轮廓，
-             所以描边的 YUAN 也是「字下面一点影子」，不会变成环形内阴影。
-             数值量化到 0.05 步进后才写入 DOM —— 逐帧改 filter 会引起重绘闪烁 */
+          /* 单层外阴影：text-shadow 投的是实心字形轮廓。
+             数值量化到 0.05 步进后才写入 DOM —— 逐帧改样式会引起重绘闪烁。
+             描边字（YUAN）内部是透明的，后面的影子会从镂空处透出来；
+             所以抬起时让内部同步渐显纸面色（像字母接住了光），把影子挡在外面，
+             落回后恢复透明 */
           const q=Math.round(o.f*20)/20;
           const sh = q>0.05
             ? '0 '+(q*9).toFixed(1)+'px '+(q*11).toFixed(1)+'px rgba(10,14,21,'+(q*.3).toFixed(2)+')'
             : 'none';
           if(ch.style.textShadow!==sh) ch.style.textShadow=sh;
+          if(isOut[i]){
+            const fill = q>0.05 ? 'rgba(223,228,232,'+Math.min(1,q*1.3).toFixed(2)+')' : '';
+            if(ch.style.color!==fill) ch.style.color=fill;
+          }
         });
         nraf=null;
         if(live) nstep();
@@ -1821,9 +1828,8 @@ const PUBLICATIONS_FALLBACK = [
     if(window.__parallaxTick) window.__parallaxTick();
   });
 
-  /* ---------- lightbox：FLIP，从缩略图飞出、回缩略图收起 ---------- */
+  /* ---------- lightbox：底部飞入 / 向下飞出（与建筑 folder 同款动线）---------- */
   const lb=document.getElementById('lb'), lbImg=document.getElementById('lbImg'), lbCap=document.getElementById('lbCap');
-  let lbSrcImg=null;
 
   function lbTargetRect(){
     const vw=innerWidth, vh=innerHeight;
@@ -1837,63 +1843,22 @@ const PUBLICATIONS_FALLBACK = [
     if(!f) return;
     const im=f.querySelector('img');
     if(!im||!im.src) return;
-    if(lbSrcImg && lbSrcImg!==im) lbSrcImg.style.visibility='';   /* 换图时恢复上一张 */
-    lbSrcImg=im;
     lbImg.src=im.src; lbImg.alt=im.alt;
-    lbImg.style.opacity='';
     const tag=f.querySelector('.ph__tag');
     lbCap.textContent=tag?tag.textContent:'';
     const t=lbTargetRect();
     lbImg.style.width=t.w+'px'; lbImg.style.height=t.h+'px';
     lbImg.style.left=t.x+'px'; lbImg.style.top=t.y+'px';
-    if(!reduced){
-      const r=im.getBoundingClientRect();
-      lbImg.style.transition='none';
-      lbImg.style.transform='translate('+(r.left-t.x)+'px,'+(r.top-t.y)+'px) '
-        +'scale('+(r.width/t.w)+','+(r.height/t.h)+')';
-      im.style.visibility='hidden';   /* 原位挖空：视觉上是“这一张”被拿起来放大 */
-    }
     lb.classList.add('is-open');
     document.body.style.overflow='hidden';
-    if(!reduced){
-      requestAnimationFrame(function(){ requestAnimationFrame(function(){
-        lbImg.style.transition='';
-        lbImg.style.transform='none';
-      });});
-    }
   });
   function closeLb(){
     if(!lb.classList.contains('is-open')) return;
-    if(!reduced && lbSrcImg && lbSrcImg.isConnected){
-      const r=lbSrcImg.getBoundingClientRect();
-      if(r.bottom>-100 && r.top<innerHeight+100){
-        const t={x:parseFloat(lbImg.style.left),y:parseFloat(lbImg.style.top),
-                 w:parseFloat(lbImg.style.width),h:parseFloat(lbImg.style.height)};
-        lbImg.style.transform='translate('+(r.left-t.x)+'px,'+(r.top-t.y)+'px) '
-          +'scale('+(r.width/t.w)+','+(r.height/t.h)+')';
-      }else{
-        lbImg.style.transform='scale(.94)';
-        lbImg.style.opacity='0';   /* 缩略图不在屏内：无处可回，淡出收场 */
-      }
-    }
     lb.classList.remove('is-open');
     document.body.style.overflow='';
-    /* 图层交接：等 transform 真正落位的那一帧再把原缩略图放回来。
-       靠定时器猜时间会出现「还压着顶栏就突然跳到下层」的错位 */
-    let done=false;
-    function land(){
-      if(done) return; done=true;
-      lbImg.removeEventListener('transitionend',onEnd);
-      if(!lb.classList.contains('is-open')){
-        if(lbSrcImg) lbSrcImg.style.visibility='';
-        lbImg.removeAttribute('src');
-        lbImg.style.transform='';
-        lbImg.style.opacity='';
-      }
-    }
-    function onEnd(ev){ if(ev.propertyName==='transform') land(); }
-    lbImg.addEventListener('transitionend',onEnd);
-    setTimeout(land,700);   /* 兜底：transitionend 被浏览器跳过时也能收尾 */
+    setTimeout(function(){
+      if(!lb.classList.contains('is-open')) lbImg.removeAttribute('src');
+    },480);
   }
   lb.addEventListener('click',closeLb);
   addEventListener('keydown',function(e){
