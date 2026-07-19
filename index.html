@@ -138,14 +138,16 @@ body.is-ready .top{translate:0 0}
   z-index:0;overflow:hidden;pointer-events:none}
 /* 丝带体：拉长的椭圆 + 旋转 + 非均匀缩放形变，宽窄浓淡随时间呼吸；
    尺寸用 vmax —— 竖屏手机上也够大，流动可见 */
-.hero__bg i{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform,opacity;display:block}
-.hero__bg .b1{width:58vmax;height:28vmax;left:-12%;top:-10%;background:radial-gradient(ellipse at center,rgba(0,47,167,.36),transparent 68%);animation:fl1 19s ease-in-out infinite alternate}
-.hero__bg .b2{width:50vmax;height:22vmax;right:-10%;top:20%;background:radial-gradient(ellipse at center,rgba(127,180,216,.5),transparent 66%);animation:fl2 23s ease-in-out infinite alternate}
-.hero__bg .b3{width:42vmax;height:24vmax;left:30%;top:-8%;background:radial-gradient(ellipse at center,rgba(255,255,255,.85),transparent 70%);animation:fl3 17s ease-in-out infinite alternate}
-.hero__bg .b4{width:40vmax;height:18vmax;left:10%;bottom:-10%;background:radial-gradient(ellipse at center,rgba(143,166,255,.4),transparent 66%);animation:fl4 21s ease-in-out infinite alternate}
-.hero__bg .b5{width:36vmax;height:20vmax;left:56%;top:50%;background:radial-gradient(ellipse at center,rgba(132,112,255,.28),transparent 66%);animation:fl5 18s ease-in-out infinite alternate}
-/* 深蓝丝带：平时几乎不可见，周期性地浮现又退去 —— “过一会儿出现一条深蓝” */
-.hero__bg .b6{width:46vmax;height:16vmax;left:22%;top:34%;background:radial-gradient(ellipse at center,rgba(6,20,86,.5),transparent 64%);animation:fl6 20s ease-in-out infinite alternate,navyBreathe 20s ease-in-out infinite alternate}
+/* 丝带体：拉长的双色线性渐变长条（非径向圆斑），旋转 + 非均匀缩放形变；
+   --ca/--cb 经 @property 注册为 <color>，JS 定期换色时可以 6s 线性互相流变 */
+@property --ca{syntax:'<color>';inherits:false;initial-value:rgba(0,47,167,.4)}
+@property --cb{syntax:'<color>';inherits:false;initial-value:rgba(122,92,235,.3)}
+.hero__bg i{
+  position:absolute;width:46vmax;height:18vmax;border-radius:50%;
+  filter:blur(62px);will-change:transform,opacity;display:block;
+  background:linear-gradient(var(--ang,105deg),var(--ca) 6%,var(--cb) 52%,transparent 84%);
+  transition:--ca 6s linear,--cb 6s linear;
+}
 @keyframes fl1{
   0%{transform:translate(0,0) rotate(10deg) scale(1,.85)}
   36%{transform:translate(24%,20%) rotate(-16deg) scale(1.3,.62)}
@@ -513,18 +515,25 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 }
 .photo-more a:hover{color:#fff;border-color:#fff}
 
-/* lightbox — FLIP: 从缩略图的位置来，回缩略图的位置去 */
+/* lightbox — FLIP: 从缩略图的位置来，回缩略图的位置去。
+   背景与照片分离：关闭时只有背景淡出，照片本体全程不透明地飞回原位（哪里来回哪里去），
+   曲线先快后慢、落点带一点回弹 */
 .lb{
-  position:fixed;inset:0;z-index:120;background:rgba(9,11,14,.84);cursor:pointer;
-  backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);
-  visibility:hidden;opacity:0;
-  transition:opacity .45s var(--ease),visibility 0s .45s;
+  position:fixed;inset:0;z-index:120;cursor:pointer;
+  visibility:hidden;
+  transition:visibility 0s .6s;
 }
-.lb.is-open{visibility:visible;opacity:1;transition:opacity .4s var(--ease),visibility 0s}
+.lb.is-open{visibility:visible;transition:visibility 0s}
+.lb__bg{
+  position:absolute;inset:0;background:rgba(9,11,14,.84);
+  backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);
+  opacity:0;transition:opacity .5s var(--ease);
+}
+.lb.is-open .lb__bg{opacity:1;transition:opacity .38s var(--ease)}
 .lb img{
   position:fixed;object-fit:cover;transform-origin:top left;will-change:transform;
-  box-shadow:0 18px 48px rgba(0,0,0,.38), 0 5px 16px rgba(0,0,0,.26);  /* 常规柔影，无光环 */
-  transition:transform .5s cubic-bezier(.3,1.06,.36,1);
+  box-shadow:0 18px 48px rgba(0,0,0,.38), 0 5px 16px rgba(0,0,0,.26);
+  transition:transform .58s cubic-bezier(.3,1.16,.36,1), opacity .42s var(--ease);   /* 先快后慢 + 明显回弹，双向共用 */
 }
 .lb__wm{
   position:absolute;top:18px;right:24px;pointer-events:none;
@@ -605,10 +614,11 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 }
 @media (max-width:700px){
   .hero {
-    min-height:100svh;   /* svh = 地址栏展开时的小视口：meta 与横条整体上抬，不再贴着地址栏 */
-    padding-top:calc(56px + 6vh); padding-bottom: 11vh !important;
+    min-height:calc(100lvh + 12px);   /* 铺满整屏：地址栏收起后横幅仍压在首屏之外 */
+    padding-top:calc(56px + 6vh); padding-bottom:16vh !important;   /* meta 与横线离底约 16vh：避开地址栏，又比上一版低一点 */
   }
-  .hero__title { padding-bottom: 0vh; }
+  .hero__title { padding-bottom:0; padding-top:7vh; }   /* 标题组整体下沉一点，视觉更平衡 */
+  h1.hero__name{font-size:clamp(66px,19.5vw,92px)}      /* 手机上名字放大，大小字对比更利落 */
   .hero__kicker{margin-bottom:24px}
   .hero__annot{margin-top:46px;font-size:19px}
   .hero__meta{padding-top:26px;gap:24px 22px}
@@ -691,7 +701,6 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <!-- ===== HERO ===== -->
 <section class="hero wrap" id="top">
   <div class="hero__bg" aria-hidden="true">
-    <i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i><i class="b5"></i><i class="b6"></i>
     <span class="hero__frost"></span>
   </div>
   <div class="hero__title" id="heroTitle" data-mouse="3">
@@ -711,7 +720,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   <div class="hero__meta" id="heroMeta">
     <div><span class="k">Affiliation</span>Wuhan University</div>
     <div><span class="k">Coordinates</span>30.54°N — 114.36°E</div>
-    <div><span class="k">Holdings</span><span id="metaHoldings">papers · works · prints</span></div>
+    <div><span class="k">Holdings</span><span id="metaHoldings">papers · designs</span></div>
     <div><span class="k">Status</span>Open to PhD positions</div>
   </div>
   </div>
@@ -976,6 +985,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 <!-- lightbox -->
 <div class="lb" id="lb" role="dialog" aria-label="Enlarged photograph">
+  <div class="lb__bg" aria-hidden="true"></div>
   <img id="lbImg" alt="">
   <div class="lb__cap" id="lbCap"></div>
   <div class="lb__wm" aria-hidden="true">© Cunyu Yuan</div>
@@ -1128,17 +1138,79 @@ const PUBLICATIONS_FALLBACK = [
     }
   }
 
-  /* ---------- aurora：每次进入网页随机洗牌光斑的位置、周期与相位 ---------- */
+  /* ---------- aurora：概率调色的丝带流体 ----------
+     每条丝带随机抽两端颜色：克莱因蓝为主（约 60%），青蓝/紫次之（约 26%），
+     橙/红作为稀有暖色偶尔出现（约 14%）；每 7–13 秒重抽一次目标色，
+     颜色经注册的 --ca/--cb 以 6 秒线性过渡互相流变 —— 丝带在游走中不断变色变形 */
   (function(){
-    if(reduced) return;
-    document.querySelectorAll('.hero__bg i').forEach(function(b){
-      b.style.left=(-14+Math.random()*82)+'%';
-      b.style.top=(-16+Math.random()*78)+'%';
-      b.style.right='auto'; b.style.bottom='auto';
-      const dur=13+Math.random()*8;                /* 13–21s，明显但仍从容的流动 */
-      b.style.animationDuration=dur.toFixed(1)+'s';
-      b.style.animationDelay=(-Math.random()*dur).toFixed(1)+'s';  /* 负延迟 = 随机相位 */
-    });
+    const bg=document.querySelector('.hero__bg');
+    if(!bg) return;
+    const frost=bg.querySelector('.hero__frost');
+    [].slice.call(bg.querySelectorAll('i')).forEach(function(n){ n.remove(); });
+
+    const PAL=[
+      {c:'0,47,167',    a:.44, w:30},  /* IKB 主色 */
+      {c:'64,110,235',  a:.4,  w:13},  /* 亮蓝 */
+      {c:'96,178,222',  a:.42, w:13},  /* 青蓝 */
+      {c:'143,166,255', a:.36, w:9},   /* 长春花 */
+      {c:'122,92,235',  a:.36, w:13},  /* 紫 */
+      {c:'167,139,250', a:.3,  w:6},   /* 浅紫 */
+      {c:'255,158,96',  a:.3,  w:9},   /* 橙 — 稀有 */
+      {c:'226,72,38',   a:.24, w:5}    /* 朱红 — 稀有 */
+    ];
+    const W=PAL.reduce(function(s,p){return s+p.w;},0);
+    function pick(){
+      let r=Math.random()*W;
+      for(let i=0;i<PAL.length;i++){ if((r-=PAL[i].w)<0) return PAL[i]; }
+      return PAL[0];
+    }
+    function paint(el,force){
+      const a=force||pick(), b=pick();
+      el.style.setProperty('--ca','rgba('+a.c+','+a.a+')');
+      el.style.setProperty('--cb','rgba('+b.c+','+b.a+')');
+    }
+    function place(el){
+      el.style.left=(-14+Math.random()*82)+'%';
+      el.style.top=(-16+Math.random()*78)+'%';
+      el.style.setProperty('--ang',Math.round(Math.random()*360)+'deg');
+    }
+    const KF=['fl1','fl2','fl3','fl4','fl5','fl6'];
+    function animate(el,extra){
+      if(reduced) return;
+      const kf=KF[Math.floor(Math.random()*KF.length)];
+      const dur=13+Math.random()*8;
+      el.style.animation=kf+' '+dur.toFixed(1)+'s ease-in-out '+(-Math.random()*dur).toFixed(1)+'s infinite alternate'
+        +(extra?','+extra+' '+dur.toFixed(1)+'s ease-in-out '+(-Math.random()*dur).toFixed(1)+'s infinite alternate':'');
+    }
+    function cycle(el){
+      if(reduced) return;
+      setTimeout(function(){ paint(el); cycle(el); }, 7000+Math.random()*6000);
+    }
+    /* 6 条彩色丝带（第一条强制以 IKB 起手，保住主色调） */
+    for(let k=0;k<6;k++){
+      const el=document.createElement('i');
+      el.style.width=(38+Math.random()*24).toFixed(0)+'vmax';
+      el.style.height=(12+Math.random()*12).toFixed(0)+'vmax';
+      place(el); paint(el, k===0?PAL[0]:null); animate(el); cycle(el);
+      bg.insertBefore(el,frost);
+    }
+    /* 白色高光带：保持画面里那一道亮光（参考图的高光核） */
+    const wh=document.createElement('i');
+    wh.style.width='34vmax'; wh.style.height='15vmax';
+    wh.style.left=(12+Math.random()*48)+'%'; wh.style.top=(Math.random()*46)+'%';
+    wh.style.setProperty('--ang',Math.round(60+Math.random()*120)+'deg');
+    wh.style.setProperty('--ca','rgba(255,255,255,.78)');
+    wh.style.setProperty('--cb','rgba(214,228,255,.22)');
+    animate(wh);
+    bg.insertBefore(wh,frost);
+    /* 深蓝丝带：周期性浮现又退去 */
+    const nv=document.createElement('i');
+    nv.style.width='44vmax'; nv.style.height='14vmax';
+    place(nv);
+    nv.style.setProperty('--ca','rgba(6,20,86,.55)');
+    nv.style.setProperty('--cb','rgba(28,44,140,.3)');
+    animate(nv,'navyBreathe');
+    bg.insertBefore(nv,frost);
   })();
 
   /* ---------- hero name: per-letter rise ---------- */
@@ -1158,6 +1230,7 @@ const PUBLICATIONS_FALLBACK = [
     const nameEl=document.getElementById('heroName');
     const chs=[].slice.call(nameEl.querySelectorAll('.ch'));
     const st=chs.map(function(){ return {x:0,y:0,s:0,f:0}; });
+    const isOut=chs.map(function(ch){ return ch.parentElement.classList.contains('ln--outline'); });
     let px=-9999,py=-9999,inside=false,nraf=null;
     function wake(){ if(!nraf) nstep(); }
     function nstep(){
@@ -1178,10 +1251,14 @@ const PUBLICATIONS_FALLBACK = [
           /* 用 translate/scale 独立属性，避开入场 transform 动画的 fill 覆盖 */
           ch.style.translate=o.x.toFixed(2)+'px '+o.y.toFixed(2)+'px';
           ch.style.scale=(1+o.s).toFixed(3);
-          /* 被抬起的字母投下柔和的影子；drop-shadow 对描边字（YUAN）同样有效 */
-          ch.style.filter = o.f>.01
-            ? 'drop-shadow(0 '+(o.f*9).toFixed(1)+'px '+(o.f*13).toFixed(1)+'px rgba(10,14,21,'+(o.f*.32).toFixed(3)+'))'
-            : '';
+          /* 被抬起的字母投下影子：近处一层实、远处一层柔；
+             描边字（YUAN）笔画覆盖面小，强度 ×1.9 补偿，否则几乎看不见 */
+          if(o.f>.01){
+            const amp=isOut[i]?1.9:1.15;
+            ch.style.filter=
+              'drop-shadow(0 '+(o.f*12).toFixed(1)+'px '+(o.f*16).toFixed(1)+'px rgba(10,14,21,'+Math.min(.55,o.f*.4*amp).toFixed(3)+')) '
+              +'drop-shadow(0 '+(o.f*3).toFixed(1)+'px '+(o.f*5).toFixed(1)+'px rgba(10,14,21,'+Math.min(.32,o.f*.22*amp).toFixed(3)+'))';
+          }else ch.style.filter='';
         });
         nraf=null;
         if(live) nstep();
@@ -1269,7 +1346,7 @@ const PUBLICATIONS_FALLBACK = [
     const m=document.getElementById('metaHoldings');
     if(!m) return;
     const works=document.querySelectorAll('.work').length;
-    m.textContent=(pubTotal||'—')+' papers · '+works+' works · '+(printTotal||'—')+' prints';
+    m.textContent=(pubTotal||'—')+' papers · '+works+' designs';
   }
 
   function renderPubs(list){
@@ -1727,8 +1804,10 @@ const PUBLICATIONS_FALLBACK = [
     if(!f) return;
     const im=f.querySelector('img');
     if(!im||!im.src) return;
+    if(lbSrcImg && lbSrcImg!==im) lbSrcImg.style.visibility='';   /* 换图时恢复上一张 */
     lbSrcImg=im;
     lbImg.src=im.src; lbImg.alt=im.alt;
+    lbImg.style.opacity='';
     const tag=f.querySelector('.ph__tag');
     lbCap.textContent=tag?tag.textContent:'';
     const t=lbTargetRect();
@@ -1739,6 +1818,7 @@ const PUBLICATIONS_FALLBACK = [
       lbImg.style.transition='none';
       lbImg.style.transform='translate('+(r.left-t.x)+'px,'+(r.top-t.y)+'px) '
         +'scale('+(r.width/t.w)+','+(r.height/t.h)+')';
+      im.style.visibility='hidden';   /* 原位挖空：视觉上是“这一张”被拿起来放大 */
     }
     lb.classList.add('is-open');
     document.body.style.overflow='hidden';
@@ -1759,17 +1839,20 @@ const PUBLICATIONS_FALLBACK = [
         lbImg.style.transform='translate('+(r.left-t.x)+'px,'+(r.top-t.y)+'px) '
           +'scale('+(r.width/t.w)+','+(r.height/t.h)+')';
       }else{
-        lbImg.style.transform='scale(.9)';
+        lbImg.style.transform='scale(.94)';
+        lbImg.style.opacity='0';   /* 缩略图不在屏内：无处可回，淡出收场 */
       }
     }
     lb.classList.remove('is-open');
     document.body.style.overflow='';
     setTimeout(function(){
       if(!lb.classList.contains('is-open')){
+        if(lbSrcImg) lbSrcImg.style.visibility='';   /* 落地瞬间把原图放回去，无缝衔接 */
         lbImg.removeAttribute('src');
         lbImg.style.transform='';
+        lbImg.style.opacity='';
       }
-    },540);
+    },600);
   }
   lb.addEventListener('click',closeLb);
   addEventListener('keydown',function(e){
