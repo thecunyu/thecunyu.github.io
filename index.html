@@ -106,12 +106,14 @@ body.is-ready .top{translate:0 0}
 .top.top--dark{background:rgba(13,16,19,.36);border-bottom-color:rgba(223,228,232,.12);color:var(--paper)}
 .top__logo{display:flex;align-items:center;gap:12px;font-weight:500}
 .top__logo .top__mark{transition:scale .55s var(--ease-pop)}
-.top__logo > span:last-child{transition:color .35s}
 .top__logo:hover .top__mark{scale:1.14}
-.top__logo:hover > span:last-child{color:var(--ikb)}
-.top--dark .top__logo:hover > span:last-child{color:var(--ikb-l)}
+/* 按下反馈：轻轻缩一下（桌面点击与手机触摸都走 :active），松手弹回。
+   必须写在 :hover 规则之后 —— 按住时 :hover 同时成立，写在前面会被 1.14 覆盖 */
+.top__logo:active .top__mark{scale:.95;transition-duration:.3s}
 .top__mark{position:relative;width:26px;height:26px;flex-shrink:0}
-.top__mark img{position:absolute;inset:0;width:26px;height:26px;border-radius:7px;transition:opacity .55s var(--ease)}
+/* 双色 logo 交叉渐隐：--ease 是 expo-out，前 10% 时间就跑完 90% 路程，
+   看起来像瞬间切换；换成对称的 ease-in-out 并拉长时长，两张图才是真·渐变过渡 */
+.top__mark img{position:absolute;inset:0;width:26px;height:26px;border-radius:7px;transition:opacity .8s cubic-bezier(.45,.05,.55,.95)}
 .top__mark img.alt{opacity:0}
 .top--dark .top__mark img{opacity:0}
 .top--dark .top__mark img.alt{opacity:1}
@@ -200,6 +202,13 @@ body.is-ready .top{translate:0 0}
 }
 @keyframes navyBreathe{0%,28%{opacity:0}50%{opacity:.9}72%,100%{opacity:.08}}
 .hero__frost{position:absolute;inset:0;backdrop-filter:blur(36px) saturate(1.18);-webkit-backdrop-filter:blur(36px) saturate(1.18);background:rgba(223,228,232,.16)}
+/* 首页极光被重度模糊后是大面积平缓渐变，8-bit 屏上偶见色带；
+   叠一层很轻的灰噪点抖动把色阶打散。模糊量本身不动 */
+.hero__frost::after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:110px 110px;opacity:.055;mix-blend-mode:overlay;
+}
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
@@ -482,27 +491,27 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .veil i{position:absolute;inset:0;display:block}
 /* 6 层，模糊量近似几何递减；遮罩用 4 个停靠点做缓入缓出，
    层间衔接与最外侧边界都以 1px 级模糊收尾 —— 消除可见的“断层线” */
-.veil--top i:nth-child(1){backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+.veil--top i:nth-child(1){backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 12%,rgba(0,0,0,.72) 24%,rgba(0,0,0,.24) 32%,transparent 40%);mask-image:linear-gradient(180deg,#000 0%,#000 12%,rgba(0,0,0,.72) 24%,rgba(0,0,0,.24) 32%,transparent 40%)}
-.veil--top i:nth-child(2){backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+.veil--top i:nth-child(2){backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 24%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.24) 46%,transparent 54%);mask-image:linear-gradient(180deg,#000 0%,#000 24%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.24) 46%,transparent 54%)}
-.veil--top i:nth-child(3){backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+.veil--top i:nth-child(3){backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 36%,rgba(0,0,0,.72) 50%,rgba(0,0,0,.24) 58%,transparent 66%);mask-image:linear-gradient(180deg,#000 0%,#000 36%,rgba(0,0,0,.72) 50%,rgba(0,0,0,.24) 58%,transparent 66%)}
-.veil--top i:nth-child(4){backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+.veil--top i:nth-child(4){backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(2.5px);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 48%,rgba(0,0,0,.72) 62%,rgba(0,0,0,.24) 71%,transparent 80%);mask-image:linear-gradient(180deg,#000 0%,#000 48%,rgba(0,0,0,.72) 62%,rgba(0,0,0,.24) 71%,transparent 80%)}
-.veil--top i:nth-child(5){backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+.veil--top i:nth-child(5){backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 60%,rgba(0,0,0,.72) 74%,rgba(0,0,0,.24) 84%,transparent 93%);mask-image:linear-gradient(180deg,#000 0%,#000 60%,rgba(0,0,0,.72) 74%,rgba(0,0,0,.24) 84%,transparent 93%)}
 .veil--top i:nth-child(6){backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px);
   -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 72%,rgba(0,0,0,.6) 86%,rgba(0,0,0,.18) 94%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,#000 72%,rgba(0,0,0,.6) 86%,rgba(0,0,0,.18) 94%,transparent 100%)}
-.veil--bottom i:nth-child(1){backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+.veil--bottom i:nth-child(1){backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 12%,rgba(0,0,0,.72) 24%,rgba(0,0,0,.24) 32%,transparent 40%);mask-image:linear-gradient(0deg,#000 0%,#000 12%,rgba(0,0,0,.72) 24%,rgba(0,0,0,.24) 32%,transparent 40%)}
-.veil--bottom i:nth-child(2){backdrop-filter:blur(15px);-webkit-backdrop-filter:blur(15px);
+.veil--bottom i:nth-child(2){backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 24%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.24) 46%,transparent 54%);mask-image:linear-gradient(0deg,#000 0%,#000 24%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.24) 46%,transparent 54%)}
-.veil--bottom i:nth-child(3){backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+.veil--bottom i:nth-child(3){backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 36%,rgba(0,0,0,.72) 50%,rgba(0,0,0,.24) 58%,transparent 66%);mask-image:linear-gradient(0deg,#000 0%,#000 36%,rgba(0,0,0,.72) 50%,rgba(0,0,0,.24) 58%,transparent 66%)}
-.veil--bottom i:nth-child(4){backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+.veil--bottom i:nth-child(4){backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(2.5px);
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 48%,rgba(0,0,0,.72) 62%,rgba(0,0,0,.24) 71%,transparent 80%);mask-image:linear-gradient(0deg,#000 0%,#000 48%,rgba(0,0,0,.72) 62%,rgba(0,0,0,.24) 71%,transparent 80%)}
-.veil--bottom i:nth-child(5){backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+.veil--bottom i:nth-child(5){backdrop-filter:blur(1.5px);-webkit-backdrop-filter:blur(1.5px);
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 60%,rgba(0,0,0,.72) 74%,rgba(0,0,0,.24) 84%,transparent 93%);mask-image:linear-gradient(0deg,#000 0%,#000 60%,rgba(0,0,0,.72) 74%,rgba(0,0,0,.24) 84%,transparent 93%)}
 .veil--bottom i:nth-child(6){backdrop-filter:blur(1px);-webkit-backdrop-filter:blur(1px);
   -webkit-mask-image:linear-gradient(0deg,#000 0%,#000 72%,rgba(0,0,0,.6) 86%,rgba(0,0,0,.18) 94%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,#000 72%,rgba(0,0,0,.6) 86%,rgba(0,0,0,.18) 94%,transparent 100%)}
@@ -512,14 +521,21 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .veil::before{
   content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:140px 140px;opacity:.05;mix-blend-mode:overlay;
+  background-size:110px 110px;opacity:.16;mix-blend-mode:overlay;
+}
+/* 第二层更细的暗噪点（normal 混合）：overlay 在极暗区域几乎不起作用，
+   而色带恰恰最容易出现在暗部 —— 这层专门负责把暗部色阶打散 */
+.veil i:last-child::after{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:90px 90px;opacity:.09;
 }
 .veil--top::before{-webkit-mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%);mask-image:linear-gradient(180deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%)}
 .veil--bottom::before{-webkit-mask-image:linear-gradient(0deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%);mask-image:linear-gradient(0deg,#000 0%,rgba(0,0,0,.75) 45%,rgba(0,0,0,.25) 75%,transparent 100%)}
 /* 压暗层：多停靠点的平滑坠入墨色 */
 .veil::after{content:"";position:absolute;inset:0}
-.veil--top::after{background:linear-gradient(180deg,#0D1013 0%,rgba(13,16,19,.96) 9%,rgba(13,16,19,.82) 22%,rgba(13,16,19,.55) 42%,rgba(13,16,19,.28) 64%,rgba(13,16,19,.1) 84%,transparent 100%)}
-.veil--bottom::after{background:linear-gradient(0deg,#0D1013 0%,rgba(13,16,19,.97) 10%,rgba(13,16,19,.83) 23%,rgba(13,16,19,.56) 43%,rgba(13,16,19,.28) 65%,rgba(13,16,19,.1) 85%,transparent 100%)}
+.veil--top::after{background:linear-gradient(180deg,#0D1013 0%,rgba(13,16,19,.97) 9%,rgba(13,16,19,.88) 22%,rgba(13,16,19,.66) 42%,rgba(13,16,19,.38) 64%,rgba(13,16,19,.14) 84%,transparent 100%)}
+.veil--bottom::after{background:linear-gradient(0deg,#0D1013 0%,rgba(13,16,19,.98) 10%,rgba(13,16,19,.89) 23%,rgba(13,16,19,.67) 43%,rgba(13,16,19,.38) 65%,rgba(13,16,19,.14) 85%,transparent 100%)}
 .photo-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;align-items:start}
 .pcol{display:flex;flex-direction:column;gap:26px;will-change:transform}
 /* 与 lightbox 同级的阴影：放大/缩回的交接瞬间不会突然出现或消失。
@@ -558,6 +574,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .lb__bg{
   position:absolute;left:0;right:0;top:0;bottom:-120px;
   background:rgba(9,11,14,.84);
+  border-top:1px solid rgba(223,228,232,.18);   /* 玻璃板的上缘线：滑入时能看清"是一块面板压上来" */
   backdrop-filter:blur(20px) saturate(1.1);-webkit-backdrop-filter:blur(20px) saturate(1.1);
   transform:translateY(103%);will-change:transform;
   transition:transform .32s cubic-bezier(.5,0,.75,.35);
@@ -571,7 +588,13 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .lb__bg::after{
   content:"";position:absolute;inset:0;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:140px 140px;opacity:.045;mix-blend-mode:overlay;
+  background-size:110px 110px;opacity:.08;mix-blend-mode:overlay;
+}
+/* 暗部专用细噪点：overlay 在近黑区域失效，normal 混合这层负责暗部抖动 */
+.lb__bg::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:90px 90px;opacity:.04;
 }
 .lb img{
   position:fixed;object-fit:cover;will-change:transform;
@@ -588,6 +611,14 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   transition:opacity .5s .2s,transform .6s .2s var(--ease-pop);
 }
 .lb.is-open .lb__cap{opacity:1;transform:translateX(-50%)}
+/* 右上角关闭按钮：外观直接复用建筑 folder 的 .folder__close，这里只补定位与入场。
+   hover 的旋转由 .folder__close:hover 自带的 transform:rotate(90deg) 接管 */
+.lb__close{
+  position:absolute;top:16px;right:clamp(22px,4vw,40px);z-index:5;
+  opacity:0;translate:0 -10px;
+  transition:opacity .4s,translate .55s var(--ease-pop),background .4s,color .4s,transform .55s var(--ease-pop);
+}
+.lb.is-open .lb__close{opacity:1;translate:0 0;transition-delay:.18s,.18s,0s,0s,0s}
 
 /* ============ 06 CONTACT ============ */
 .contact{padding-bottom:0;padding-top:140px}
@@ -1032,6 +1063,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 <!-- lightbox -->
 <div class="lb" id="lb" role="dialog" aria-label="Enlarged photograph">
   <div class="lb__bg" aria-hidden="true"></div>
+  <button class="folder__close lb__close" id="lbClose" aria-label="Close">✕</button>
   <img id="lbImg" alt="">
   <div class="lb__cap" id="lbCap"></div>
 </div>
@@ -1586,12 +1618,16 @@ const PUBLICATIONS_FALLBACK = [
     document.documentElement.style.scrollBehavior='auto';
     let target=scrollY, cur=scrollY, raf=null, last=0;
     function maxScroll(){ return Math.max(0, document.documentElement.scrollHeight-innerHeight); }
-    function overlaysOpen(){
-      return document.getElementById('folder').classList.contains('is-open')
-          || document.getElementById('lb').classList.contains('is-open');
-    }
     addEventListener('wheel',function(e){
-      if(overlaysOpen() || e.ctrlKey) return;
+      if(e.ctrlKey) return;
+      /* 覆盖层打开时：html 自带 overflow-x:hidden，body 的 overflow:hidden
+         不会传播到视口，原生滚轮会漏过去滚动背景 —— 必须在这里主动拦截。
+         lightbox：滚轮完全禁用；folder：只放行其内部滚动区自己的处理 */
+      if(document.getElementById('lb').classList.contains('is-open')){ e.preventDefault(); return; }
+      if(document.getElementById('folder').classList.contains('is-open')){
+        if(!e.target.closest('#folderScroll')) e.preventDefault();
+        return;
+      }
       e.preventDefault();
       const d=e.deltaMode===1 ? e.deltaY*33 : e.deltaY;
       target=Math.min(maxScroll(), Math.max(0, target+d));
@@ -1672,6 +1708,7 @@ const PUBLICATIONS_FALLBACK = [
 
       folder.classList.add('is-open');
       document.body.style.overflow='hidden';
+      document.documentElement.style.overflow='hidden';   /* html 也要锁：body 的锁不会传播到视口 */
 
       /* 设计说明 */
       (function loadDesc(){
@@ -1708,6 +1745,7 @@ const PUBLICATIONS_FALLBACK = [
     if(!folder.classList.contains('is-open')) return;
     folder.classList.remove('is-open');
     document.body.style.overflow='';
+    document.documentElement.style.overflow='';
   }
   document.getElementById('folderClose').addEventListener('click',function(e){ e.stopPropagation(); closeFolder(); });
 
@@ -1880,16 +1918,19 @@ const PUBLICATIONS_FALLBACK = [
     lbImg.style.left=t.x+'px'; lbImg.style.top=t.y+'px';
     lb.classList.add('is-open');
     document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
   });
   function closeLb(){
     if(!lb.classList.contains('is-open')) return;
     lb.classList.remove('is-open');
     document.body.style.overflow='';
+    document.documentElement.style.overflow='';
     setTimeout(function(){
       if(!lb.classList.contains('is-open')) lbImg.removeAttribute('src');
     },380);
   }
   lb.addEventListener('click',closeLb);
+  document.getElementById('lbClose').addEventListener('click',function(e){ e.stopPropagation(); closeLb(); });
   addEventListener('keydown',function(e){
     if(e.key==='Escape'){ closeLb(); closeFolder(); }
   });
