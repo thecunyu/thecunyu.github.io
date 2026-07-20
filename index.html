@@ -219,6 +219,16 @@ body.is-ready .top{translate:0 0}
 html.is-android .hero__frost{backdrop-filter:none;-webkit-backdrop-filter:none}
 html.is-android .hero__base{filter:blur(82px)}
 html.is-android .hero__bg i{filter:blur(75px);transition:none}
+/* 安卓抗色带：噪点是静态平铺纹理，光栅化一次、逐帧只做一次简单混合 —— 约等于免费。
+   原 .055 的浓度是按「上面还有一层实时磨砂帮忙揉色」调的；磨砂并入图层 blur 后
+   渐变更平缓、色带更显，故 overlay 噪点加浓一档，并照搬 lightbox 玻璃板的做法
+   补一层 normal 混合的细噪点（overlay 在深色区域会失效，这层负责暗部抖动） */
+html.is-android .hero__frost::after{opacity:.095}
+html.is-android .hero__frost::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:90px 90px;opacity:.045;
+}
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity,transform}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
