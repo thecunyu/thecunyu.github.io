@@ -209,7 +209,17 @@ body.is-ready .top{translate:0 0}
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
   background-size:110px 110px;opacity:.055;mix-blend-mode:overlay;
 }
-.hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity}
+/* ============ ANDROID 降载（html.is-android 由 JS 侦测 UA 添加；其余平台完全不受影响）============
+   安卓 GPU 对「backdrop-filter 逐帧实时磨砂动态内容 + @property 颜色过渡逐帧重绘重模糊」非常吃力：
+   触摸时掉帧，图层显存吃紧被合成器丢弃时就露出浅色底 —— 即白屏闪跳。
+   等效替代：去掉 frost 的 backdrop-filter（保留其半透明蒙层与噪点），把这份磨砂量并入
+   丝带/基底自身的 blur（√(66²+36²)≈75、√(74²+36²)≈82），叠加结果观感几乎一致；
+   同时关闭 --ca/--cb 的 8s 流变过渡（该过渡会让巨型渐变层连续 8 秒逐帧重绘），改为定色。
+   图层从此只做 transform 合成动画：光栅化一次、GPU 平移旋转，流动效果原样保留 */
+html.is-android .hero__frost{backdrop-filter:none;-webkit-backdrop-filter:none}
+html.is-android .hero__base{filter:blur(82px)}
+html.is-android .hero__bg i{filter:blur(75px);transition:none}
+.hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity,transform}
 .hero__kicker{
   font-family:var(--font-m);font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--ikb);
   margin-bottom:26px;display:flex;align-items:center;gap:16px;
@@ -616,9 +626,15 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .lb__close{
   position:absolute;top:16px;right:clamp(22px,4vw,40px);z-index:5;
   opacity:0;translate:0 -10px;
-  transition:opacity .4s,translate .55s var(--ease-pop),background .4s,color .4s,transform .55s var(--ease-pop);
+  /* 关闭：与建筑 folder 的 X 一致 —— 只原地淡出，不往上跳。
+     translate 的过渡时长为 0 并延迟到完全隐身之后才瞬时归位，为下次入场备好起点 */
+  transition:opacity .28s,translate 0s .3s,background .4s,color .4s,transform .55s var(--ease-pop);
 }
-.lb.is-open .lb__close{opacity:1;translate:0 0;transition-delay:.18s,.18s,0s,0s,0s}
+.lb.is-open .lb__close{
+  opacity:1;translate:0 0;
+  /* 打开：保留原来的延迟下落入场 */
+  transition:opacity .4s .18s,translate .55s .18s var(--ease-pop),background .4s,color .4s,transform .55s var(--ease-pop);
+}
 
 /* ============ 06 CONTACT ============ */
 .contact{padding-bottom:0;padding-top:140px}
@@ -710,6 +726,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .hero__bg i{filter:blur(48px)}
   .hero__base{filter:blur(54px)}
   .hero__frost{backdrop-filter:blur(27px) saturate(1.1);-webkit-backdrop-filter:blur(27px) saturate(1.1)}
+  /* 安卓：同样把 27px 磨砂并入图层自身（√(48²+27²)≈55、√(54²+27²)≈60） */
+  html.is-android .hero__bg i{filter:blur(55px)}
+  html.is-android .hero__base{filter:blur(60px)}
   .contact__logo{width:58px}
   .contact__left{gap:30px}
   .xp__inner ul{padding-left:0}
@@ -1099,6 +1118,9 @@ const PUBLICATIONS_FALLBACK = [
 (function(){
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fine = matchMedia('(pointer: fine)').matches;
+  /* 安卓专属降载开关：其余平台（iOS / Windows / macOS）走原路径，效果一字不改 */
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  if(isAndroid) document.documentElement.classList.add('is-android');
   const IMG_DIR = '图片/';
 
   /* ---------- favicon 跟随浏览器深浅模式 ---------- */
@@ -1258,7 +1280,10 @@ const PUBLICATIONS_FALLBACK = [
         +(extra?','+extra+' '+dur.toFixed(1)+'s ease-in-out '+(-Math.random()*dur).toFixed(1)+'s infinite alternate':'');
     }
     function cycle(el){
-      if(reduced) return;
+      /* 安卓：--ca/--cb 的 8s 过渡已被关闭，此时换色只剩生硬瞬跳且每次都触发
+         巨型模糊层的整层重绘 —— 索性保持首次随机抽到的配色不再轮换。
+         丝带的旋转/缩放/漂移动画全部保留，画面依旧在流动 */
+      if(reduced||isAndroid) return;
       setTimeout(function(){ paint(el); cycle(el); }, 8000+Math.random()*6000);
     }
     function add(el){ bg.insertBefore(el,frost); }
@@ -1347,6 +1372,8 @@ const PUBLICATIONS_FALLBACK = [
              实心字（CUNYU）：text-shadow，投完整字形。
              描边字（YUAN）：drop-shadow，只投描边像素 —— 阴影天然只落在字母外侧，
              字腔保持透明干净；描边只有 2px，故阴影加浓一点补偿视觉分量 */
+          if(isAndroid) return;   /* 安卓：只保留 translate/scale 的弹起推开（纯合成，流畅），
+                                     跳过阴影 —— 逐帧改文字 filter/text-shadow 在安卓上是重绘重灾区 */
           const q=Math.round(o.f*20)/20;
           if(isOut[i]){
             const fl = q>0.05
@@ -1544,17 +1571,27 @@ const PUBLICATIONS_FALLBACK = [
   /* ---------- mouse parallax on hero ---------- */
   if(fine && !reduced){
     const mEls=[].slice.call(document.querySelectorAll('[data-mouse]'));
-    let mx=0,my=0,cx=0,cy=0,mOn=false;
+    /* 提前告知 Safari 这些元素会持续变换 —— 提升为合成层，
+       避免每帧 transform 变化都触发文字重绘（果冻感的主因） */
+    mEls.forEach(function(el){ el.style.willChange='transform'; });
+    let mx=0,my=0,cx=0,cy=0,mOn=false,mLast=null;
     addEventListener('mousemove',function(e){
       mx=e.clientX/innerWidth-.5;
       my=e.clientY/innerHeight-.5;
-      if(!mOn){ mOn=true; requestAnimationFrame(mLoop); }
+      if(!mOn){ mOn=true; mLast=null; requestAnimationFrame(mLoop); }
     });
-    function mLoop(){
-      cx+=(mx-cx)*.045; cy+=(my-cy)*.045;
+    function mLoop(now){
+      /* 时间归一化阻尼：dt=16.7ms 时系数 ≈ 原来的 .045，
+         帧间隔不匀（Safari 常见）时位移量随 dt 缩放，不再一顿一顿 */
+      if(mLast===null) mLast=now;
+      const dt=Math.min(50, now-mLast); mLast=now;
+      const k=1-Math.exp(-dt/362);
+      cx+=(mx-cx)*k; cy+=(my-cy)*k;
       mEls.forEach(function(el){
         const d=parseFloat(el.dataset.mouse);
-        el.style.transform='translate('+(cx*d).toFixed(1)+'px,'+(cy*d).toFixed(1)+'px)';
+        /* translate3d 强制走 GPU 合成；精度提到 0.01px，
+           收尾阶段的缓慢漂移不再以 0.1px 一格一格跳 */
+        el.style.transform='translate3d('+(cx*d).toFixed(2)+'px,'+(cy*d).toFixed(2)+'px,0)';
       });
       requestAnimationFrame(mLoop);
     }
