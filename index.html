@@ -219,15 +219,17 @@ body.is-ready .top{translate:0 0}
 html.is-android .hero__frost{backdrop-filter:none;-webkit-backdrop-filter:none}
 html.is-android .hero__base{filter:blur(82px)}
 html.is-android .hero__bg i{filter:blur(75px);transition:none}
-/* 安卓抗色带：噪点是静态平铺纹理，光栅化一次、逐帧只做一次简单混合 —— 约等于免费。
-   原 .055 的浓度是按「上面还有一层实时磨砂帮忙揉色」调的；磨砂并入图层 blur 后
-   渐变更平缓、色带更显，故 overlay 噪点加浓一档，并照搬 lightbox 玻璃板的做法
-   补一层 normal 混合的细噪点（overlay 在深色区域会失效，这层负责暗部抖动） */
-html.is-android .hero__frost::after{opacity:.095}
+/* 安卓抗色带 + 抗闪屏（第二轮）：
+   ① mix-blend-mode:overlay 不是 GPU 原生混合模式 —— 合成器每帧都要把下方
+      正在动画的底图回读进离屏纹理再做程序化混合，这个「回读」在不少安卓驱动上
+      正是闪白的触发点。安卓上两层噪点全部改用 normal（源覆盖）混合：
+      GPU 原生、零回读；抖散色阶的能力对灰噪点而言与 overlay 相当。
+   ② 噪点本身是静态平铺纹理，逐帧开销约等于零 —— 可以放心加浓。 */
+html.is-android .hero__frost::after{mix-blend-mode:normal;opacity:.06}
 html.is-android .hero__frost::before{
   content:"";position:absolute;inset:0;pointer-events:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:90px 90px;opacity:.045;
+  background-size:90px 90px;opacity:.05;
 }
 .hero__title{position:relative;z-index:3;margin:auto 0;padding:0 0 9vh;will-change:translate,opacity,transform}
 .hero__kicker{
@@ -1298,11 +1300,17 @@ const PUBLICATIONS_FALLBACK = [
     }
     function add(el){ bg.insertBefore(el,frost); }
 
-    /* 5 条巨型冷色丝带：宽 70–100vmax、彼此大幅交叠，融成一整片流动的场 */
-    for(let k=0;k<5;k++){
+    /* 5 条巨型冷色丝带：宽 70–100vmax、彼此大幅交叠，融成一整片流动的场。
+       安卓：4 条、尺寸收一档。每条丝带都是一整张「元素尺寸×DPR + blur 外扩」的
+       GPU 纹理，安卓中端机显存吃紧时合成器有两种自救：把纹理降位深/降分辨率
+       （→ 色带骤然变粗），或干脆逐出图层等重新光栅化（→ 露出浅色底，白屏闪跳）。
+       缩减总纹理量是对这两个症状釜底抽薪；丝带彼此重度交叠又盖着等效磨砂，
+       少一条、小一圈在观感上几乎读不出来 */
+    const RIBN = isAndroid?4:5;
+    for(let k=0;k<RIBN;k++){
       const el=document.createElement('i');
-      el.style.width=(70+Math.random()*30).toFixed(0)+'vmax';
-      el.style.height=(26+Math.random()*16).toFixed(0)+'vmax';
+      el.style.width=((isAndroid?58:70)+Math.random()*(isAndroid?24:30)).toFixed(0)+'vmax';
+      el.style.height=((isAndroid?22:26)+Math.random()*(isAndroid?12:16)).toFixed(0)+'vmax';
       el.style.left=(-38+Math.random()*66)+'%';
       el.style.top=(-34+Math.random()*68)+'%';
       el.style.setProperty('--ang',Math.round(Math.random()*360)+'deg');
@@ -1318,9 +1326,9 @@ const PUBLICATIONS_FALLBACK = [
     wh.style.setProperty('--ca','rgba(255,255,255,.72)');
     wh.style.setProperty('--cb','rgba(206,224,255,.2)');
     animate(wh); add(wh);
-    /* 深蓝丝带：周期性浮现又退去 */
+    /* 深蓝丝带：周期性浮现又退去（安卓同样收一档尺寸） */
     const nv=document.createElement('i');
-    nv.style.width='72vmax'; nv.style.height='22vmax';
+    nv.style.width=isAndroid?'58vmax':'72vmax'; nv.style.height=isAndroid?'18vmax':'22vmax';
     nv.style.left=(-30+Math.random()*56)+'%'; nv.style.top=(-24+Math.random()*60)+'%';
     nv.style.setProperty('--ang',Math.round(Math.random()*360)+'deg');
     nv.style.setProperty('--ca','rgba(6,20,86,.5)');
