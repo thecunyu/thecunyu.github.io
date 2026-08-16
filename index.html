@@ -286,7 +286,7 @@ body.is-ready .hero__annot{animation:fadeUp 1.05s cubic-bezier(.26,1.16,.4,1) 0.
 .hero__meta{
   display:grid;grid-template-columns:repeat(4,1fr);gap:28px;position:relative;z-index:3;
   padding-top:22px;will-change:translate;
-  font-family:var(--font-m);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  font-family:var(--font-m);font-size:12px;letter-spacing:.08em;text-transform:uppercase;
 }
 .hero__meta::before{
   content:"";position:absolute;top:0;left:0;right:0;height:1px;background:var(--ink);
@@ -299,7 +299,7 @@ body.is-ready .hero__meta > div:nth-child(1){animation-delay:0.8s;}
 body.is-ready .hero__meta > div:nth-child(2){animation-delay:0.9s;}
 body.is-ready .hero__meta > div:nth-child(3){animation-delay:1.0s;}
 body.is-ready .hero__meta > div:nth-child(4){animation-delay:1.1s;}
-.hero__meta .k{display:block;color:var(--ink-soft);margin-bottom:6px;font-size:10px}
+.hero__meta .k{display:block;color:var(--ink-soft);margin-bottom:6px;font-size:11px}
 
 /* ============ MARQUEE — monochrome ============ */
 .marquee{background:var(--ink);color:var(--paper);overflow:hidden}
@@ -334,7 +334,7 @@ section.rec{padding-top:120px; padding-bottom:100px; position:relative}
 .rec__head{
   display:flex;align-items:flex-end;gap:26px;border-bottom:1px solid var(--ink);
   padding-bottom:18px;margin-bottom:64px;
-  font-family:var(--font-m);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  font-family:var(--font-m);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
 }
 .rec__no{color:var(--ikb);font-weight:500}
 .rec__title{font-family:var(--font-d);font-weight:900;font-size:clamp(30px,4.6vw,56px);letter-spacing:-.01em;text-transform:uppercase;line-height:1;flex:1}
@@ -363,14 +363,21 @@ section.rec{padding-top:120px; padding-bottom:100px; position:relative}
 .field:first-child{padding-top:6px}
 .field:hover{translate:10px 0}
 .field:hover h3{color:var(--ikb)}
-.field__no{font-family:var(--font-m);font-size:11px;color:var(--ikb);padding-top:5px}
+.field__no{font-family:var(--font-m);font-size:12px;color:var(--ikb);padding-top:5px}
 .field h3{font-size:17px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;transition:color .4s}
-.field p{font-family:var(--font-m);font-size:12px;color:var(--ink-soft);margin-top:6px;line-height:1.8}
+.field p{font-family:var(--font-m);font-size:12.5px;color:var(--ink-soft);margin-top:6px;line-height:1.8}
 
 /* ============ 02 PUBLICATIONS ============ */
+#rec02 .rec__head{margin-bottom:42px}
+.pubtable__head{
+  display:grid;grid-template-columns:56px 2.15fr 1fr 116px 96px;gap:18px;
+  padding:0 0 12px;border-bottom:1px solid var(--ink);
+  font-family:var(--font-m);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
+}
+.pubtable__head span:last-child{text-align:right}
 .pub{
-  display:grid;grid-template-columns:64px 1.9fr 1fr 130px 110px;gap:26px;align-items:baseline;
-  padding:34px 0;border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:56px 2.15fr 1fr 116px 96px;gap:18px;align-items:baseline;
+  padding:25px 0;border-bottom:1px solid var(--line);
   transition:opacity 1.2s var(--ease),transform 1.2s var(--ease),translate .5s var(--ease);
   position:relative;
 }
@@ -380,12 +387,12 @@ section.rec{padding-top:120px; padding-bottom:100px; position:relative}
 }
 .pub:hover::before{width:100%}
 .pub:hover{translate:12px 0}
-.pub__no{font-family:var(--font-m);font-size:12px;color:var(--ink-soft)}
-.pub__title{font-weight:600;font-size:clamp(16px,1.7vw,21px);line-height:1.35;letter-spacing:-.005em;transition:color .4s}
+.pub__no{font-family:var(--font-m);font-size:12.5px;color:var(--ink-soft)}
+.pub__title{font-weight:600;font-size:clamp(16px,1.5vw,19px);line-height:1.35;letter-spacing:-.005em;transition:color .4s}
 .pub__venue{font-family:var(--font-s);font-style:italic;font-size:17px;color:var(--ink-soft)}
-.pub__role{font-family:var(--font-m);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft)}
+.pub__role{font-family:var(--font-m);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft)}
 .chip{
-  font-family:var(--font-m);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
   color:var(--ink-soft);justify-self:end;white-space:nowrap;
 }
 .chip--live{color:var(--ember)}
@@ -405,16 +412,22 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 
 /* ============ 03 EXPERIENCE ============ */
 #rec03{padding-bottom:110px}
-.xp__item{border-bottom:1px solid var(--line)}
+.xp{position:relative}
+.xp::before{content:"";position:absolute;left:14px;top:36px;bottom:36px;width:1px;background:var(--line)}
+.xp__item{position:relative;border-bottom:1px solid var(--line)}
+.xp__item::before{
+  content:"";position:absolute;left:10px;top:43px;z-index:2;width:9px;height:9px;border-radius:50%;
+  border:2px solid var(--ikb);background:var(--paper);box-shadow:0 0 0 5px var(--paper);
+}
 .xp__btn{
-  width:100%;display:grid;grid-template-columns:64px 1fr auto;gap:26px;align-items:baseline;
+  width:100%;display:grid;grid-template-columns:72px 1fr auto;gap:26px;align-items:baseline;
   text-align:left;padding:32px 0;transition:translate .5s var(--ease);
 }
 .xp__btn:hover{translate:10px 0}
 .xp__btn:hover h3{color:var(--ikb)}
-.xp__no{font-family:var(--font-m);font-size:12px;color:var(--ink-soft)}
+.xp__no{font-family:var(--font-m);font-size:12.5px;color:var(--ikb);padding-left:30px}
 .xp__t h3{font-size:clamp(16px,1.7vw,21px);font-weight:600;line-height:1.35;transition:color .4s}
-.xp__t p{font-family:var(--font-m);font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);margin-top:8px}
+.xp__t p{font-family:var(--font-m);font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-top:8px}
 .xp__plus{
   width:40px;height:40px;border:1px solid var(--ink);border-radius:50%;
   display:flex;align-items:center;justify-content:center;
@@ -426,7 +439,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .xp__body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .7s var(--ease)}
 .xp__item.is-open .xp__body{grid-template-rows:1fr}
 .xp__inner{overflow:hidden}
-.xp__inner ul{list-style:none;padding:4px 0 38px 90px;max-width:800px}
+.xp__inner ul{list-style:none;padding:4px 0 38px 98px;max-width:800px}
 .xp__inner li{
   font-size:14.5px;color:var(--ink-soft);padding:12px 0 12px 26px;position:relative;line-height:1.7;
 }
@@ -462,7 +475,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .work img { filter:grayscale(1) brightness(.92); }
   .work:hover img { filter:grayscale(0) brightness(1); transform:scale(1.01); }
 }
-.work__cap{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-top:14px;font-family:var(--font-m);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.work__cap{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding-top:14px;font-family:var(--font-m);font-size:11.5px;letter-spacing:.09em;text-transform:uppercase}
 .work__cap b{font-family:var(--font-d);font-weight:600;font-size:15.5px;letter-spacing:0;text-transform:none}
 .work__cap .open{color:rgba(223,228,232,.45);transition:color .4s,transform .55s var(--ease-pop)}
 .work:hover .open{color:var(--ikb-l);transform:translateX(4px)}
@@ -678,7 +691,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .contact__mail{
   display:inline-flex;align-items:center;gap:.45em;
   font-weight:900;text-transform:lowercase;letter-spacing:-.02em;
-  font-size:clamp(21px,3.2vw,38px);line-height:1.1;
+  font-size:clamp(20px,2.8vw,34px);line-height:1.1;
   transition:color .4s;white-space:nowrap;
 }
 .contact__mail:hover{color:var(--ikb)}
@@ -688,7 +701,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   box-shadow:0 18px 44px -14px rgba(10,14,20,.3);position:relative;
 }
 .contact__photo img{width:100%;aspect-ratio:4/5;object-fit:cover;filter:saturate(.9)}
-.contact__photo figcaption{position:absolute;left:10px;bottom:9px;font-family:var(--font-m);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft)}
+.contact__photo figcaption{position:absolute;left:10px;bottom:9px;font-family:var(--font-m);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft)}
 .crow{
   display:grid;grid-template-columns:64px 1fr auto;gap:26px;align-items:center;
   padding:24px 0;border-bottom:1px solid var(--line);
@@ -702,7 +715,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .crow:hover .arr{transform:translate(6px,-6px)}
 .foot{
   display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
-  padding:44px 0 32px;font-family:var(--font-m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);
+  padding:44px 0 32px;font-family:var(--font-m);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);
 }
 .foot a:hover{color:var(--ikb)}
 
@@ -777,6 +790,8 @@ html[data-theme="dark"] .top.top--dark{
 @media (max-width:980px){
   .hero__title { padding-bottom: 5vh; }
   .research{grid-template-columns:1fr;gap:50px}
+  .pubtable__head{display:none}
+  #rec02 .rec__head{margin-bottom:44px}
   .pub{grid-template-columns:48px 1fr 90px;grid-template-areas:"no title chip" "no venue chip";row-gap:8px}
   .pub__no{grid-area:no}.pub__title{grid-area:title}.pub__venue{grid-area:venue}.chip{grid-area:chip}
   .pub__role{display:none}
@@ -885,7 +900,7 @@ html[data-theme="dark"] .top.top--dark{
   </nav>
   <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
     <span class="theme-toggle__track" aria-hidden="true"><span class="theme-toggle__thumb"></span></span>
-    <span class="theme-toggle__label">Mode</span>
+    <span class="theme-toggle__label">Dark</span>
   </button>
 </header>
 
@@ -972,6 +987,9 @@ html[data-theme="dark"] .top.top--dark{
     <span class="rec__no">REC 02</span>
     <span class="rec__title">Publications</span>
     <span class="rec__count" id="pubCount"></span>
+  </div>
+  <div class="pubtable__head" aria-hidden="true">
+    <span>Index</span><span>Title</span><span>Journal</span><span>Contribution</span><span>Status</span>
   </div>
   <div class="pubtable" id="pubtable" data-stagger></div>
   <p class="pub-note" data-reveal>My current study offers the first large-scale, fine-grained quantification of the link between depressive states and perceived urban places in China.</p>
