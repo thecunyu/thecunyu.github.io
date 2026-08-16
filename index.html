@@ -763,13 +763,38 @@ html[data-theme="dark"] .lb{
   --ikb-l:#8FA6FF;
   --ember:#E23B12;
 }
-html[data-theme="dark"] .hero__base{
-  background:linear-gradient(112deg,
-    rgba(24,26,31,.84) 0%,rgba(18,21,27,.82) 17%,rgba(36,40,48,.72) 33%,
-    rgba(45,53,61,.6) 49%,rgba(43,48,64,.56) 65%,rgba(51,44,68,.42) 82%,rgba(20,22,28,.82) 100%);
+html[data-theme="dark"] .hero{
+  --ink:#F4F6FA;
+  --ink-soft:#B7C0CF;
+  --line:rgba(224,232,247,.22);
+  --ikb:#91A8FF;
 }
-html[data-theme="dark"] .hero__bg i{opacity:.58}
-html[data-theme="dark"] .hero__frost{background:rgba(15,16,19,.46)}
+html[data-theme="dark"] .hero__base{
+  background:linear-gradient(118deg,
+    rgba(7,10,22,.98) 0%,rgba(10,21,58,.94) 17%,rgba(16,53,134,.82) 35%,
+    rgba(24,105,162,.62) 49%,rgba(63,70,211,.68) 66%,rgba(82,37,145,.58) 83%,rgba(8,11,27,.97) 100%);
+}
+html[data-theme="dark"] .hero__bg i{opacity:.72}
+html[data-theme="dark"] .hero__frost{
+  background:rgba(6,9,17,.20);
+  backdrop-filter:blur(30px) saturate(1.32);
+  -webkit-backdrop-filter:blur(30px) saturate(1.32);
+}
+html[data-theme="dark"] .hero__frost::after{opacity:.03}
+html[data-theme="dark"] .hero__bg::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  background:
+    radial-gradient(ellipse at 50% 42%,transparent 24%,rgba(4,6,13,.06) 58%,rgba(4,6,13,.38) 100%),
+    linear-gradient(180deg,rgba(4,6,13,.10),transparent 28%,transparent 72%,rgba(4,6,13,.20));
+}
+html.is-android[data-theme="dark"] .hero__frost{
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
 html[data-theme="dark"] .contact__logo img{opacity:0}
 html[data-theme="dark"] .contact__logo img.alt{opacity:1}
 html[data-theme="dark"] .contact__photo{
@@ -830,9 +855,15 @@ html[data-theme="dark"] .top.top--dark{
   .hero__bg i{filter:blur(48px)}
   .hero__base{filter:blur(54px)}
   .hero__frost{backdrop-filter:blur(27px) saturate(1.1);-webkit-backdrop-filter:blur(27px) saturate(1.1)}
+  html[data-theme="dark"] .hero__frost{
+    background:rgba(6,9,17,.18);
+    backdrop-filter:blur(24px) saturate(1.26);
+    -webkit-backdrop-filter:blur(24px) saturate(1.26);
+  }
   /* 安卓：同样把 27px 磨砂并入图层自身（√(48²+27²)≈55、√(54²+27²)≈60） */
   html.is-android .hero__bg i{filter:blur(55px)}
   html.is-android .hero__base{filter:blur(60px)}
+  html.is-android[data-theme="dark"] .hero__frost{backdrop-filter:none;-webkit-backdrop-filter:none}
   .contact__logo{width:58px}
   .contact__left{gap:30px}
   .xp__inner ul{padding-left:0}
