@@ -13,6 +13,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;900&family=IBM+Plex+Mono:ital,wght@0,400;0,500;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script>
+(function(){
+  const hour=new Date().getHours();
+  const theme=(hour>=7 && hour<19)?'light':'dark';
+  document.documentElement.dataset.theme=theme;
+})();
+</script>
 <style>
 /* ============ TOKENS ============ */
 :root{
@@ -119,15 +126,28 @@ body.is-ready .top{translate:0 0}
 .top--dark .top__mark img.alt{opacity:1}
 .top--dark .top__links a::after{background:var(--ikb-l)}
 .top--dark .top__links a:hover{color:var(--ikb-l)}
-.top--dark .top__status{color:rgba(223,228,232,.62)}
 .top__links{display:flex;gap:clamp(16px,2.6vw,32px)}
 .top a{position:relative;padding:2px 0}
 .top__links a::after{content:"";position:absolute;left:0;bottom:-2px;height:1px;width:0;background:var(--ikb);transition:width .45s var(--ease)}
 .top__links a:hover::after{width:100%}
 .top__links a:hover{color:var(--ikb)}
-.top__status{display:flex;align-items:center;gap:8px;color:var(--ink-soft)}
-.top__status i{width:7px;height:7px;border-radius:50%;background:var(--ember);display:inline-block;animation:pulse 2.6s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.theme-toggle{
+  display:inline-flex;align-items:center;gap:10px;width:78px;flex:0 0 78px;padding:5px 0;
+  font-family:var(--font-m);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-soft);white-space:nowrap;transition:color .4s;
+}
+.theme-toggle:hover{color:var(--ikb)}
+.theme-toggle__track{
+  position:relative;width:36px;height:20px;border:1px solid currentColor;border-radius:999px;
+  opacity:.9;transition:background .5s var(--ease),border-color .4s;
+}
+.theme-toggle__thumb{
+  position:absolute;left:3px;top:3px;width:12px;height:12px;border-radius:50%;
+  background:currentColor;transition:transform .55s var(--ease-pop),background .4s;
+}
+html[data-theme="dark"] .theme-toggle__thumb{transform:translateX(16px)}
+.top--dark .theme-toggle{color:rgba(223,228,232,.68)}
+.top--dark .theme-toggle:hover{color:var(--ikb-l)}
 
 /* ============ HERO ============ */
 .hero{
@@ -652,7 +672,9 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
 .contact{padding-bottom:0;padding-top:140px}
 .contact__grid{display:grid;grid-template-columns:1.4fr auto;gap:clamp(40px,6vw,90px);align-items:center;padding:10px 0 70px}
 .contact__left{display:flex;flex-direction:column;gap:38px;min-width:0}
-.contact__logo{width:clamp(60px,6.5vw,84px);mix-blend-mode:multiply;opacity:.92;-webkit-user-drag:none}
+.contact__logo{position:relative;display:block;width:clamp(60px,6.5vw,84px);opacity:.92}
+.contact__logo img{width:100%;transition:opacity .65s cubic-bezier(.45,.05,.55,.95)}
+.contact__logo img.alt{position:absolute;inset:0;opacity:0}
 .contact__mail{
   display:inline-flex;align-items:center;gap:.45em;
   font-weight:900;text-transform:lowercase;letter-spacing:-.02em;
@@ -691,6 +713,61 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   display:flex;align-items:center;justify-content:center;text-align:center;
   font-family:var(--font-m);font-size:10px;letter-spacing:.1em;color:inherit;opacity:.7;
   width:100%;min-height:220px;padding:20px;text-transform:none;
+}
+
+/* ============ DEEP MODE ============ */
+html[data-theme="dark"]{
+  --paper:#17191D;
+  --paper-2:#1D2025;
+  --ice:#24282E;
+  --ink:#E7E8EA;
+  --ink-soft:#A0A4AB;
+  --line:#3B4048;
+  --line-d:rgba(229,234,240,.13);
+  --ikb:#8097E8;
+  --ikb-l:#AAB7E8;
+  --ember:#FF6A49;
+  color-scheme:dark;
+}
+html,body{transition:background-color .65s var(--ease),color .55s var(--ease)}
+.hero__frost,.contact__photo{transition:background-color .65s var(--ease),box-shadow .65s var(--ease)}
+
+/* These sections already have their own dark art direction; keep it unchanged. */
+html[data-theme="dark"] .intro,
+html[data-theme="dark"] .marquee,
+html[data-theme="dark"] .darkzone,
+html[data-theme="dark"] .folder,
+html[data-theme="dark"] .lb{
+  --paper:#DFE4E8;
+  --paper-2:#D4DBE0;
+  --ice:#EDF1F3;
+  --ink:#0C1015;
+  --ink-2:#0D1013;
+  --ink-soft:#5A6572;
+  --line:#BAC5CD;
+  --line-d:rgba(223,228,232,.14);
+  --ikb:#002FA7;
+  --ikb-l:#8FA6FF;
+  --ember:#E23B12;
+}
+html[data-theme="dark"] .hero__base{
+  background:linear-gradient(112deg,
+    rgba(24,26,31,.84) 0%,rgba(18,21,27,.82) 17%,rgba(36,40,48,.72) 33%,
+    rgba(45,53,61,.6) 49%,rgba(43,48,64,.56) 65%,rgba(51,44,68,.42) 82%,rgba(20,22,28,.82) 100%);
+}
+html[data-theme="dark"] .hero__bg i{opacity:.58}
+html[data-theme="dark"] .hero__frost{background:rgba(15,16,19,.46)}
+html[data-theme="dark"] .contact__logo img{opacity:0}
+html[data-theme="dark"] .contact__logo img.alt{opacity:1}
+html[data-theme="dark"] .contact__photo{
+  background:#25282D;
+  box-shadow:0 20px 50px -15px rgba(0,0,0,.65);
+}
+html[data-theme="dark"] .top.top--dark{
+  --paper:#DFE4E8;
+  --ink:#0C1015;
+  --ink-soft:#5A6572;
+  --ikb-l:#8FA6FF;
 }
 
 /* ============ RESPONSIVE ============ */
@@ -751,6 +828,10 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   .folder__bar{padding:14px 22px}
   .folder__scroll{padding:44px 22px 150px}
 }
+@media (max-width:420px){
+  .theme-toggle{width:36px;flex-basis:36px;gap:0}
+  .theme-toggle__label{display:none !important}
+}
 /* 打印 / 另存 PDF：图片不出，整页盖水印 */
 @media print{
   img,.hero__bg,.band,.lb,.folder{display:none !important}
@@ -802,7 +883,10 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
     <a href="#rec05">Photography</a>
     <a href="#rec06">Contact</a>
   </nav>
-  <div class="top__status"><i></i>Open — PhD Positions</div>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">
+    <span class="theme-toggle__track" aria-hidden="true"><span class="theme-toggle__thumb"></span></span>
+    <span class="theme-toggle__label">Mode</span>
+  </button>
 </header>
 
 <!-- ===== HERO ===== -->
@@ -1051,15 +1135,17 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   </div>
   <div class="contact__grid" data-reveal>
     <div class="contact__left">
-      <img class="contact__logo" src="图片/logo-black.png" alt="CY monogram">
+      <span class="contact__logo">
+        <img src="图片/logo-black.png" alt="CY monogram">
+        <img src="图片/logo-white.png" class="alt" alt="" aria-hidden="true">
+      </span>
       <a class="contact__mail" href="mailto:thecunyu@gmail.com">
         <svg class="mailico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><path d="M3.2 6.6 12 13l8.8-6.4"/></svg>
         <span>thecunyu<span class="at">@</span>gmail.com</span>
       </a>
       <div class="ctable" data-stagger>
         <a class="crow" href="https://scholar.google.com/citations?user=-O9y3XkAAAAJ" target="_blank" rel="noopener"><span>C.01</span><span>Google Scholar</span><span class="arr">↗︎</span></a>
-        <a class="crow" href="https://www.instagram.com/thecunyu7/" target="_blank" rel="noopener"><span>C.02</span><span>Instagram</span><span class="arr">↗︎</span></a>
-        <a class="crow" href="https://unsplash.com/@thecunyu7" target="_blank" rel="noopener"><span>C.03</span><span>Unsplash</span><span class="arr">↗︎</span></a>
+        <a class="crow" href="https://unsplash.com/@thecunyu7" target="_blank" rel="noopener"><span>C.02</span><span>Unsplash</span><span class="arr">↗︎</span></a>
       </div>
     </div>
     <figure class="contact__photo">
@@ -1120,7 +1206,7 @@ const PHOTO_SETS = ['buildings','lights','monuments','woods','summers','contrast
 
 const PUBLICATIONS_FALLBACK = [
   {title:"CBEES: A fine-grained commercial built environment perception and evaluation based on social media.", venue:"Sustainable Cities and Society, 119", role:"First author", status:"Published", link:"https://doi.org/10.1016/j.scs.2024.106120", highlight:""},
-  {title:"Depression risk looms in idealized sentiment towards urban places on social media.", venue:"Nature Cities", role:"First author", status:"Accept in principle", link:"", highlight:"yes"},
+  {title:"Depression risk looms in idealized sentiment towards urban places on social media.", venue:"Nature Cities", role:"First author", status:"Accept", link:"", highlight:"yes"},
   {title:"A case study on the public sentiment effects of the built environment based on natural language processing: nine commercial projects in Wuhan.", venue:"Modern Urban Research (CN)", role:"First author", status:"Published", link:"https://doi.org/10.3969/j.issn.1009-6000.2026.03.010", highlight:""},
   {title:"Exploring the Impact of Environmental and Behavioral Factors on Emotional Experience in Themed Shopping Malls Using Social Media Data and Interpretable Machine Learning.", venue:"Buildings, 16(13)", role:"Third author", status:"Published", link:"https://doi.org/10.3390/buildings16132499", highlight:""},
   {title:"Experiential pathways linking urban waterfronts and public happiness: Evidence from social media data in Wuhan, China.", venue:"Ecological Indicators", role:"Sixth author", status:"Under review", link:"", highlight:""},
@@ -1135,19 +1221,34 @@ const PUBLICATIONS_FALLBACK = [
   if(isAndroid) document.documentElement.classList.add('is-android');
   const IMG_DIR = '图片/';
 
-  /* ---------- favicon 跟随浏览器深浅模式 ---------- */
+  /* ---------- light / deep theme ---------- */
+  const root=document.documentElement;
+  const themeToggle=document.getElementById('themeToggle');
+  function isDarkTheme(){ return root.dataset.theme==='dark'; }
+  function renderThemeToggle(){
+    const dark=isDarkTheme();
+    themeToggle.setAttribute('aria-pressed',dark?'true':'false');
+    themeToggle.setAttribute('aria-label',dark?'Switch to light mode':'Switch to dark mode');
+  }
+  renderThemeToggle();
+  themeToggle.addEventListener('click',function(){
+    const next=isDarkTheme()?'light':'dark';
+    root.dataset.theme=next;
+    renderThemeToggle();
+    dispatchEvent(new Event('themechange'));
+  });
+
+  /* ---------- favicon 跟随站内主题 ---------- */
   (function(){
-    const links=document.querySelectorAll('link[rel="icon"]');
-    const mq=matchMedia('(prefers-color-scheme: dark)');
     function setIcon(){
-      links.forEach(function(l){ l.remove(); });
+      document.querySelectorAll('link[rel="icon"]').forEach(function(l){ l.remove(); });
       const l=document.createElement('link');
       l.rel='icon'; l.type='image/png';
-      l.href=mq.matches?'图片/logo-white.png':'图片/logo-black.png';
+      l.href=isDarkTheme()?'图片/logo-white.png':'图片/logo-black.png';
       document.head.appendChild(l);
     }
     setIcon();
-    if(mq.addEventListener) mq.addEventListener('change',setIcon);
+    addEventListener('themechange',setIcon);
   })();
 
   /* ---------- 每次刷新回到最上面 ---------- */
@@ -1722,7 +1823,7 @@ const PUBLICATIONS_FALLBACK = [
     function tone(){
       tick=false;
       const y=bar.offsetHeight*0.6;
-      let dark=false;
+      let dark=document.documentElement.dataset.theme==='dark';
       for(let i=0;i<darkEls.length;i++){
         const r=darkEls[i].getBoundingClientRect();
         if(r.top<=y && r.bottom>=y){ dark=true; break; }
@@ -1731,6 +1832,7 @@ const PUBLICATIONS_FALLBACK = [
     }
     addEventListener('scroll',function(){ if(!tick){ tick=true; requestAnimationFrame(tone); } },{passive:true});
     addEventListener('resize',tone);
+    addEventListener('themechange',tone);
     tone();
   })();
 
