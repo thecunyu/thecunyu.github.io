@@ -639,7 +639,7 @@ a.pub:hover .pub__title{color:var(--ikb);background-size:100% 1px}
   background-size:90px 90px;opacity:.04;
 }
 .lb img{
-  position:fixed;object-fit:cover;will-change:transform;
+  position:fixed;object-fit:contain;will-change:transform;
   transform:translateY(114%);
   transition:transform .32s cubic-bezier(.5,0,.75,.35);   /* 关闭：先快后慢地落下去（提速 ~1.3×） */
 }
@@ -2055,11 +2055,20 @@ const PUBLICATIONS_FALLBACK = [
   /* ---------- lightbox：底部飞入 / 向下飞出（与建筑 folder 同款动线）---------- */
   const lb=document.getElementById('lb'), lbImg=document.getElementById('lbImg'), lbCap=document.getElementById('lbCap');
 
-  function lbTargetRect(){
+  function lbTargetRect(img){
     const vw=innerWidth, vh=innerHeight;
-    const W=Math.min(vw*0.9, vh*0.86*0.75);
-    const H=W*4/3;
+    const maxW=vw*0.9, maxH=vh*0.86;
+    const ratio=(img&&img.naturalWidth&&img.naturalHeight)
+      ? img.naturalWidth/img.naturalHeight
+      : 3/4;
+    let W=maxW, H=W/ratio;
+    if(H>maxH){ H=maxH; W=H*ratio; }
     return {x:(vw-W)/2, y:(vh-H)/2, w:W, h:H};
+  }
+  function placeLb(img){
+    const t=lbTargetRect(img);
+    lbImg.style.width=t.w+'px'; lbImg.style.height=t.h+'px';
+    lbImg.style.left=t.x+'px'; lbImg.style.top=t.y+'px';
   }
   photoCols.addEventListener('click',function(e){
     if(matchMedia('(max-width:700px)').matches) return;   /* 手机不放大 */
@@ -2070,12 +2079,16 @@ const PUBLICATIONS_FALLBACK = [
     lbImg.src=im.src; lbImg.alt=im.alt;
     const tag=f.querySelector('.ph__tag');
     lbCap.textContent=tag?tag.textContent:'';
-    const t=lbTargetRect();
-    lbImg.style.width=t.w+'px'; lbImg.style.height=t.h+'px';
-    lbImg.style.left=t.x+'px'; lbImg.style.top=t.y+'px';
+    placeLb(im);
     lb.classList.add('is-open');
     document.body.style.overflow='hidden';
     document.documentElement.style.overflow='hidden';
+  });
+  lbImg.addEventListener('load',function(){
+    if(lb.classList.contains('is-open')) placeLb(lbImg);
+  });
+  addEventListener('resize',function(){
+    if(lb.classList.contains('is-open')&&lbImg.src) placeLb(lbImg);
   });
   function closeLb(){
     if(!lb.classList.contains('is-open')) return;
