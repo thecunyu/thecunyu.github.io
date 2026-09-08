@@ -2908,7 +2908,7 @@ THREE.OBJLoader = ( function () {
   let touchY=0,touchArch=false;
   addEventListener('touchstart',event=>{touchY=event.touches[0].clientY;state.currentScroll=scrollY;state.targetScroll=scrollY;state.scrollDone=null;state.modalScroll=null;const l=state.layout;touchArch=!state.modal&&state.sy>=l.archGallery-2&&state.sy<=l.archLast+l.archStep*.7;state.archGesture=null;},{passive:true});
   addEventListener('touchmove',event=>{if(state.modal)return;const y=event.touches[0].clientY,delta=touchY-y;touchY=y;
-    if(touchArch){event.preventDefault();consumeArchGesture(delta,performance.now());}
+    if(touchArch&&consumeArchGesture(delta,performance.now()))event.preventDefault();
     else if(!state.reduced&&coverResistance()){event.preventDefault();state.targetScroll=clamp(state.targetScroll+delta*.46,0,maxScroll());wake();}
     else if(scrollY<=0&&delta<0||scrollY>=maxScroll()-1&&delta>0){event.preventDefault();pullEdge(delta*2);}
   },{passive:false});
