@@ -2372,7 +2372,7 @@ THREE.OBJLoader = ( function () {
   const easeOut=t=>1-Math.pow(1-clamp(t),5);
   const easeInOut=t=>t<.5?8*t*t*t*t:1-Math.pow(-2*t+2,4)/2;
   const MOTION={out:'cubic-bezier(.16,1,.3,1)',sweep:'cubic-bezier(.76,0,.24,1)',pop:'cubic-bezier(.2,1.2,.3,1)',exit:'cubic-bezier(.7,0,.2,1)'};
-  const state={reduced:reduceQuery.matches,width:0,height:0,sy:scrollY,currentScroll:scrollY,targetScroll:scrollY,writtenScroll:scrollY,scrollDone:null,raf:0,lastTime:0,dirty:true,ready:false,modal:null,modalScroll:null,lockedY:0,city:null,layout:{},archIndex:0,archMotion:null};
+  const state={reduced:reduceQuery.matches,width:0,height:0,sy:scrollY,currentScroll:scrollY,targetScroll:scrollY,writtenScroll:scrollY,scrollDone:null,raf:0,lastTime:0,dirty:true,ready:false,modal:null,modalScroll:null,lockedY:0,city:null,layout:{},archIndex:0,archMotion:null,archExitReady:false,archExitTimer:0};
   let wheelDamping=false;
   const WHEEL_DAMPING=6;
   const hero=$('home'),arch=$('architecture'),archStage=$('archStage');
@@ -2433,7 +2433,7 @@ THREE.OBJLoader = ( function () {
       heroBottom:hero.offsetHeight,cityBottom:archTop,
       researchTop:documentTop($('research')),researchBottom:documentTop($('research'))+$('research').offsetHeight,
       experienceTop:documentTop($('experienceWrap')),
-      archTop,archIntro:intro,archHold,archStep:step,archGallery:archTop+intro,archLast:archTop+intro+4*step,archBottom:archTop+pinLength+h,
+      archTop,archIntro:intro,archHold,archStep:step,archGallery:archTop+intro+archHold,archLast:archTop+intro+archHold+4*step,archBottom:archTop+pinLength+h,
       photoRawTop,photoTop,photoHold,photoReveal,photoStart:photoTop+photoHold+photoReveal,photoLength,photoTravel,photoRamp,photoEnd:photoTop+photoHold+photoReveal+photoLength,photoMetrics,
       contactRawTop,contactTop,resistance,loss,slideW,slideH,slideX:(w-slideW)/2,slideY:(h-slideH)/2,
       mobile,photoFocus:photoMetrics.find(m=>m.focus===heroPhotoIndex)
@@ -2571,7 +2571,6 @@ THREE.OBJLoader = ( function () {
   function consumeArchGesture(delta,now){
     const l=state.layout;
     if(!delta||state.sy<l.archGallery-2||state.sy>l.archLast+2)return false;
-    if(state.archIndex===4&&delta>0||state.archIndex===0&&delta<0){state.archGesture=null;return false;}
     let g=state.archGesture;
     const direction=Math.sign(delta);
     const amount=Math.abs(delta);
@@ -2600,7 +2599,27 @@ THREE.OBJLoader = ( function () {
 
       g=null;
     }
+    if(state.archIndex===4&&delta>0){
+      if(!state.archExitReady){
+        if(!state.archExitTimer){
+          state.archExitTimer=setTimeout(()=>{
+            state.archExitReady=true;
+            state.archExitTimer=0;
+            state.dirty=true;
+            wake();
+          },420);
+        }
+        return true;
+      }
 
+      state.archGesture=null;
+      return false;
+    }
+
+    if(state.archIndex===0&&delta<0){
+      state.archGesture=null;
+      return false;
+    }
     if(!g||now-g.last>180||direction!==g.direction){
       g=state.archGesture={
         sum:0,
@@ -2957,7 +2976,7 @@ THREE.OBJLoader = ( function () {
       sy>=l.archGallery-2 &&
       sy<=l.archLast+2 &&
       state.archIndex>0 &&
-      state.archIndex<4
+      (state.archIndex<4 || (state.archIndex===4 && !state.archExitReady))
         ? 'none'
         : 'pan-y';
     if(sy<l.archTop-h*1.1||sy>l.archBottom+h){state.archMotion=null;return;}
@@ -3253,6 +3272,9 @@ THREE.OBJLoader = ( function () {
   addEventListener('scroll',()=>{
     if(state.modal||state.restoring)return;
     state.sy=scrollY;state.currentScroll=scrollY;
+    if(state.layout.archLast&&state.sy>state.layout.archLast+20){
+      state.archExitReady=false;
+    }
     if(!state.scrollAnimation&&!wheelDamping)state.targetScroll=scrollY;
     state.dirty=true;wake();
   },{passive:true});
