@@ -2951,6 +2951,8 @@ THREE.OBJLoader = ( function () {
   }
   function renderArchitecture(now=performance.now()){
     const {sy,layout:l,width:w,height:h}=state;
+    $('archStage').style.touchAction=
+      touchDevice() && sy>=l.archGallery-2 && sy<=l.archLast+2 ? 'none' : 'pan-y';
     if(sy<l.archTop-h*1.1||sy>l.archBottom+h){state.archMotion=null;return;}
     const intro=clamp((sy-l.archTop-l.archHold)/(l.archIntro-l.archHold)),arrival=clamp((sy-l.archTop+h)/h);
     const reveal=easeOut(clamp((intro-.78)/.22));
@@ -2975,7 +2977,7 @@ THREE.OBJLoader = ( function () {
       $('typeCaption').style.transform='translateY('+((1-arrival)*45-phraseOut*70)+'px)';
     }
     const previous=state.archRenderedIndex;
-    if(previous!==undefined&&previous!==index&&reveal>.99&&!state.reduced&&!touchDevice()){
+    if(previous!==undefined&&previous!==index&&reveal>.99&&!state.reduced){
       const direction=index>previous?1:-1;
       state.archMotion={from:renderSlides.map(slide=>slide.pos||cardPosition(slide.logical-previous,w,h,l.slideW,l.slideH)),start:now,direction,previous};
       showSlideText(index,direction);state.slidePointer={x:0,y:0};
@@ -2988,11 +2990,6 @@ THREE.OBJLoader = ( function () {
     renderSlides.forEach((slide,i)=>{
       const delta=slide.logical-index,active=!slide.duplicate&&delta===0&&intro>=.99&&leaving<.2;
       let target=cardPosition(delta,w,h,l.slideW,l.slideH);
-      if(touchDevice()&&!state.reduced){
-        const base=Math.floor(cardProgress),fraction=cardProgress-base;
-        const a=cardPosition(slide.logical-base,w,h,l.slideW,l.slideH),b=cardPosition(slide.logical-base-1,w,h,l.slideW,l.slideH);
-        target=a.map((v,j)=>lerp(v,b[j],fraction));
-      }
       let pos=target;
       if(state.archMotion){
         const delay=l.mobile?0:clamp((state.archMotion.direction>0?delta+1:1-delta),0,3)*35;
