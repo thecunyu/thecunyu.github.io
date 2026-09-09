@@ -260,7 +260,7 @@ html.touch-layout:not([data-input="keyboard"]) .photo-item__button:focus-visible
   .site-logo { top:calc(22px + env(safe-area-inset-top,0px)); left:max(22px,env(safe-area-inset-left,0px)); }
   .menu-toggle { top:calc(22px + env(safe-area-inset-top,0px)); right:max(22px,env(safe-area-inset-right,0px)); }
   .slide__side { display:none; }
-  .arch-heading { top:calc(28px + env(safe-area-inset-top,0px)); }
+  .arch-heading { top:calc(33px + env(safe-area-inset-top,0px)); }
 }
 @media(max-width:600px) {
   .hero__meta>span:last-child { left:50%; right:auto; bottom:calc(32px + env(safe-area-inset-bottom,0px)); transform:translateX(-50%); width:max-content; text-align:center; }
@@ -2577,6 +2577,7 @@ THREE.OBJLoader = ( function () {
     const amount=Math.abs(delta);
 
     if(g&&g.done){
+      if(touchDevice())return true;
       const gap=now-g.last;
       const previous=g.lastAmount??amount;
 
