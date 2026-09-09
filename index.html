@@ -2952,7 +2952,13 @@ THREE.OBJLoader = ( function () {
   function renderArchitecture(now=performance.now()){
     const {sy,layout:l,width:w,height:h}=state;
     $('archStage').style.touchAction=
-      touchDevice() && sy>=l.archGallery-2 && sy<=l.archLast+2 ? 'none' : 'pan-y';
+      touchDevice() &&
+      sy>=l.archGallery-2 &&
+      sy<=l.archLast+2 &&
+      state.archIndex>0 &&
+      state.archIndex<4
+        ? 'none'
+        : 'pan-y';
     if(sy<l.archTop-h*1.1||sy>l.archBottom+h){state.archMotion=null;return;}
     const intro=clamp((sy-l.archTop-l.archHold)/(l.archIntro-l.archHold)),arrival=clamp((sy-l.archTop+h)/h);
     const reveal=easeOut(clamp((intro-.78)/.22));
