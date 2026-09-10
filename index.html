@@ -307,12 +307,8 @@ dialog { touch-action:pan-y pinch-zoom; }
 @media(prefers-reduced-motion:reduce) { .photo-gallery,.slide__image-wrap { will-change:auto; } }
 
 
-/* 触屏滚动只属于浏览器；原生停靠消化惯性，下一划无需等待计时器。 */
+/* 触屏正文原生滚动；建筑卡片在独立手势区域处理。 */
 main { touch-action:pan-y pinch-zoom; }
-html.native-scroll:not(.is-navigating) { scroll-snap-type:y proximity; }
-html.native-scroll.native-landing:not(.is-navigating) { scroll-snap-type:y mandatory; scroll-behavior:smooth!important; }
-.native-landing .native-snap-anchor:not(.is-snap-target) { scroll-snap-align:none; }
-.native-snap-anchor { position:absolute; left:0; width:1px; height:1px; pointer-events:none; scroll-snap-align:start; scroll-snap-stop:always; }
 .photo-item img { opacity:0; transition:opacity .18s ease-out,transform 1.1s var(--ease),filter .8s; }
 .photo-item.is-ready img { opacity:1; }
 .slide__title .letter { opacity:1; backface-visibility:hidden; }
@@ -323,22 +319,53 @@ html.native-scroll.native-landing:not(.is-navigating) { scroll-snap-type:y manda
 @keyframes heroGlyphJitter { 0%,100% { transform:none; } 18% { transform:translate(1px,-1px) skewX(-3deg); } 35% { transform:translate(-1.5px,0); } 57% { transform:translate(.5px,1px) skewX(2deg); } 76% { transform:translate(-.5px,-.5px); } }
 @media(prefers-reduced-motion:reduce) { .hero-glyph.is-glitching { animation:none; } .hero-glyph::before,.hero-glyph::after { display:none; } }
 
-  </style>
+  
+/* 开场循环与真实 SVG 遮帘。 */
+.loader__corners { stroke-dasharray:28 28; stroke-dashoffset:0; animation:loaderOrbit 1.45s linear infinite; stroke-linejoin:round; }
+@keyframes loaderOrbit { from { stroke-dashoffset:0; } to { stroke-dashoffset:-56; } }
+.opening { display:block; z-index:199; contain:paint; }
+.opening[hidden] { display:none; }
+
+/* 手势归属在手指按下前由 CSS 确定，不在普通滚动中切换吸附目标。 */
+.arch-stage.is-touch-deck #archSlideshow { touch-action:pan-x pinch-zoom; }
+.arch-copy-layer { position:absolute; inset:0; z-index:6; pointer-events:none; transform:translateZ(0); }
+.slide__copy { will-change:transform; }
+.slide__title .letter { opacity:1; will-change:auto; backface-visibility:visible; -webkit-backface-visibility:visible; }
+#archBand { z-index:0; }
+#typeCaption { z-index:1; }
+#typeArt { z-index:2; contain:paint; transform:translateZ(0); }
+
+/* 模糊源保持 7px，仅合成层淡入淡出；菜单内部的 30px 玻璃效果保留。 */
+.menu-blur { position:fixed; inset:0; z-index:100; pointer-events:none; opacity:0; backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); will-change:opacity; }
+.menu-blur[hidden] { display:none; }
+.menu-dialog::backdrop,.menu-dialog.is-open::backdrop { background:transparent; backdrop-filter:none; -webkit-backdrop-filter:none; }
+
+/* 反相只覆盖实际文字边界，不把整屏当作混合层。照片只保留一层移动载体。 */
+.photo-title { display:contents; mix-blend-mode:normal; }
+.photo-title>span { z-index:5; mix-blend-mode:exclusion; }
+.photo-gallery { will-change:transform; }
+.photo-item__frame { transform:none; }
+.photo-item img { backface-visibility:visible; -webkit-backface-visibility:visible; }
+
+#heroLetters { pointer-events:auto; }
+#heroLetters .hero-glyph { cursor:default; }
+@media(prefers-reduced-motion:reduce) { .loader__corners { animation:none; } }
+</style>
 </head>
 <body class="is-loading">
   <a class="skip-link" href="#research">Skip to research</a>
   <div class="loader" id="loader" aria-label="Loading website" role="status">
     <div class="loader__inner">
       <svg class="loader__mark" viewBox="0 0 64 64" aria-hidden="true">
-        <path class="loader__corners" d="M4 18V4H60V60H4V18"/>
+        <path class="loader__corners" pathLength="224" d="M4 4H60V60H4Z"/>
       </svg>
       <span class="loader__percent sr-only" id="loadPercent">00</span>
     </div>
   </div>
   <svg class="opening" id="opening" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" hidden>
-    <defs><mask id="openingMask" x="0" y="0" width="100" height="100" maskUnits="userSpaceOnUse" style="mask-type:luminance"><rect width="100" height="100" fill="white"/><path id="openingPath" fill="black" d="M0 100V100Q50 100 100 100V100Z"/></mask></defs>
-    <rect width="100" height="100" fill="#090b0f" mask="url(#openingMask)"/>
+    <path id="openingPath" fill="#090b0f" d="M0 0H100V100Q50 100 0 100Z"/>
   </svg>
+  <div id="menuBlur" class="menu-blur" hidden aria-hidden="true"></div>
   <a class="site-logo" href="#home" aria-label="Cunyu Yuan — Home"><img src="图片/logo-white.png" width="42" height="42" alt="Cunyu Yuan logo"></a>
   <div class="city-scene" id="cityScene" aria-hidden="true"><canvas id="cityCanvas"></canvas><div class="city-shade" id="cityShade"></div><div class="city-grain"></div></div>
   <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-haspopup="dialog" aria-controls="menuDialog"><span class="menu-toggle__text">Menu</span><span class="menu-toggle__icon" aria-hidden="true"><i></i><i></i></span></button>
@@ -390,17 +417,18 @@ html.native-scroll.native-landing:not(.is-navigating) { scroll-snap-type:y manda
       <div class="arch-stage" id="archStage">
         <div class="arch-slideshow" id="archSlideshow">
           <article class="slide" data-project="0"><button class="slide__image-wrap" aria-label="View all drawings for ECO ECHO" tabindex="-1"><img class="slide__image" src="图片/arch-1-1.jpg" alt="ECO ECHO — architectural project" width="1000" height="1400" decoding="async"></button><span class="slide__side">Honorable Mention · Weihai Art Gallery</span><div class="slide__copy"><span class="slide__number">01</span><h3 class="slide__title">ECO ECHO</h3><p class="slide__subtitle">Honorable Mention · Weihai Art Gallery</p><span class="slide__open">View project +</span></div></article><article class="slide" data-project="1"><button class="slide__image-wrap" aria-label="View all drawings for Play with Wheels" tabindex="-1"><img class="slide__image" src="图片/arch-2-1.jpg" alt="Play with Wheels — architectural project" width="1000" height="1400" decoding="async"></button><span class="slide__side">47th Nisshin Kogyo Competition, Japan</span><div class="slide__copy"><span class="slide__number">02</span><h3 class="slide__title">Play with Wheels</h3><p class="slide__subtitle">47th Nisshin Kogyo Competition, Japan</p><span class="slide__open">View project +</span></div></article><article class="slide" data-project="2"><button class="slide__image-wrap" aria-label="View all drawings for Observation Tower" tabindex="-1"><img class="slide__image" src="图片/arch-3-1.jpg" alt="Observation Tower — architectural project" width="1000" height="1400" decoding="async"></button><span class="slide__side">CUICOCHA Lookout</span><div class="slide__copy"><span class="slide__number">03</span><h3 class="slide__title">Observation Tower</h3><p class="slide__subtitle">CUICOCHA Lookout</p><span class="slide__open">View project +</span></div></article><article class="slide" data-project="3"><button class="slide__image-wrap" aria-label="View all drawings for Community Center" tabindex="-1"><img class="slide__image" src="图片/arch-4-1.jpg" alt="Community Center — architectural project" width="1000" height="1400" decoding="async"></button><span class="slide__side">Excellence Award · Survey-driven Programme Design</span><div class="slide__copy"><span class="slide__number">04</span><h3 class="slide__title">Community Center</h3><p class="slide__subtitle">Excellence Award · Survey-driven Programme Design</p><span class="slide__open">View project +</span></div></article><article class="slide" data-project="4"><button class="slide__image-wrap" aria-label="View all drawings for Museum" tabindex="-1"><img class="slide__image" src="图片/arch-5-1.jpg" alt="Museum — architectural project" width="1000" height="1400" decoding="async"></button><span class="slide__side">Imperial Kiln Museum</span><div class="slide__copy"><span class="slide__number">05</span><h3 class="slide__title">Museum</h3><p class="slide__subtitle">Imperial Kiln Museum</p><span class="slide__open">View project +</span></div></article>
-          <div class="arch-heading" id="archHeading"><h2 id="archSmallTitle">Architecture</h2><span>Selected works / 05 projects</span></div>
+          <div id="archCopyLayer" class="arch-copy-layer"></div><div class="arch-heading" id="archHeading"><h2 id="archSmallTitle">Architecture</h2><span>Selected works / 05 projects</span></div>
           <div class="arch-status" id="archStatus"><span id="archCounter">01 / 05</span><span>Scroll to explore <span aria-hidden="true"><svg class="ui-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5L19 19M6 19H19V6"/></svg></span></span></div>
         </div>
         <div class="type-transition" id="typeTransition" aria-hidden="true">
           <img class="type-transition__photo" id="archBand" src="图片/band-2.jpg" alt="" decoding="async">
+          <div class="type-transition__caption" id="typeCaption"><span>From data<br>back to space.</span></div>
           <svg id="typeArt" xmlns="http://www.w3.org/2000/svg">
             <defs><mask id="typeCutout" x="0" y="0" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" style="mask-type:luminance"><rect id="typeMaskField" fill="white"/><g id="typeAperture"><path id="typeTitle" fill="black" d="M71.826171875 0.0H56.103515625L49.853515625 -16.259765625H21.240234375L15.33203125 0.0H0.0L27.880859375 -71.58203125H43.1640625ZM45.21484375 -28.3203125 35.3515625 -54.8828125 25.68359375 -28.3203125ZM75.541015625 0.0V-71.58203125H105.9609375Q117.435546875 -71.58203125 122.6357421875 -69.6533203125Q127.8359375 -67.724609375 130.9609375 -62.79296875Q134.0859375 -57.861328125 134.0859375 -51.513671875Q134.0859375 -43.45703125 129.349609375 -38.2080078125Q124.61328125 -32.958984375 115.189453125 -31.591796875Q119.876953125 -28.857421875 122.9287109375 -25.5859375Q125.98046875 -22.314453125 131.15625 -13.96484375L139.896484375 0.0H122.611328125L112.162109375 -15.576171875Q106.595703125 -23.92578125 104.544921875 -26.0986328125Q102.494140625 -28.271484375 100.19921875 -29.0771484375Q97.904296875 -29.8828125 92.923828125 -29.8828125H89.994140625V0.0ZM89.994140625 -41.30859375H100.6875Q111.087890625 -41.30859375 113.67578125 -42.1875Q116.263671875 -43.06640625 117.728515625 -45.21484375Q119.193359375 -47.36328125 119.193359375 -50.5859375Q119.193359375 -54.19921875 117.2646484375 -56.4208984375Q115.3359375 -58.642578125 111.8203125 -59.228515625Q110.0625 -59.47265625 101.2734375 -59.47265625H89.994140625ZM189.509765625 -26.318359375 203.5234375 -21.875Q200.30078125 -10.15625 192.8056640625 -4.4677734375Q185.310546875 1.220703125 173.787109375 1.220703125Q159.529296875 1.220703125 150.349609375 -8.5205078125Q141.169921875 -18.26171875 141.169921875 -35.15625Q141.169921875 -53.02734375 150.3984375 -62.9150390625Q159.626953125 -72.802734375 174.666015625 -72.802734375Q187.80078125 -72.802734375 196.00390625 -65.0390625Q200.88671875 -60.44921875 203.328125 -51.85546875L189.021484375 -48.4375Q187.751953125 -54.00390625 183.7236328125 -57.2265625Q179.6953125 -60.44921875 173.93359375 -60.44921875Q165.974609375 -60.44921875 161.0185546875 -54.736328125Q156.0625 -49.0234375 156.0625 -36.23046875Q156.0625 -22.65625 160.9453125 -16.89453125Q165.828125 -11.1328125 173.640625 -11.1328125Q179.40234375 -11.1328125 183.552734375 -14.794921875Q187.703125 -18.45703125 189.509765625 -26.318359375ZM211.974609375 0.0V-71.58203125H226.427734375V-43.408203125H254.748046875V-71.58203125H269.201171875V0.0H254.748046875V-31.298828125H226.427734375V0.0ZM279.703125 0.0V-71.58203125H294.15625V0.0ZM320.0390625 0.0V-59.47265625H298.798828125V-71.58203125H355.68359375V-59.47265625H334.4921875V0.0ZM361.009765625 0.0V-71.58203125H414.0859375V-59.47265625H375.462890625V-43.603515625H411.400390625V-31.54296875H375.462890625V-12.060546875H415.453125V0.0ZM469.509765625 -26.318359375 483.5234375 -21.875Q480.30078125 -10.15625 472.8056640625 -4.4677734375Q465.310546875 1.220703125 453.787109375 1.220703125Q439.529296875 1.220703125 430.349609375 -8.5205078125Q421.169921875 -18.26171875 421.169921875 -35.15625Q421.169921875 -53.02734375 430.3984375 -62.9150390625Q439.626953125 -72.802734375 454.666015625 -72.802734375Q467.80078125 -72.802734375 476.00390625 -65.0390625Q480.88671875 -60.44921875 483.328125 -51.85546875L469.021484375 -48.4375Q467.751953125 -54.00390625 463.7236328125 -57.2265625Q459.6953125 -60.44921875 453.93359375 -60.44921875Q445.974609375 -60.44921875 441.0185546875 -54.736328125Q436.0625 -49.0234375 436.0625 -36.23046875Q436.0625 -22.65625 440.9453125 -16.89453125Q445.828125 -11.1328125 453.640625 -11.1328125Q459.40234375 -11.1328125 463.552734375 -14.794921875Q467.703125 -18.45703125 469.509765625 -26.318359375ZM508.0390625 0.0V-59.47265625H486.798828125V-71.58203125H543.68359375V-59.47265625H522.4921875V0.0ZM548.912109375 -71.58203125H563.365234375V-32.8125Q563.365234375 -23.583984375 563.90234375 -20.849609375Q564.830078125 -16.455078125 568.3212890625 -13.7939453125Q571.8125 -11.1328125 577.8671875 -11.1328125Q584.01953125 -11.1328125 587.14453125 -13.6474609375Q590.26953125 -16.162109375 590.904296875 -19.82421875Q591.5390625 -23.486328125 591.5390625 -31.982421875V-71.58203125H605.9921875V-33.984375Q605.9921875 -21.09375 604.8203125 -15.771484375Q603.6484375 -10.44921875 600.4990234375 -6.787109375Q597.349609375 -3.125 592.076171875 -0.9521484375Q586.802734375 1.220703125 578.306640625 1.220703125Q568.052734375 1.220703125 562.7548828125 -1.1474609375Q557.45703125 -3.515625 554.380859375 -7.2998046875Q551.3046875 -11.083984375 550.328125 -15.234375Q548.912109375 -21.38671875 548.912109375 -33.3984375ZM617.275390625 0.0V-71.58203125H647.6953125Q659.169921875 -71.58203125 664.3701171875 -69.6533203125Q669.5703125 -67.724609375 672.6953125 -62.79296875Q675.8203125 -57.861328125 675.8203125 -51.513671875Q675.8203125 -43.45703125 671.083984375 -38.2080078125Q666.34765625 -32.958984375 656.923828125 -31.591796875Q661.611328125 -28.857421875 664.6630859375 -25.5859375Q667.71484375 -22.314453125 672.890625 -13.96484375L681.630859375 0.0H664.345703125L653.896484375 -15.576171875Q648.330078125 -23.92578125 646.279296875 -26.0986328125Q644.228515625 -28.271484375 641.93359375 -29.0771484375Q639.638671875 -29.8828125 634.658203125 -29.8828125H631.728515625V0.0ZM631.728515625 -41.30859375H642.421875Q652.822265625 -41.30859375 655.41015625 -42.1875Q657.998046875 -43.06640625 659.462890625 -45.21484375Q660.927734375 -47.36328125 660.927734375 -50.5859375Q660.927734375 -54.19921875 658.9990234375 -56.4208984375Q657.0703125 -58.642578125 653.5546875 -59.228515625Q651.796875 -59.47265625 643.0078125 -59.47265625H631.728515625ZM685.443359375 0.0V-71.58203125H738.51953125V-59.47265625H699.896484375V-43.603515625H735.833984375V-31.54296875H699.896484375V-12.060546875H739.88671875V0.0Z"/></g></mask></defs>
             <rect id="typeCurtain" fill="#000" mask="url(#typeCutout)"/>
             <g id="typeSolid"><path fill="#eee" d="M71.826171875 0.0H56.103515625L49.853515625 -16.259765625H21.240234375L15.33203125 0.0H0.0L27.880859375 -71.58203125H43.1640625ZM45.21484375 -28.3203125 35.3515625 -54.8828125 25.68359375 -28.3203125ZM75.541015625 0.0V-71.58203125H105.9609375Q117.435546875 -71.58203125 122.6357421875 -69.6533203125Q127.8359375 -67.724609375 130.9609375 -62.79296875Q134.0859375 -57.861328125 134.0859375 -51.513671875Q134.0859375 -43.45703125 129.349609375 -38.2080078125Q124.61328125 -32.958984375 115.189453125 -31.591796875Q119.876953125 -28.857421875 122.9287109375 -25.5859375Q125.98046875 -22.314453125 131.15625 -13.96484375L139.896484375 0.0H122.611328125L112.162109375 -15.576171875Q106.595703125 -23.92578125 104.544921875 -26.0986328125Q102.494140625 -28.271484375 100.19921875 -29.0771484375Q97.904296875 -29.8828125 92.923828125 -29.8828125H89.994140625V0.0ZM89.994140625 -41.30859375H100.6875Q111.087890625 -41.30859375 113.67578125 -42.1875Q116.263671875 -43.06640625 117.728515625 -45.21484375Q119.193359375 -47.36328125 119.193359375 -50.5859375Q119.193359375 -54.19921875 117.2646484375 -56.4208984375Q115.3359375 -58.642578125 111.8203125 -59.228515625Q110.0625 -59.47265625 101.2734375 -59.47265625H89.994140625ZM189.509765625 -26.318359375 203.5234375 -21.875Q200.30078125 -10.15625 192.8056640625 -4.4677734375Q185.310546875 1.220703125 173.787109375 1.220703125Q159.529296875 1.220703125 150.349609375 -8.5205078125Q141.169921875 -18.26171875 141.169921875 -35.15625Q141.169921875 -53.02734375 150.3984375 -62.9150390625Q159.626953125 -72.802734375 174.666015625 -72.802734375Q187.80078125 -72.802734375 196.00390625 -65.0390625Q200.88671875 -60.44921875 203.328125 -51.85546875L189.021484375 -48.4375Q187.751953125 -54.00390625 183.7236328125 -57.2265625Q179.6953125 -60.44921875 173.93359375 -60.44921875Q165.974609375 -60.44921875 161.0185546875 -54.736328125Q156.0625 -49.0234375 156.0625 -36.23046875Q156.0625 -22.65625 160.9453125 -16.89453125Q165.828125 -11.1328125 173.640625 -11.1328125Q179.40234375 -11.1328125 183.552734375 -14.794921875Q187.703125 -18.45703125 189.509765625 -26.318359375ZM211.974609375 0.0V-71.58203125H226.427734375V-43.408203125H254.748046875V-71.58203125H269.201171875V0.0H254.748046875V-31.298828125H226.427734375V0.0ZM279.703125 0.0V-71.58203125H294.15625V0.0ZM320.0390625 0.0V-59.47265625H298.798828125V-71.58203125H355.68359375V-59.47265625H334.4921875V0.0ZM361.009765625 0.0V-71.58203125H414.0859375V-59.47265625H375.462890625V-43.603515625H411.400390625V-31.54296875H375.462890625V-12.060546875H415.453125V0.0ZM469.509765625 -26.318359375 483.5234375 -21.875Q480.30078125 -10.15625 472.8056640625 -4.4677734375Q465.310546875 1.220703125 453.787109375 1.220703125Q439.529296875 1.220703125 430.349609375 -8.5205078125Q421.169921875 -18.26171875 421.169921875 -35.15625Q421.169921875 -53.02734375 430.3984375 -62.9150390625Q439.626953125 -72.802734375 454.666015625 -72.802734375Q467.80078125 -72.802734375 476.00390625 -65.0390625Q480.88671875 -60.44921875 483.328125 -51.85546875L469.021484375 -48.4375Q467.751953125 -54.00390625 463.7236328125 -57.2265625Q459.6953125 -60.44921875 453.93359375 -60.44921875Q445.974609375 -60.44921875 441.0185546875 -54.736328125Q436.0625 -49.0234375 436.0625 -36.23046875Q436.0625 -22.65625 440.9453125 -16.89453125Q445.828125 -11.1328125 453.640625 -11.1328125Q459.40234375 -11.1328125 463.552734375 -14.794921875Q467.703125 -18.45703125 469.509765625 -26.318359375ZM508.0390625 0.0V-59.47265625H486.798828125V-71.58203125H543.68359375V-59.47265625H522.4921875V0.0ZM548.912109375 -71.58203125H563.365234375V-32.8125Q563.365234375 -23.583984375 563.90234375 -20.849609375Q564.830078125 -16.455078125 568.3212890625 -13.7939453125Q571.8125 -11.1328125 577.8671875 -11.1328125Q584.01953125 -11.1328125 587.14453125 -13.6474609375Q590.26953125 -16.162109375 590.904296875 -19.82421875Q591.5390625 -23.486328125 591.5390625 -31.982421875V-71.58203125H605.9921875V-33.984375Q605.9921875 -21.09375 604.8203125 -15.771484375Q603.6484375 -10.44921875 600.4990234375 -6.787109375Q597.349609375 -3.125 592.076171875 -0.9521484375Q586.802734375 1.220703125 578.306640625 1.220703125Q568.052734375 1.220703125 562.7548828125 -1.1474609375Q557.45703125 -3.515625 554.380859375 -7.2998046875Q551.3046875 -11.083984375 550.328125 -15.234375Q548.912109375 -21.38671875 548.912109375 -33.3984375ZM617.275390625 0.0V-71.58203125H647.6953125Q659.169921875 -71.58203125 664.3701171875 -69.6533203125Q669.5703125 -67.724609375 672.6953125 -62.79296875Q675.8203125 -57.861328125 675.8203125 -51.513671875Q675.8203125 -43.45703125 671.083984375 -38.2080078125Q666.34765625 -32.958984375 656.923828125 -31.591796875Q661.611328125 -28.857421875 664.6630859375 -25.5859375Q667.71484375 -22.314453125 672.890625 -13.96484375L681.630859375 0.0H664.345703125L653.896484375 -15.576171875Q648.330078125 -23.92578125 646.279296875 -26.0986328125Q644.228515625 -28.271484375 641.93359375 -29.0771484375Q639.638671875 -29.8828125 634.658203125 -29.8828125H631.728515625V0.0ZM631.728515625 -41.30859375H642.421875Q652.822265625 -41.30859375 655.41015625 -42.1875Q657.998046875 -43.06640625 659.462890625 -45.21484375Q660.927734375 -47.36328125 660.927734375 -50.5859375Q660.927734375 -54.19921875 658.9990234375 -56.4208984375Q657.0703125 -58.642578125 653.5546875 -59.228515625Q651.796875 -59.47265625 643.0078125 -59.47265625H631.728515625ZM685.443359375 0.0V-71.58203125H738.51953125V-59.47265625H699.896484375V-43.603515625H735.833984375V-31.54296875H699.896484375V-12.060546875H739.88671875V0.0Z"/></g>
           </svg>
-          <div class="type-transition__caption" id="typeCaption"><span>From data<br>back to space.</span></div>
+          
         </div>
 
       </div>
@@ -2404,7 +2432,7 @@ THREE.OBJLoader = ( function () {
   const easeOut=t=>1-Math.pow(1-clamp(t),5);
   const easeInOut=t=>t<.5?8*t*t*t*t:1-Math.pow(-2*t+2,4)/2;
   const MOTION={out:'cubic-bezier(.16,1,.3,1)',sweep:'cubic-bezier(.76,0,.24,1)',pop:'cubic-bezier(.2,1.2,.3,1)',exit:'cubic-bezier(.7,0,.2,1)'};
-  const state={reduced:reduceQuery.matches,width:0,height:0,sy:scrollY,currentScroll:scrollY,targetScroll:scrollY,writtenScroll:scrollY,scrollDone:null,raf:0,lastTime:0,dirty:true,ready:false,modal:null,modalScroll:null,lockedY:0,city:null,layout:{},archIndex:0,archMotion:null,maxScroll:0,landing:null,nativeScroll:!fineQuery.matches};
+  const state={reduced:reduceQuery.matches,width:0,height:0,sy:scrollY,currentScroll:scrollY,targetScroll:scrollY,writtenScroll:scrollY,scrollDone:null,raf:0,lastTime:0,dirty:true,ready:false,modal:null,modalScroll:null,lockedY:0,city:null,layout:{},archIndex:0,archMotion:null,maxScroll:0,landing:null,nativeScroll:!fineQuery.matches,touchPrimary:matchMedia("(pointer:coarse)").matches,nativeDirection:1};
   let wheelDamping=false;
   const WHEEL_DAMPING=6;
   const hero=$('home'),arch=$('architecture'),archStage=$('archStage');
@@ -2453,7 +2481,7 @@ THREE.OBJLoader = ( function () {
     const photoTravel=Math.max(h,...photoMetrics.map(m=>m.cycle));
     const photoRamp=state.reduced?0:Math.min(h*.16,140),photoLength=photoTravel+.8*photoRamp;
     const photoHold=0,photoReveal=(state.reduced?.35:1.05)*h;
-    const archHold=0,intro=(state.reduced?.7:1.7)*h,step=(w<=1100?.64:.8)*h;
+    const archHold=0,intro=(state.reduced?.7:state.touchPrimary?2.75:1.7)*h,step=(w<=1100?.64:.8)*h;
     const pinLength=intro+(slides.length-1)*step+1.65*h,experienceHeight=dom.experience.offsetHeight;
     arch.style.height=pinLength+h+'px';arch.style.marginTop=-h+'px';
     $('experienceWrap').style.paddingBottom='0px';$('experienceWrap').style.height=experienceHeight+h*1.15+'px';
@@ -2472,16 +2500,16 @@ THREE.OBJLoader = ( function () {
       contactRawTop,contactTop,contactHeight:dom.contact.offsetHeight,resistance,loss,slideW,slideH,slideX:(w-slideW)/2,slideY:(h-slideH)/2,mobile,coverRatio,coverWidth,photoFocus:photoMetrics.find(m=>m.focus===heroPhotoIndex)};
     const l=state.layout;
     l.stops=[archTop,l.archGallery,l.archLast,photoTop];
-    updateSnapAnchors();
+
     renderSlides.forEach(slide=>{slide.wrap.style.left=l.slideX+'px';slide.wrap.style.top=l.slideY+'px';slide.wrap.style.width=slideW+'px';slide.wrap.style.height=slideH+'px';slide.copy.style.top=mobile?l.slideY+slideH-30+'px':'';});
     dom.photoCoverImage.style.width=coverWidth+'px';dom.photoCoverImage.style.height=coverWidth/coverRatio+'px';
-    state.maxScroll=Math.max(0,document.documentElement.scrollHeight-document.documentElement.clientHeight);
+    state.maxScroll=Math.max(0,contactRawTop+dom.contact.offsetHeight+loss-document.documentElement.clientHeight);
     let correction=anchor?anchor.getBoundingClientRect().top-anchorY:preserveChapter?archTop-old.archTop:0;
     if(!state.nativeScroll&&Number.isFinite(correction)&&Math.abs(correction)>.05&&!state.scrollAnimation){state.targetScroll+=correction;writeScroll(scrollY+correction);}
     if(state.scrollAnimation)state.targetScroll=clamp(state.scrollAnimation.to,0,maxScroll());
     else if(!wheelDamping)state.targetScroll=clamp(scrollY,0,maxScroll());
     state.sy=clamp(scrollY,0,maxScroll());
-    measureType();if(state.city)resizeCity();state.dirty=true;wake();
+    measureType();setupPhotoTimeline();if(state.city)resizeCity();state.dirty=true;wake();
   }
 
   function frame(now){
@@ -2519,7 +2547,7 @@ THREE.OBJLoader = ( function () {
     if(keep)wake();else state.lastTime=0;
   }
   function cancelScroll(){
-    clearNativeLanding();
+
     wheelDamping=false;state.scrollAnimation=null;state.landing=null;
     state.targetScroll=state.currentScroll=clamp(scrollY,0,maxScroll());
     document.documentElement.classList.remove('is-navigating');
@@ -2556,45 +2584,13 @@ THREE.OBJLoader = ( function () {
   // 触屏由浏览器独占滚动；PC 滚轮只在这一处阻尼，弹窗复用相同响应。
   const INPUT={quiet:140,cardThreshold:28,cardLock:260};
   const input={id:0,source:'',last:-Infinity,direction:0,magnitude:0,peak:0,trough:Infinity,rearmed:false,decay:0,touch:null};
-  const snapAnchors=[];
-  function clearNativeLanding(){
-    document.documentElement.classList.remove('native-landing');
-    snapAnchors.forEach(el=>el.classList.remove('is-snap-target'));
-  }
-  function settleNativeGesture(t){
-    const distance=t.startY-t.y,direction=Math.sign(distance),l=state.layout;
-    if(Math.abs(distance)<24||Math.abs(t.startX-t.x)>Math.abs(distance))return;
-    let target=-1;
-    if(t.sy>=l.archGallery-2&&t.sy<=l.archLast+2){
-      const index=clamp(Math.round((t.sy-l.archGallery)/l.archStep),0,slides.length-1),next=index+direction;
-      if(next>=0&&next<slides.length)target=1+next;
-    }
-    if(target<0){
-      // 拖动期间完全跟手。松手后仅对已经接近/跨越的章节边界请求原生停靠。
-      const end=clamp(scrollY,0,maxScroll()),tolerance=state.height*.28;
-      const crossed=snapAnchors.map((el,i)=>({i,at:parseFloat(el.style.top)})).filter(p=>
-        direction>0?t.sy<p.at-2&&end>=p.at-tolerance:t.sy>p.at+2&&end<=p.at+tolerance
-      ).sort((a,b)=>direction*(a.at-b.at))[0];
-      if(crossed)target=crossed.i;
-    }
-    if(target<0)return;
-    snapAnchors[target].classList.add('is-snap-target');
-    document.documentElement.classList.add('native-landing');
-  }
+
   function setNativeScroll(native){
     if(state.nativeScroll===native)return;
     cancelScroll();state.nativeScroll=native;
-    document.documentElement.classList.toggle('native-scroll',native);
+    document.documentElement.classList.toggle('native-scroll',native);setupPhotoTimeline();state.dirty=true;wake();
   }
-  function updateSnapAnchors(){
-    const l=state.layout;
-    const stops=[l.archTop,...slides.map((_,i)=>l.archGallery+i*l.archStep),l.photoTop,l.photoStart];
-    stops.forEach((at,i)=>{
-      let el=snapAnchors[i];
-      if(!el){el=document.createElement('span');el.className='native-snap-anchor';el.setAttribute('aria-hidden','true');$('main').append(el);snapAnchors.push(el);}
-      style(el,'top',at+'px');
-    });
-  }
+
   function newGesture(source,now=performance.now()){
     input.id++;input.source=source;input.last=now;input.direction=0;input.decay=0;
     input.peak=0;input.trough=Infinity;input.rearmed=false;
@@ -2671,25 +2667,70 @@ THREE.OBJLoader = ( function () {
     input.last=now;input.direction=direction;input.magnitude=magnitude;input.peak=Math.max(input.peak,magnitude);
     applyScrollDelta(delta,now,'wheel');
   },{passive:false});
+  // 普通触摸属于浏览器。只有已经进入卡片区的手势才属于卡片控制器。
+  const touchDeck={active:false,index:0,settled:false,pending:0};
+  function inTouchDeck(y=state.sy){const l=state.layout;return y>=l.archGallery-1&&y<=l.archLast+1;}
+  function updateTouchDeck(){
+    const active=state.nativeScroll&&inTouchDeck();
+    archStage.classList.toggle('is-touch-deck',active);
+    if(active&&!touchDeck.active){
+      touchDeck.index=state.nativeDirection<0?slides.length-1:0;
+      // 显式导航、方向键及布局恢复保留其指定的作品。
+      if(state.scrollAnimation||state.sy===state.writtenScroll)touchDeck.index=clamp(Math.round((state.sy-state.layout.archGallery)/state.layout.archStep),0,slides.length-1);
+      touchDeck.settled=Math.abs(state.sy-(state.layout.archGallery+touchDeck.index*state.layout.archStep))<1;
+    }
+    touchDeck.active=active;
+    if(!active){touchDeck.settled=false;return;}
+    // 原生惯性进入卡片区时只定位一次，且仅在手指离开后；不存在全页吸附或反复纠正。
+    if(!touchDeck.settled&&!input.touch&&!state.scrollAnimation&&!touchDeck.pending){
+      touchDeck.pending=requestAnimationFrame(()=>{
+        touchDeck.pending=0;
+        if(!state.nativeScroll||state.modal||input.touch||!inTouchDeck())return;
+        touchDeck.settled=true;scrollToY(state.layout.archGallery+touchDeck.index*state.layout.archStep,0,null,'touch-card');
+      });
+    }
+  }
+  function commitTouchCard(t){
+    if(t.committed||!t.deck)return;
+    const dy=t.startY-t.y,dx=t.startX-t.x;
+    if(Math.max(Math.abs(dy),Math.abs(dx))<32)return;
+    const direction=Math.sign(Math.abs(dy)>=Math.abs(dx)?dy:dx),next=t.index+direction,l=state.layout;
+    t.committed=true;state.suppressCardClickUntil=performance.now()+450;
+    if(next<0||next>=slides.length){
+      touchDeck.active=false;touchDeck.settled=false;
+      scrollToY(next<0?l.archGallery-state.height*.62:l.archLast+state.height*.72,460,null,'touch-exit');
+    }else{
+      touchDeck.index=next;touchDeck.settled=true;
+      scrollToY(l.archGallery+next*l.archStep,0,null,'touch-card');
+    }
+  }
   addEventListener('touchstart',event=>{
     if(!state.ready)return;
-    // 任何真实触摸立即交还浏览器控制权，包括仍在播放的菜单定位动画。
     state.modalScroll=null;setNativeScroll(true);cancelScroll();
+    if(touchDeck.pending){cancelAnimationFrame(touchDeck.pending);touchDeck.pending=0;}
     if(event.touches.length!==1){input.touch=null;return;}
-    const t=event.touches[0];input.touch={x:t.clientX,y:t.clientY,startX:t.clientX,startY:t.clientY,sy:clamp(scrollY,0,maxScroll())};
+    const t=event.touches[0],deck=!state.modal&&inTouchDeck()&&!!event.target.closest('#archSlideshow');
+    input.touch={x:t.clientX,y:t.clientY,startX:t.clientX,startY:t.clientY,deck,index:state.archIndex,committed:false};
   },{passive:true});
   addEventListener('touchmove',event=>{
-    const t=input.touch;if(!t||state.modal||event.touches.length!==1)return;
-    const y=event.touches[0].clientY,delta=t.y-y;t.y=y;t.x=event.touches[0].clientX;
-    // 仅观察首页真正的文档顶端，反馈只作用于城市镜头，不回写页面位置。
+    const t=input.touch;if(!t||event.touches.length!==1)return;
+    const point=event.touches[0],delta=t.y-point.clientY;t.y=point.clientY;t.x=point.clientX;
+    if(state.modal)return;
+    if(t.deck){commitTouchCard(t);return;}
     if(scrollY<=0&&delta<0)pullEdge(delta);else edge.pull=0;
   },{passive:true});
   function finishTouch(cancelled=false){
-    if(input.touch&&!state.modal&&!cancelled)settleNativeGesture(input.touch);
-    input.touch=null;edge.pull=0;edge.last=0;wake();
+    const t=input.touch;input.touch=null;edge.pull=0;edge.last=0;
+    if(!cancelled&&t?.deck)commitTouchCard(t);
+    state.dirty=true;wake();
   }
   addEventListener('touchend',event=>{if(!event.touches.length)finishTouch();},{passive:true});
   addEventListener('touchcancel',()=>finishTouch(true),{passive:true});
+  $('archSlideshow').addEventListener('click',event=>{
+    if(performance.now()<(state.suppressCardClickUntil||0)){event.preventDefault();event.stopImmediatePropagation();}
+  },true);
+
+
   $('projectScroll').addEventListener('scroll',()=>{
     const s=state.modalScroll;
     if(s&&Math.abs(s.el.scrollTop-s.written)>1)state.modalScroll=null;
@@ -2730,19 +2771,28 @@ THREE.OBJLoader = ( function () {
     return animation.finished.catch(()=>{});
   }
 
+  async function menuBlur(show){
+    const el=$('menuBlur');
+    if(show){el.hidden=false;el.getAnimations().forEach(a=>a.cancel());}
+    const from=show?0:Number(getComputedStyle(el).opacity);
+    await animateElement(el,[{opacity:from},{opacity:show?1:0}],{duration:show?520:420,easing:'cubic-bezier(.25,.6,.3,1)',fill:'forwards'});
+    if(!show){el.hidden=true;el.getAnimations().forEach(a=>a.cancel());}
+  }
+
   function openDialog(id,trigger){
     const dialog=$(id);
     if(state.modal)return;
     state.pendingProject=null;state.mediaEpoch=(state.mediaEpoch||0)+1;
     cancelScroll();state.currentScroll=scrollY;state.targetScroll=scrollY;state.scrollDone=null;state.modalScroll=null;state.modal=id;state.lockedY=scrollY;state.sy=scrollY;
     lockedDialogs.set(id,trigger||document.activeElement);
+    freezePhotoTimeline();
     document.body.style.position='fixed';document.body.style.top=-state.lockedY+'px';document.body.style.width='100%';
     dialog.showModal();dialog.dataset.phase='opening';syncHeroGlitch();
     document.querySelectorAll('.aurora').forEach(el=>el.classList.add('is-paused'));
     requestAnimationFrame(()=>dialog.classList.add('is-open'));
     let entrance;
     if(id==='menuDialog'){
-      entrance=animateElement(dialog,[{transform:'translateX(102%) scale(.97)',clipPath:'inset(0 0 0 8%)'},{transform:'translateX(0) scale(1)',clipPath:'inset(0 0 0 0%)'}],{duration:620,easing:'cubic-bezier(.13,1,.22,1)'});
+      entrance=Promise.all([menuBlur(true),animateElement(dialog,[{transform:'translateX(102%) scale(.97)',clipPath:'inset(0 0 0 8%)'},{transform:'translateX(0) scale(1)',clipPath:'inset(0 0 0 0%)'}],{duration:620,easing:'cubic-bezier(.13,1,.22,1)'})]);
       [...dialog.querySelectorAll('nav a')].forEach((el,i)=>animateElement(el,[{opacity:0,transform:'translate3d(60px,12px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:620,delay:45+i*32,fill:'backwards'}));
     }else if(id==='projectDialog'){
       $('projectScroll').scrollTop=0;
@@ -2760,6 +2810,7 @@ THREE.OBJLoader = ( function () {
   }
   function restoreDialog(dialog){
     const id=dialog.id;if(state.modal!==id)return;
+    if(id==='menuDialog'){$('menuBlur').hidden=true;$('menuBlur').getAnimations().forEach(a=>a.cancel());}
     const y=state.lockedY;
     state.restoring=true;document.documentElement.classList.add('is-navigating');
     document.body.style.position='';document.body.style.top='';document.body.style.width='';
@@ -2775,7 +2826,7 @@ THREE.OBJLoader = ( function () {
     dialog.dataset.phase='closing';dialog.classList.remove('is-open');photoRequest++;
     const trigger=lockedDialogs.get(id);
     if(id==='menuDialog'){
-      await animateElement(dialog,[{transform:getComputedStyle(dialog).transform},{transform:'translateX(105%)'}],{duration:400,easing:MOTION.exit,fill:'forwards'});
+      await Promise.all([menuBlur(false),animateElement(dialog,[{transform:getComputedStyle(dialog).transform},{transform:'translateX(105%)'}],{duration:400,easing:MOTION.exit,fill:'forwards'})]);
     }else if(id==='lightbox'){
       await Promise.all([photoFlight(trigger,true),animateElement(dialog,[{opacity:1},{opacity:0}],{duration:400,easing:MOTION.exit,fill:'forwards'})]);
     }else{
@@ -2969,16 +3020,52 @@ THREE.OBJLoader = ( function () {
     record.item.classList.toggle('is-ready',record.ready);state.dirty=true;wake();
   }
   function heroTileReady(){return !!state.heroTile?.ready;}
+  // iOS 26 / 现代 Chrome 由滚动时间线直接推进位移；旧浏览器只更新邻近照片。
+  const photoTimelineStyle=document.createElement('style');document.head.append(photoTimelineStyle);
+  const supportsPhotoTimeline=CSS.supports('animation-timeline','scroll(root block)')&&CSS.supports('animation-range','1px 2px');
+  function photoY(m,j,motion){
+    const raw=m.y+(m.down?1:-1)*m.cycle*motion+(j-m.focusAt)*m.stride;
+    return ((raw+m.stride)%m.cycle+m.cycle)%m.cycle-m.stride;
+  }
+  function freezePhotoTimeline(){
+    if(!state.photoTimeline)return;
+    // 锁定 body 会暂时消除根滚动范围。先保存当前合成位置，再停用时间线。
+    const positions=photoRecords.filter(r=>r.near).map(r=>[r,getComputedStyle(r.item).transform]);
+    positions.forEach(([r,transform])=>style(r.item,'transform',transform));
+    photoRecords.forEach(r=>{r.item.style.animationName='none';});
+    state.photoTimeline=false;
+  }
+  function setupPhotoTimeline(){
+    const l=state.layout;if(!l.photoMetrics)return;
+    state.photoTimeline=state.nativeScroll&&supportsPhotoTimeline&&!state.reduced;
+    if(!state.photoTimeline){photoTimelineStyle.textContent='';photoRecords.forEach(r=>r.item.style.animationName='none');return;}
+    const css=[],length=l.photoLength,ramp=l.photoRamp;
+    const inverse=motion=>{
+      let lo=0,hi=1;
+      for(let i=0;i<34;i++){const mid=(lo+hi)/2;if(galleryDistance(mid*length,length,ramp)/l.photoTravel<motion)lo=mid;else hi=mid;}
+      return (lo+hi)/2;
+    };
+    l.photoMetrics.forEach(m=>m.indices.forEach((index,j)=>{
+      const start=photoY(m,j,0),wrap=m.down?(m.cycle-m.stride-start)/m.cycle:(start+m.stride)/m.cycle;
+      const p=inverse(clamp(wrap)),points=[0,1,p-1e-7,p+1e-7];
+      for(let n=1;n<=12;n++){const u=n/12*ramp/length;points.push(u,1-u);}
+      const frames=[...new Set(points.filter(v=>v>=0&&v<=1))].sort((a,b)=>a-b).map(v=>`${(v*100).toFixed(7)}%{transform:translate3d(0,${photoY(m,j,galleryDistance(v*length,length,ramp)/l.photoTravel).toFixed(3)}px,0)}`).join('');
+      css.push(`@keyframes photoPath${index}{${frames}}`);
+      const el=photoRecords[index].item;
+      el.style.animationName='photoPath'+index;el.style.animationDuration='auto';el.style.animationTimingFunction='linear';el.style.animationFillMode='both';
+      el.style.animationTimeline='scroll(root block)';el.style.animationRange=l.photoStart+'px '+l.photoEnd+'px';
+    }));
+    photoTimelineStyle.textContent=css.join('\n');
+  }
   function renderPhotoTiles(motion,handoff){
     photoColumns.forEach((col,i)=>{
-      const m=state.layout.photoMetrics[i],shift=(m.down?1:-1)*m.cycle*motion;
+      const m=state.layout.photoMetrics[i];
       m.indices.forEach((index,j)=>{
-        const record=photoRecords[index],raw=m.y+shift+(j-m.focusAt)*m.stride;
-        const y=((raw+m.stride)%m.cycle+m.cycle)%m.cycle-m.stride;
-        const visible=y<state.height+32&&y+m.height+32>0,near=y<state.height*2&&y+m.height>-state.height;
+        const record=photoRecords[index],y=photoY(m,j,motion);
+        const visible=y<state.height&&y+m.height+36>0,near=y<state.height*1.6&&y+m.height>-state.height*.6;
         if(near)preparePhoto(record,visible);
-        style(record.item,'transform',`translate3d(0,${y.toFixed(3)}px,0)`);
-        style(record.item,'visibility',visible?'visible':'hidden');
+        if(!state.photoTimeline&&(near||record.near))style(record.item,'transform',`translate3d(0,${y.toFixed(3)}px,0)`);
+        if(record.near!==near){record.near=near;style(record.item,'visibility',near?'visible':'hidden');style(record.item,'will-change',near?'transform':'auto');}
         const tab=visible&&handoff&&record.ready?0:-1;
         if(record.button.tabIndex!==tab)record.button.tabIndex=tab;
         attribute(record.item,'aria-hidden',String(!visible));
@@ -2992,9 +3079,10 @@ THREE.OBJLoader = ( function () {
     const {sy,height:h,layout:l}=state;syncHeroGlitch();
     const heroP=clamp(sy/h),blurP=smooth(h*.12,l.researchBottom-h*.55,sy);
     style(dom.heroIntro,'opacity',String(1-smooth(.06,.8,heroP)));
-    style(dom.heroIntro,'transform',state.reduced?'none':`translate3d(0,${sy*.28}px,0)`);
+    style(dom.heroIntro,'transform',state.reduced?'none':`translate3d(0,${Math.min(sy,h)*.28}px,0)`);
     style(dom.heroMeta,'opacity',String(1-smooth(0,h*.43,sy)));
     const archCover=smooth(l.archTop-h,l.archTop,sy);
+    style(dom.cityScene,'visibility',sy<l.archTop+h*.1?'visible':'hidden');
     style(dom.cityScene,'--city-blur',(state.reduced?2:blurP*3.2).toFixed(2)+'px');
     style(dom.cityShade,'opacity',String(Math.max(smooth(.25*h,1.15*h,sy)*.9,archCover)));
     style(dom.experience,'opacity',String(1-archCover*.7));
@@ -3021,7 +3109,8 @@ THREE.OBJLoader = ( function () {
     const leaving=smooth(l.contactTop-h,l.contactTop,sy);
     renderPhotoTiles(motion,handoff);
     style(dom.photoGallery,'transform',state.reduced?'none':`translate3d(0,${(1-dock)*h*.025-leaving*h*.02}px,0) scale(${1-(1-dock)*.02-leaving*.018})`);
-    style(dom.photoGallery,'filter',`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
+    style(dom.photoGallery,'filter',dock>=1?'none':`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
+    style(dom.photoGallery,'will-change',dock>=1?'transform':'transform,filter');
     style(dom.photoTitleTop,'transform',`translate3d(0,${(1-dock)*5.5}vw,0)`);
     style(dom.photoTitleBottom,'transform',`translate3d(0,${-(1-dock)*5.5}vw,0)`);
     const phraseOut=smooth(.26,.73,reveal);
@@ -3074,16 +3163,23 @@ THREE.OBJLoader = ( function () {
       slide.wrap.addEventListener('pointerleave',()=>{state.slidePointer={x:0,y:0};state.archTiltActive=true;wake();});
     });
   }
+  function syncActiveCopy(index){
+    if(state.activeCopyIndex===index)return;
+    if(state.activeCopyIndex!==undefined){const old=slides[state.activeCopyIndex];old.el.append(old.copy);}
+    $('archCopyLayer').append(slides[index].copy);state.activeCopyIndex=index;
+  }
   function showSlideText(index,direction=1){
-    if(state.reduced)return;
     const slide=slides[index];
-    slide.el.querySelectorAll('.letter').forEach((letter,i)=>{
-      letter.getAnimations().forEach(a=>a.cancel());
-      animateElement(letter,[{opacity:.72,transform:`translate3d(${direction*(8+i%3*3)}px,${25+i%4*4}px,0) rotate(${direction*4}deg)`},{opacity:1,transform:'translate3d(0,0,0) rotate(0)'}],{duration:620,delay:Math.min(i*12,120),fill:'backwards'});
+    slide.copy.getAnimations({subtree:true}).forEach(a=>a.cancel());
+    if(state.reduced)return;
+    slide.copy.querySelectorAll('.letter').forEach((letter,i)=>{
+      animateElement(letter,[{opacity:.85,transform:`translate3d(${direction*(8+i%3*3)}px,${25+i%4*4}px,0) rotate(${direction*4}deg)`},{opacity:1,transform:'translate3d(0,0,0) rotate(0)'}],{duration:620,delay:Math.min(i*12,120),fill:'backwards'});
     });
-    animateElement(slide.el.querySelector('.slide__number'),[{opacity:0,transform:'translateX(-20px)'},{opacity:1,transform:'translateX(0)'}],{duration:850,easing:MOTION.pop,delay:140,fill:'backwards'});
+    animateElement(slide.copy.querySelector('.slide__number'),[{opacity:.75,transform:'translateX(-20px)'},{opacity:1,transform:'translateX(0)'}],{duration:850,easing:MOTION.pop,delay:140,fill:'backwards'});
+    slide.side.getAnimations().forEach(a=>a.cancel());
     animateElement(slide.side,[{opacity:0,transform:'rotate(180deg) translateY(-25px)'},{opacity:1,transform:'rotate(180deg) translateY(0)'}],{duration:900,delay:200,fill:'backwards'});
   }
+
   function initBoundarySlides(){
     const make=(source,logical)=>{
       const el=source.el.cloneNode(true);el.setAttribute('aria-hidden','true');el.inert=true;el.dataset.boundaryCopy='true';
@@ -3104,14 +3200,17 @@ THREE.OBJLoader = ( function () {
   function renderArchitecture(now=performance.now()){
     const {sy,layout:l,width:w,height:h}=state;
 
-    if(sy<l.archTop-h*1.1||sy>l.archBottom+h){state.archMotion=null;return;}
+    updateTouchDeck();
+    const onScreen=sy>=l.archTop-h*1.1&&sy<=l.photoTop+h*.1;
+    style(archStage,'visibility',onScreen?'visible':'hidden');
+    if(!onScreen){state.archMotion=null;state.archTiltActive=false;return;}
     const intro=clamp((sy-l.archTop)/l.archIntro),arrival=clamp((sy-l.archTop+h)/h);
     const reveal=easeOut(clamp((intro-.78)/.22));
     const cardProgress=clamp((sy-l.archGallery)/l.archStep,0,4);
-    const index=clamp(Math.floor(cardProgress+.5),0,4);
+    const index=touchDeck.active?touchDeck.index:clamp(Math.floor(cardProgress+.5),0,4);
     const leaving=smooth(l.photoTop-h,l.photoTop,sy),g=state.typeGeometry;
     if(g){
-      const unzoom=smooth(0,.62,intro),dock=smooth(.58,1,intro);
+      const unzoom=smooth(0,state.touchPrimary?.74:.62,intro),dock=smooth(state.touchPrimary?.64:.58,1,intro);
       const zoom=state.reduced?1:Math.exp(Math.log(g.finalZoom)*(1-unzoom));
       const scale=lerp(g.base*zoom,g.dockScale,dock);
       const x=lerp(g.pivotX-g.anchorX*g.base*zoom,g.dockX,dock),y=lerp(g.pivotY-g.anchorY*g.base*zoom,g.dockY,dock);
@@ -3127,6 +3226,7 @@ THREE.OBJLoader = ( function () {
       $('typeCaption').style.opacity=String(smooth(.12,.92,arrival)*(1-phraseOut));
       $('typeCaption').style.transform='translateY('+((1-arrival)*45-phraseOut*70)+'px)';
     }
+    syncActiveCopy(index);
     const previous=state.archRenderedIndex;
     if(previous!==undefined&&previous!==index&&reveal>.99&&!state.reduced){
       const direction=index>previous?1:-1;
@@ -3333,34 +3433,50 @@ THREE.OBJLoader = ( function () {
     paint();play();
   }
 
-  const heroGlitch={timer:0,end:0,glyphs:[],active:null};
+  const heroGlitch={timer:0,pending:new Set(),active:new Set(),glyphs:[],hoverAt:0};
+  function glitchDelay(callback,delay){const id=setTimeout(()=>{heroGlitch.pending.delete(id);callback();},delay);heroGlitch.pending.add(id);return id;}
   function stopHeroGlitch(){
-    clearTimeout(heroGlitch.timer);clearTimeout(heroGlitch.end);heroGlitch.timer=heroGlitch.end=0;
-    const glyph=heroGlitch.active;
-    if(glyph){glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');heroGlitch.active=null;}
+    clearTimeout(heroGlitch.timer);heroGlitch.timer=0;
+    heroGlitch.pending.forEach(clearTimeout);heroGlitch.pending.clear();
+    heroGlitch.active.forEach(glyph=>{glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');});heroGlitch.active.clear();
   }
   function canGlitch(){return state.ready&&!state.reduced&&!state.modal&&!document.hidden&&state.sy<state.height*.25;}
   function syncHeroGlitch(){
     if(!canGlitch()){stopHeroGlitch();return;}
-    if(!heroGlitch.glyphs.length||heroGlitch.timer||heroGlitch.active)return;
-    heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},4200+Math.random()*5800);
+    if(!heroGlitch.glyphs.length||heroGlitch.timer||heroGlitch.pending.size)return;
+    heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},1400+Math.random()*2200);
   }
-  function pulseHeroGlitch(){
-    if(!canGlitch()||!heroGlitch.glyphs.length)return;
-    const letters=heroGlitch.glyphs.filter(el=>el.dataset.char!==' '),glyph=letters[Math.floor(Math.random()*letters.length)];
-    heroGlitch.active=glyph;
-    if(Math.random()<.38)glyph.textContent='NX7#%'[Math.floor(Math.random()*5)];
+  function disturbGlyph(glyph){
+    if(!canGlitch()||heroGlitch.active.has(glyph))return;
+    heroGlitch.active.add(glyph);
+    if(Math.random()<.6)glyph.textContent='NX7#%'[Math.floor(Math.random()*5)];
     glyph.classList.add('is-glitching');
-    heroGlitch.end=setTimeout(()=>{heroGlitch.end=0;glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');heroGlitch.active=null;syncHeroGlitch();},150+Math.random()*55);
+    glitchDelay(()=>{glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');heroGlitch.active.delete(glyph);syncHeroGlitch();},145+Math.random()*90);
+  }
+  function pulseHeroGlitch(origin=null){
+    if(!canGlitch()||!heroGlitch.glyphs.length)return;
+    clearTimeout(heroGlitch.timer);heroGlitch.timer=0;
+    const letters=heroGlitch.glyphs.filter(el=>el.dataset.char!==' '),start=origin?letters.indexOf(origin):Math.floor(Math.random()*letters.length);
+    const count=origin?2:1+Math.floor(Math.random()*3);
+    for(let i=0;i<count;i++){
+      const glyph=letters[(Math.max(0,start)+i)%letters.length];
+      if(i===0)disturbGlyph(glyph);else glitchDelay(()=>disturbGlyph(glyph),i*(60+Math.random()*75));
+    }
   }
   function initHeroGlitch(){
     const host=$('heroLetters');
     host.replaceChildren(...[...'CUNYU YUAN'].map(char=>{const el=document.createElement('span');el.className='hero-glyph';el.dataset.char=char;el.textContent=char;return el;}));
     heroGlitch.glyphs=[...host.children];
-    // 固定每字的自然宽度（em），字符扰动不会挤动相邻字母，手机横竖屏同样缩放。
     const em=parseFloat(getComputedStyle(host).fontSize),widths=heroGlitch.glyphs.map(el=>el.getBoundingClientRect().width/em);
-    heroGlitch.glyphs.forEach((el,i)=>el.style.width=widths[i]+'em');syncHeroGlitch();
+    heroGlitch.glyphs.forEach((el,i)=>el.style.width=widths[i]+'em');
+    host.addEventListener('pointerover',event=>{
+      const glyph=event.target.closest('.hero-glyph'),now=performance.now();
+      if(event.pointerType!=='mouse'||!glyph||glyph.dataset.char===' '||now-heroGlitch.hoverAt<85)return;
+      heroGlitch.hoverAt=now;pulseHeroGlitch(glyph);
+    },{passive:true});
+    syncHeroGlitch();
   }
+
 
   function startHeroEntrance(){
     const elements=[document.querySelector('.site-logo'),$('menuToggle'),...$('heroMeta').children,$('heroStatement')];
@@ -3390,21 +3506,27 @@ THREE.OBJLoader = ( function () {
   }
   async function releaseLoader(){
     const loader=$('loader'),opening=$('opening'),path=$('openingPath');
-    // Render the opaque curtain before removing the identically coloured loader.
-    opening.hidden=false;
-    if(!state.reduced)await animateElement(loader.querySelector('.loader__inner'),[{opacity:1},{opacity:0}],{duration:220,fill:'forwards'});
+    loader.dataset.phase='complete';
+    await new Promise(resolve=>setTimeout(resolve,1000));
+    // SVGElement.hidden 不是跨浏览器可靠的布尔属性，必须真正移除 attribute。
+    opening.removeAttribute('hidden');opening.dataset.phase='opening';
+    path.setAttribute('d','M0 0H100V100Q50 100 0 100Z');
     document.body.classList.add('is-ready');state.revealing=true;
-    startHeroEntrance();
     if(state.city)updateCity(performance.now(),16);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    await animateElement(loader.querySelector('.loader__inner'),[{opacity:1},{opacity:0}],{duration:240,fill:'forwards'});
     loader.remove();wake();
     if(!state.reduced){
-      await animateValue(500,p=>{const t=p*p*p;path.setAttribute('d','M0 100V'+lerp(100,50,t)+'Q50 '+lerp(100,0,t)+' 100 '+lerp(100,50,t)+'V100Z');});
-      await animateValue(620,p=>{const t=1-Math.pow(1-p,3);path.setAttribute('d','M0 100V'+lerp(50,0,t)+'Q50 0 100 '+lerp(50,0,t)+'V100Z');});
-    }
+      // 与参考中的二次曲线展开一致：先加速弯曲，再减速铺开；直接绘制遮帘避免 SVG 蒙版兼容问题。
+      await animateValue(650,p=>{const t=p*p*p;path.setAttribute('d',`M0 0H100V${lerp(100,50,t)}Q50 ${lerp(100,0,t)} 0 ${lerp(100,50,t)}Z`);});
+      startHeroEntrance();
+      await animateValue(850,p=>{const t=1-Math.pow(1-p,3);path.setAttribute('d',`M0 0H100V${lerp(50,0,t)}Q50 0 0 ${lerp(50,0,t)}Z`);});
+    }else startHeroEntrance();
     opening.remove();document.body.classList.remove('is-loading');state.ready=true;measure();
     if(location.hash)navigateTo(location.hash);
   }
+
+
   async function boot(){
     if('scrollRestoration'in history)history.scrollRestoration='manual';
     document.documentElement.classList.toggle('native-scroll',state.nativeScroll);
@@ -3434,7 +3556,9 @@ THREE.OBJLoader = ( function () {
   addEventListener('scroll',()=>{
     if(state.modal||state.restoring)return;
     // Safari 越界坐标可以为负或超出文档；仅约束视觉进度，不反向纠正原生滚动。
-    state.sy=clamp(scrollY,0,maxScroll());
+    const next=clamp(scrollY,0,maxScroll());
+    if(Math.abs(next-state.sy)>.5)state.nativeDirection=Math.sign(next-state.sy);
+    state.sy=next;
     if(state.nativeScroll||Math.abs(scrollY-state.writtenScroll)>1){state.currentScroll=state.sy;state.landing=null;}
     if(!state.scrollAnimation&&!wheelDamping)state.targetScroll=state.sy;
     state.dirty=true;wake();
