@@ -26,7 +26,6 @@
       volume: 0.45,           // 0～1
       fadeSeconds: 2.5       // 每轮音乐开头与结尾的非线性淡入淡出
     },
-    motion: { statementPause: 1350, dockPause: 360 }, // 全屏文案 / 矩形归位后的停顿，毫秒
     transitionResistance: 100, // 交接处阻力区间，单位像素，建议 80～120
     publications: [
       {
@@ -285,9 +284,9 @@ html.touch-layout:not([data-input="keyboard"]) .photo-item__button:focus-visible
   .site-logo img { transition:none; }
 }
 
-/* 统一交互：只有主场景接管纵向滚动，弹窗仍使用浏览器原生滚动。 */
+/* 模糊、图像合成与菜单视觉层。滚动控制见文件末尾运行逻辑。 */
 html,body { overscroll-behavior-y:none; }
-main { touch-action:pan-x pinch-zoom; }
+main { touch-action:pan-y pinch-zoom; }
 dialog { touch-action:pan-y pinch-zoom; }
 .menu-dialog { box-shadow:none; }
 .menu-dialog::backdrop,.menu-dialog.is-open::backdrop { background:transparent; transition:none; backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
@@ -306,6 +305,23 @@ dialog { touch-action:pan-y pinch-zoom; }
 .project-images img { display:block; width:100%; height:auto; }
 .media-flight { will-change:transform; }
 @media(prefers-reduced-motion:reduce) { .photo-gallery,.slide__image-wrap { will-change:auto; } }
+
+
+/* 触屏滚动只属于浏览器；原生停靠消化惯性，下一划无需等待计时器。 */
+main { touch-action:pan-y pinch-zoom; }
+html.native-scroll:not(.is-navigating) { scroll-snap-type:y proximity; }
+html.native-scroll.native-landing:not(.is-navigating) { scroll-snap-type:y mandatory; scroll-behavior:smooth!important; }
+.native-landing .native-snap-anchor:not(.is-snap-target) { scroll-snap-align:none; }
+.native-snap-anchor { position:absolute; left:0; width:1px; height:1px; pointer-events:none; scroll-snap-align:start; scroll-snap-stop:always; }
+.photo-item img { opacity:0; transition:opacity .18s ease-out,transform 1.1s var(--ease),filter .8s; }
+.photo-item.is-ready img { opacity:1; }
+.slide__title .letter { opacity:1; backface-visibility:hidden; }
+#heroLetters .hero-glyph { position:relative; display:inline-block; vertical-align:baseline; white-space:pre; background:linear-gradient(180deg,#ffffffe6,#e8f2ff80 53%,#d5e7ffb0); background-clip:text; -webkit-background-clip:text; }
+.hero-glyph.is-glitching { animation:heroGlyphJitter .18s steps(1,end); }
+.hero-glyph.is-glitching::before,.hero-glyph.is-glitching::after { content:attr(data-char); position:absolute; inset:0; color:#9eeeff; -webkit-text-fill-color:#9eeeff; -webkit-text-stroke:0; opacity:.68; clip-path:inset(27% 0 55%); transform:translateX(-2px); }
+.hero-glyph.is-glitching::after { color:#ffb6ca; -webkit-text-fill-color:#ffb6ca; clip-path:inset(63% 0 24%); transform:translateX(2px); opacity:.5; }
+@keyframes heroGlyphJitter { 0%,100% { transform:none; } 18% { transform:translate(1px,-1px) skewX(-3deg); } 35% { transform:translate(-1.5px,0); } 57% { transform:translate(.5px,1px) skewX(2deg); } 76% { transform:translate(-.5px,-.5px); } }
+@media(prefers-reduced-motion:reduce) { .hero-glyph.is-glitching { animation:none; } .hero-glyph::before,.hero-glyph::after { display:none; } }
 
   </style>
 </head>
@@ -2388,7 +2404,7 @@ THREE.OBJLoader = ( function () {
   const easeOut=t=>1-Math.pow(1-clamp(t),5);
   const easeInOut=t=>t<.5?8*t*t*t*t:1-Math.pow(-2*t+2,4)/2;
   const MOTION={out:'cubic-bezier(.16,1,.3,1)',sweep:'cubic-bezier(.76,0,.24,1)',pop:'cubic-bezier(.2,1.2,.3,1)',exit:'cubic-bezier(.7,0,.2,1)'};
-  const state={reduced:reduceQuery.matches,width:0,height:0,sy:scrollY,currentScroll:scrollY,targetScroll:scrollY,writtenScroll:scrollY,scrollDone:null,raf:0,lastTime:0,dirty:true,ready:false,modal:null,modalScroll:null,lockedY:0,city:null,layout:{},archIndex:0,archMotion:null,inertia:0,maxScroll:0,gate:null};
+  const state={reduced:reduceQuery.matches,width:0,height:0,sy:scrollY,currentScroll:scrollY,targetScroll:scrollY,writtenScroll:scrollY,scrollDone:null,raf:0,lastTime:0,dirty:true,ready:false,modal:null,modalScroll:null,lockedY:0,city:null,layout:{},archIndex:0,archMotion:null,maxScroll:0,landing:null,nativeScroll:!fineQuery.matches};
   let wheelDamping=false;
   const WHEEL_DAMPING=6;
   const hero=$('home'),arch=$('architecture'),archStage=$('archStage');
@@ -2432,15 +2448,12 @@ THREE.OBJLoader = ( function () {
       const colRect=col.getBoundingClientRect(),width=colRect.width/galleryScale,height=frame.getBoundingClientRect().height/galleryScale;
       const gap=w*(w<=600?.1:.05),stride=height+12+item.record.captions[0].parentElement.offsetHeight+gap;
       const indices=col.photoIndices,focus=indices.includes(heroPhotoIndex)?heroPhotoIndex:indices[Math.floor(indices.length/2)];
-      const poolSize=Math.ceil(h/stride)+4;
-      while(col.children.length<poolSize)col.append(createPhotoTile());
-      while(col.children.length>poolSize)col.lastElementChild.remove();
-      return {cycle:indices.length*stride,stride,indices,focus,focusAt:indices.indexOf(focus),x:(colRect.left-galleryRect.left)/galleryScale,y:h/2-height/2,width,height,down:photoCount===3&&i===1,pool:[...col.children].map(item=>item.record)};
+      return {cycle:indices.length*stride,stride,indices,focus,focusAt:indices.indexOf(focus),x:(colRect.left-galleryRect.left)/galleryScale,y:h/2-height/2,width,height,down:photoCount===3&&i===1};
     });
     const photoTravel=Math.max(h,...photoMetrics.map(m=>m.cycle));
-    const photoRamp=state.reduced?0:Math.min(h*.32,280),photoLength=photoTravel+photoRamp;
-    const photoHold=(state.reduced?0:.85)*h,photoReveal=(state.reduced?.35:1.5)*h;
-    const archHold=(state.reduced?0:.9)*h,intro=(state.reduced?.7:2.05)*h+archHold,step=.8*h;
+    const photoRamp=state.reduced?0:Math.min(h*.16,140),photoLength=photoTravel+.8*photoRamp;
+    const photoHold=0,photoReveal=(state.reduced?.35:1.05)*h;
+    const archHold=0,intro=(state.reduced?.7:1.7)*h,step=(w<=1100?.64:.8)*h;
     const pinLength=intro+(slides.length-1)*step+1.65*h,experienceHeight=dom.experience.offsetHeight;
     arch.style.height=pinLength+h+'px';arch.style.marginTop=-h+'px';
     $('experienceWrap').style.paddingBottom='0px';$('experienceWrap').style.height=experienceHeight+h*1.15+'px';
@@ -2457,19 +2470,17 @@ THREE.OBJLoader = ( function () {
       experienceTop:documentTop($('experienceWrap')),archTop,archIntro:intro,archHold,archStep:step,archGallery:archTop+intro,archLast:archTop+intro+(slides.length-1)*step,archBottom:archTop+pinLength+h,
       photoRawTop,photoTop,photoHold,photoReveal,photoStart:photoTop+photoHold+photoReveal,photoLength,photoTravel,photoRamp,photoEnd:photoTop+photoHold+photoReveal+photoLength,photoMetrics,
       contactRawTop,contactTop,contactHeight:dom.contact.offsetHeight,resistance,loss,slideW,slideH,slideX:(w-slideW)/2,slideY:(h-slideH)/2,mobile,coverRatio,coverWidth,photoFocus:photoMetrics.find(m=>m.focus===heroPhotoIndex)};
-    const l=state.layout,pause=clamp(Number(CONFIG.motion?.statementPause)||1350,0,5000),dockPause=clamp(Number(CONFIG.motion?.dockPause)||360,0,2000);
-    l.gates=[{key:'architecture-cover',at:archTop,hold:pause},{key:'architecture-first',at:l.archGallery,hold:220},{key:'architecture-last',at:l.archLast,hold:300},{key:'photo-cover',at:photoTop,hold:pause},{key:'photo-dock',at:l.photoStart,hold:dockPause},{key:'contact',at:contactTop,hold:200}];
+    const l=state.layout;
+    l.stops=[archTop,l.archGallery,l.archLast,photoTop];
+    updateSnapAnchors();
     renderSlides.forEach(slide=>{slide.wrap.style.left=l.slideX+'px';slide.wrap.style.top=l.slideY+'px';slide.wrap.style.width=slideW+'px';slide.wrap.style.height=slideH+'px';slide.copy.style.top=mobile?l.slideY+slideH-30+'px':'';});
     dom.photoCoverImage.style.width=coverWidth+'px';dom.photoCoverImage.style.height=coverWidth/coverRatio+'px';
     state.maxScroll=Math.max(0,document.documentElement.scrollHeight-document.documentElement.clientHeight);
     let correction=anchor?anchor.getBoundingClientRect().top-anchorY:preserveChapter?archTop-old.archTop:0;
-    if(Number.isFinite(correction)&&Math.abs(correction)>.05&&!state.scrollAnimation){state.targetScroll+=correction;writeScroll(scrollY+correction);}
-    if(state.gate){
-      const point=gatePoint(state.gate.key);
-      if(point){state.gate.at=point.at;state.targetScroll=point.at;if(sizeChanged)writeScroll(point.at);}
-      else state.gate=null;
-    }else if(state.scrollAnimation)state.targetScroll=clamp(state.scrollAnimation.to,0,maxScroll());
-    else if(!wheelDamping)state.targetScroll=scrollY;
+    if(!state.nativeScroll&&Number.isFinite(correction)&&Math.abs(correction)>.05&&!state.scrollAnimation){state.targetScroll+=correction;writeScroll(scrollY+correction);}
+    if(state.scrollAnimation)state.targetScroll=clamp(state.scrollAnimation.to,0,maxScroll());
+    else if(!wheelDamping)state.targetScroll=clamp(scrollY,0,maxScroll());
+    state.sy=clamp(scrollY,0,maxScroll());
     measureType();if(state.city)resizeCity();state.dirty=true;wake();
   }
 
@@ -2477,25 +2488,28 @@ THREE.OBJLoader = ( function () {
     state.raf=0;
     const dt=state.lastTime?Math.min((now-state.lastTime)/1000,.05):1/60;state.lastTime=now;
     let keep=false;
+    const modal=state.modalScroll;
+    if(state.modal&&modal){
+      const diff=modal.target-modal.current;
+      modal.current=Math.abs(diff)<.35||state.reduced?modal.target:modal.current+diff*(1-Math.exp(-dt*WHEEL_DAMPING));
+      modal.el.scrollTop=modal.current;modal.written=modal.el.scrollTop;
+      keep=Math.abs(diff)>=.35&&!state.reduced;
+      if(!keep)state.modalScroll=null;
+    }
     if(!state.modal){
-      if(state.inertia){
-        const velocity=state.inertia;applyScrollDelta(velocity*dt,now,'inertia');
-        if(state.inertia){state.inertia*=Math.exp(-INPUT.inertiaDecay*dt);if(Math.abs(state.inertia)<12)state.inertia=0;}
-        keep=!!state.inertia;
-      }
       const animation=state.scrollAnimation;
       if(animation){
         if(animation.start===null)animation.start=now;
         const p=clamp((now-animation.start)/animation.duration);
         writeScroll(lerp(animation.from,animation.to,p*p*(3-2*p)));
         if(p<1)keep=true;
-        else{state.scrollAnimation=null;state.targetScroll=scrollY;animation.done?.();}
-      }else if(wheelDamping){
+        else{state.scrollAnimation=null;state.targetScroll=scrollY;document.documentElement.classList.remove('is-navigating');animation.done?.();}
+      }else if(wheelDamping&&!state.nativeScroll){
         const diff=state.targetScroll-state.currentScroll;
         if(Math.abs(diff)<.35||state.reduced){writeScroll(state.targetScroll);wheelDamping=false;}
-        else{const response=input.touch?INPUT.touchResponse:WHEEL_DAMPING;writeScroll(state.currentScroll+diff*(1-Math.exp(-dt*response)));keep=true;}
+        else{writeScroll(state.currentScroll+diff*(1-Math.exp(-dt*WHEEL_DAMPING)));keep=true;}
       }
-      updateGate(now);keep=updateEdge(now,dt)||keep;
+      keep=updateEdge(now,dt)||keep;
       const scrollRendered=state.dirty;
       if(scrollRendered){state.dirty=false;renderScroll();}
       if(state.archMotion||state.archTiltActive){if(!scrollRendered)renderArchitecture(now);keep=!!state.archMotion||state.archTiltActive||keep;}
@@ -2504,14 +2518,19 @@ THREE.OBJLoader = ( function () {
     }
     if(keep)wake();else state.lastTime=0;
   }
-  function cancelScroll(clearGate=true){
-    wheelDamping=false;state.inertia=0;state.scrollAnimation=null;state.targetScroll=scrollY;state.currentScroll=scrollY;
-    if(clearGate)state.gate=null;
+  function cancelScroll(){
+    clearNativeLanding();
+    wheelDamping=false;state.scrollAnimation=null;state.landing=null;
+    state.targetScroll=state.currentScroll=clamp(scrollY,0,maxScroll());
+    document.documentElement.classList.remove('is-navigating');
   }
   function scrollToY(to,duration=650,done,kind='navigation'){
     cancelScroll();to=clamp(to,0,maxScroll());state.targetScroll=to;
-    if(state.reduced||duration===0){writeScroll(to);done?.();}
-    else state.scrollAnimation={from:scrollY,to,start:null,duration,done,kind};
+    document.documentElement.classList.add('is-navigating');
+    if(state.reduced||duration===0){
+      writeScroll(to);done?.();
+      requestAnimationFrame(()=>{if(!state.scrollAnimation)document.documentElement.classList.remove('is-navigating');});
+    }else state.scrollAnimation={from:scrollY,to,start:null,duration,done,kind};
     wake();
   }
 
@@ -2525,8 +2544,7 @@ THREE.OBJLoader = ( function () {
     if(el.closest('.academic')&&el.id!=='experience')target-=.13*state.height;
     scrollToY(target,650,()=>{
       el.setAttribute('tabindex','-1');el.focus({preventScroll:true});
-      const point=state.layout.gates.find(point=>Math.abs(point.at-scrollY)<2);
-      if(point){armGate(point,el.id==='contact'?-1:1);if(el.id==='contact')state.gate.gesture=null;}
+
     });
   }
   document.querySelectorAll('a[href^="#"]').forEach(link=>link.addEventListener('click',async event=>{
@@ -2535,122 +2553,147 @@ THREE.OBJLoader = ( function () {
     navigateTo(hash);
   }));
 
-  // 输入统一为像素位移；设备能力只控制 Hover，不改变滚动或卡片布局。
-  const INPUT={quiet:190,cardThreshold:45,cardDuration:500,cardLock:1020,touchResponse:18,inertiaDecay:5.5};
-  const input={id:0,source:'',last:-Infinity,direction:0,touch:null,velocity:0};
+  // 触屏由浏览器独占滚动；PC 滚轮只在这一处阻尼，弹窗复用相同响应。
+  const INPUT={quiet:140,cardThreshold:28,cardLock:260};
+  const input={id:0,source:'',last:-Infinity,direction:0,magnitude:0,peak:0,trough:Infinity,rearmed:false,decay:0,touch:null};
+  const snapAnchors=[];
+  function clearNativeLanding(){
+    document.documentElement.classList.remove('native-landing');
+    snapAnchors.forEach(el=>el.classList.remove('is-snap-target'));
+  }
+  function settleNativeGesture(t){
+    const distance=t.startY-t.y,direction=Math.sign(distance),l=state.layout;
+    if(Math.abs(distance)<24||Math.abs(t.startX-t.x)>Math.abs(distance))return;
+    let target=-1;
+    if(t.sy>=l.archGallery-2&&t.sy<=l.archLast+2){
+      const index=clamp(Math.round((t.sy-l.archGallery)/l.archStep),0,slides.length-1),next=index+direction;
+      if(next>=0&&next<slides.length)target=1+next;
+    }
+    if(target<0){
+      // 拖动期间完全跟手。松手后仅对已经接近/跨越的章节边界请求原生停靠。
+      const end=clamp(scrollY,0,maxScroll()),tolerance=state.height*.28;
+      const crossed=snapAnchors.map((el,i)=>({i,at:parseFloat(el.style.top)})).filter(p=>
+        direction>0?t.sy<p.at-2&&end>=p.at-tolerance:t.sy>p.at+2&&end<=p.at+tolerance
+      ).sort((a,b)=>direction*(a.at-b.at))[0];
+      if(crossed)target=crossed.i;
+    }
+    if(target<0)return;
+    snapAnchors[target].classList.add('is-snap-target');
+    document.documentElement.classList.add('native-landing');
+  }
+  function setNativeScroll(native){
+    if(state.nativeScroll===native)return;
+    cancelScroll();state.nativeScroll=native;
+    document.documentElement.classList.toggle('native-scroll',native);
+  }
+  function updateSnapAnchors(){
+    const l=state.layout;
+    const stops=[l.archTop,...slides.map((_,i)=>l.archGallery+i*l.archStep),l.photoTop,l.photoStart];
+    stops.forEach((at,i)=>{
+      let el=snapAnchors[i];
+      if(!el){el=document.createElement('span');el.className='native-snap-anchor';el.setAttribute('aria-hidden','true');$('main').append(el);snapAnchors.push(el);}
+      style(el,'top',at+'px');
+    });
+  }
   function newGesture(source,now=performance.now()){
-    input.id++;input.source=source;input.last=now;input.direction=0;input.velocity=0;
+    input.id++;input.source=source;input.last=now;input.direction=0;input.decay=0;
+    input.peak=0;input.trough=Infinity;input.rearmed=false;
     return input.id;
   }
-  function armGate(point,direction,gesture=input.id){
-    state.gate={...point,direction,gesture,arrived:null};
-    state.inertia=0;state.targetScroll=point.at;wheelDamping=true;wake();
-  }
-  function updateGate(now){
-    const gate=state.gate;
-    if(gate&&gate.arrived===null&&Math.abs(state.sy-gate.at)<1.1)gate.arrived=now;
-  }
-  function gatePoint(key){return state.layout.gates?.find(point=>point.key===key);}
   function consumeArchGesture(delta,now,gesture=input.id){
     const l=state.layout;
     if(!delta||state.sy<l.archGallery-1.5||state.sy>l.archLast+1.5)return false;
-    if(state.cardGesture===gesture||now<(state.cardLockedUntil||0)){
-      state.cardGesture=gesture;state.inertia=0;return true;
-    }
+    if(state.cardGesture===gesture)return true;
     const direction=Math.sign(delta),index=state.archIndex;
     if(index===0&&direction<0||index===slides.length-1&&direction>0)return false;
     let g=state.archGesture;
     if(!g||g.id!==gesture||g.direction!==direction)g=state.archGesture={id:gesture,direction,sum:0};
     g.sum+=delta;
     if(Math.abs(g.sum)<INPUT.cardThreshold)return true;
-    state.cardGesture=gesture;state.cardLockedUntil=now+INPUT.cardLock;state.inertia=0;
-    scrollToY(l.archGallery+(index+direction)*l.archStep,INPUT.cardDuration,null,'card');
+    if(now<(state.cardLockedUntil||0)&&direction===state.cardDirection)return true;
+    state.cardGesture=gesture;state.cardDirection=direction;state.cardLockedUntil=now+INPUT.cardLock;
+    // Sticky 场景的滚动坐标立即定位；卡片本身仍以 700ms 的物理曲线移动。
+    scrollToY(l.archGallery+(index+direction)*l.archStep,0,null,'card');
     return true;
   }
   function applyScrollDelta(delta,now=performance.now(),source=input.source,gesture=input.id){
     if(!delta||state.modal||!state.ready)return false;
     state.measureAnchor=null;
-    if(state.scrollAnimation?.kind==='card'){
-      state.cardGesture=gesture;state.inertia=0;return true;
-    }
-    if(state.scrollAnimation)cancelScroll(false);
-    const direction=Math.sign(delta),gate=state.gate;
-    if(gate){
-      if(gate.gesture===null)gate.gesture=gesture;
-      if(gate.key==='contact'&&direction<0)pullEdge(delta,'contact');
-      const arrived=gate.arrived!==null;
-      const waited=arrived&&now-gate.arrived>=(state.reduced?0:gate.hold);
-      const ready=gate.key!=='photo-dock'||heroTileReady();
-      // 同一手势的尾部与惯性永远不能越过停顿点；反向操作可以立即退出。
-      if(direction!==gate.direction){
-        state.gate=null;
-      }else if(source==='inertia'||gesture===gate.gesture||!waited||!ready){
-        state.inertia=0;state.targetScroll=gate.at;wheelDamping=true;wake();return true;
-      }else state.gate=null;
+    if(state.scrollAnimation)cancelScroll();
+    const direction=Math.sign(delta),landing=state.landing;
+    if(landing){
+      // 只收束抵达封面这一划的尾部；新发力或反向立即放行，没有强制阅读计时。
+      if(direction===landing.direction&&gesture===landing.gesture&&now-landing.started<260){
+        state.targetScroll=landing.at;wheelDamping=true;wake();return true;
+      }
+      state.landing=null;
     }
     if(consumeArchGesture(delta,now,gesture))return true;
     const from=state.targetScroll;
-    if(from<=.5&&direction<0){pullEdge(delta,'home');state.inertia=0;return true;}
-    if(from>=maxScroll()-.5&&direction>0){pullEdge(delta,'bottom');state.inertia=0;return true;}
+    if(from<=.5&&direction<0){pullEdge(delta);return true;}
+    if(direction<0||from>state.height*.1)edge.pull=0;
     let next=clamp(from+delta,0,maxScroll());
-    const crossing=(state.layout.gates||[]).filter(point=>{
-      if(point.key==='contact'&&direction>0)return false;
-      if(gate?.key===point.key)return false;
-      if(point.key==='contact'&&direction<0&&Math.abs(from-point.at)<=.5)return true;
-      return direction>0?from<point.at-.5&&next>=point.at:from>point.at+.5&&next<=point.at;
-    }).sort((a,b)=>direction*(a.at-b.at))[0];
-    if(crossing){armGate(crossing,direction,gesture);next=crossing.at;}
+    const crossing=(state.layout.stops||[]).filter(point=>direction>0?from<point-.5&&next>=point:from>point+.5&&next<=point).sort((a,b)=>direction*(a-b))[0];
+    if(crossing!==undefined){
+      next=crossing;state.landing={at:crossing,direction,gesture,started:now};
+      if(crossing===state.layout.archGallery||crossing===state.layout.archLast)state.cardGesture=gesture;
+    }
     state.targetScroll=next;
-    if(!wheelDamping)state.currentScroll=scrollY;
+    if(!wheelDamping)state.currentScroll=clamp(scrollY,0,maxScroll());
     wheelDamping=true;wake();return true;
   }
+  function modalWheel(delta){
+    const el=state.modal==='projectDialog'?$('projectScroll'):state.modal==='menuDialog'?$('menuDialog'):null;
+    if(!el)return false;
+    const max=Math.max(0,el.scrollHeight-el.clientHeight);
+    if(!max)return false;
+    let s=state.modalScroll;
+    if(!s||s.el!==el)s=state.modalScroll={el,current:el.scrollTop,target:el.scrollTop,written:el.scrollTop};
+    s.target=clamp(s.target+delta,0,max);wake();return true;
+  }
   addEventListener('wheel',event=>{
-    if(event.ctrlKey||event.metaKey||state.modal||!state.ready||!event.cancelable)return;
+    if(event.ctrlKey||event.metaKey||!state.ready||!event.cancelable)return;
     const raw=Math.abs(event.deltaX)>Math.abs(event.deltaY)?event.deltaX:event.deltaY;
     const delta=raw*(event.deltaMode===1?16:event.deltaMode===2?state.height:1);
     if(!delta)return;
-    event.preventDefault();
-    const now=performance.now(),direction=Math.sign(delta);
-    if(input.source!=='wheel'||now-input.last>INPUT.quiet||input.direction&&direction!==input.direction)newGesture('wheel',now);
-    input.last=now;input.direction=direction;state.inertia=0;
+    if(state.modal){if(modalWheel(delta))event.preventDefault();return;}
+    setNativeScroll(false);event.preventDefault();
+    const now=performance.now(),direction=Math.sign(delta),magnitude=Math.abs(delta),gap=now-input.last;
+    // 连续触控板事件中也能识别新的发力峰，不依赖整个惯性序列彻底停止。
+    if(magnitude<input.magnitude){
+      input.decay++;
+      if(input.decay>=3&&magnitude<Math.max(6,input.peak*.45))input.rearmed=true;
+      if(input.rearmed)input.trough=Math.min(input.trough,magnitude);
+    }else input.decay=0;
+    const impulse=input.rearmed&&magnitude>input.magnitude&&magnitude>=Math.max(5,input.trough*1.8);
+    const notch=event.deltaMode!==0||Number.isInteger(raw)&&magnitude>=40&&gap>45;
+    if(input.source!=='wheel'||gap>INPUT.quiet||direction!==input.direction||impulse||notch)newGesture('wheel',now);
+    input.last=now;input.direction=direction;input.magnitude=magnitude;input.peak=Math.max(input.peak,magnitude);
     applyScrollDelta(delta,now,'wheel');
   },{passive:false});
   addEventListener('touchstart',event=>{
-    if(state.modal||!state.ready)return;
-    if(event.touches.length!==1){input.touch=null;state.inertia=0;return;}
-    if(state.scrollAnimation?.kind!=='card')cancelScroll(false);
-    newGesture('touch');
-    const touch=event.touches[0];
-    input.touch={x:touch.clientX,y:touch.clientY,startX:touch.clientX,startY:touch.clientY,last:performance.now(),axis:null};
+    if(!state.ready)return;
+    // 任何真实触摸立即交还浏览器控制权，包括仍在播放的菜单定位动画。
+    state.modalScroll=null;setNativeScroll(true);cancelScroll();
+    if(event.touches.length!==1){input.touch=null;return;}
+    const t=event.touches[0];input.touch={x:t.clientX,y:t.clientY,startX:t.clientX,startY:t.clientY,sy:clamp(scrollY,0,maxScroll())};
   },{passive:true});
   addEventListener('touchmove',event=>{
-    const t=input.touch;
-    if(!t||state.modal||event.touches.length!==1)return;
-    const touch=event.touches[0],now=performance.now();
-    if(!t.axis){
-      const dx=Math.abs(touch.clientX-t.startX),dy=Math.abs(touch.clientY-t.startY);
-      if(Math.max(dx,dy)<4)return;
-      t.axis=dy>=dx?'y':'x';
-    }
-    if(t.axis!=='y')return;
-    if(!event.cancelable){input.touch=null;input.velocity=0;return;}
-    event.preventDefault();
-    const delta=t.y-touch.clientY,dt=Math.max(8,now-t.last);
-    input.velocity=lerp(input.velocity,clamp(delta/dt*1000,-2800,2800),.35);
-    t.x=touch.clientX;t.y=touch.clientY;t.last=now;input.last=now;
-    applyScrollDelta(delta,now,'touch');
-  },{passive:false});
+    const t=input.touch;if(!t||state.modal||event.touches.length!==1)return;
+    const y=event.touches[0].clientY,delta=t.y-y;t.y=y;t.x=event.touches[0].clientX;
+    // 仅观察首页真正的文档顶端，反馈只作用于城市镜头，不回写页面位置。
+    if(scrollY<=0&&delta<0)pullEdge(delta);else edge.pull=0;
+  },{passive:true});
   function finishTouch(cancelled=false){
-    const t=input.touch;input.touch=null;edge.pull=0;edge.last=0;
-    if(!t)return;
-    const fresh=performance.now()-t.last<90;
-    if(!cancelled&&t.axis==='y'&&fresh&&!state.gate&&!state.scrollAnimation&&state.cardGesture!==input.id){
-      state.inertia=Math.abs(input.velocity)>80?input.velocity:0;
-    }else state.inertia=0;
-    input.velocity=0;wake();
+    if(input.touch&&!state.modal&&!cancelled)settleNativeGesture(input.touch);
+    input.touch=null;edge.pull=0;edge.last=0;wake();
   }
-  addEventListener('touchend',event=>{if(event.touches.length===0)finishTouch();},{passive:true});
+  addEventListener('touchend',event=>{if(!event.touches.length)finishTouch();},{passive:true});
   addEventListener('touchcancel',()=>finishTouch(true),{passive:true});
+  $('projectScroll').addEventListener('scroll',()=>{
+    const s=state.modalScroll;
+    if(s&&Math.abs(s.el.scrollTop-s.written)>1)state.modalScroll=null;
+  },{passive:true});
 
   // 弹簧按时间积分，60/120 Hz 与触摸/滚轮共享强度及阻尼。
   function updateEdge(now,dt){
@@ -2672,13 +2715,15 @@ THREE.OBJLoader = ( function () {
     const d=state.layout.resistance;if(!d)return 0;
     const t=clamp(distance/d);return .7*d*(t-t*t*t+.5*t*t*t*t);
   }
-  // Gallery speed smoothly ramps 0→1 and 1→0; the middle retains unit speed.
+  // 入口保留 20% 速度，缓慢加速至 1:1；两端没有静止的滚动死区。
   function galleryDistance(distance,length,ramp){
     const x=clamp(distance,0,length);if(!ramp)return x;
-    if(x<ramp){const t=x/ramp;return ramp*(t*t*t-.5*t*t*t*t);}
-    if(x>length-ramp){const t=(length-x)/ramp;return length-ramp-ramp*(t*t*t-.5*t*t*t*t);}
-    return x-ramp/2;
+    const integral=t=>.2*t+.8*(t*t*t-.5*t*t*t*t);
+    if(x<ramp)return ramp*integral(x/ramp);
+    if(x>length-ramp)return length-.8*ramp-ramp*integral((length-x)/ramp);
+    return x-.4*ramp;
   }
+
   function animateElement(el,frames,options={}){
     if(state.reduced){if(options.fill==='forwards'||options.fill==='both')Object.assign(el.style,frames[frames.length-1]);return Promise.resolve();}
     const animation=el.animate(frames,{duration:750,easing:MOTION.out,...options});
@@ -2692,7 +2737,7 @@ THREE.OBJLoader = ( function () {
     cancelScroll();state.currentScroll=scrollY;state.targetScroll=scrollY;state.scrollDone=null;state.modalScroll=null;state.modal=id;state.lockedY=scrollY;state.sy=scrollY;
     lockedDialogs.set(id,trigger||document.activeElement);
     document.body.style.position='fixed';document.body.style.top=-state.lockedY+'px';document.body.style.width='100%';
-    dialog.showModal();dialog.dataset.phase='opening';
+    dialog.showModal();dialog.dataset.phase='opening';syncHeroGlitch();
     document.querySelectorAll('.aurora').forEach(el=>el.classList.add('is-paused'));
     requestAnimationFrame(()=>dialog.classList.add('is-open'));
     let entrance;
@@ -2716,14 +2761,14 @@ THREE.OBJLoader = ( function () {
   function restoreDialog(dialog){
     const id=dialog.id;if(state.modal!==id)return;
     const y=state.lockedY;
-    state.restoring=true;
+    state.restoring=true;document.documentElement.classList.add('is-navigating');
     document.body.style.position='';document.body.style.top='';document.body.style.width='';
     dialog.classList.remove('is-open');dialog.dataset.phase='closed';
     state.modal=null;state.modalScroll=null;state.targetScroll=y;writeScroll(y);
     const trigger=lockedDialogs.get(id);lockedDialogs.delete(id);
     if(trigger&&document.contains(trigger))trigger.focus({preventScroll:true});
     measure();
-    requestAnimationFrame(()=>{if(!state.modal&&!state.scrollAnimation){writeScroll(y);state.targetScroll=y;}state.restoring=false;});
+    requestAnimationFrame(()=>{if(!state.modal&&!state.scrollAnimation){writeScroll(y);state.targetScroll=y;}state.restoring=false;document.documentElement.classList.remove('is-navigating');syncHeroGlitch();});
   }
   async function closeDialog(id){
     const dialog=$(id);if(!dialog.open||dialog.dataset.phase==='closing')return;
@@ -2884,14 +2929,21 @@ THREE.OBJLoader = ( function () {
       });
     });
   }
-  function createPhotoTile(){
-    const item=document.createElement('figure');item.className='photo-item';
+  // 每张照片拥有永久节点。响应式改列只移动节点，循环滚动只移动坐标，永不换图。
+  const photoRecords=[];
+  function createPhotoTile(index){
+    const p=DATA.photos[index],item=document.createElement('figure');item.className='photo-item';
     item.innerHTML='<button class="photo-item__button" tabindex="-1"><span class="photo-item__frame"><img decoding="async" width="960" height="1000" alt=""></span><span class="photo-item__caption"><span></span><span></span></span></button>';
-    item.record={item,button:item.querySelector('button'),img:item.querySelector('img'),frame:item.querySelector('.photo-item__frame'),captions:[...item.querySelectorAll('.photo-item__caption span')],index:-1,requested:-1,request:0,suppressed:false};
-    return item;
+    const record={item,button:item.querySelector('button'),img:item.querySelector('img'),frame:item.querySelector('.photo-item__frame'),captions:[...item.querySelectorAll('.photo-item__caption span')],index,loading:false,ready:false};
+    item.record=record;item.dataset.photoIndex=index;record.button.dataset.photo=index;
+    record.button.setAttribute('aria-label','Enlarge '+p.label+' photograph '+(index+1));
+    record.img.alt=p.label+' — photograph by Cunyu Yuan';sizeImage(record.img,p.src);
+    record.captions[0].textContent=p.label;record.captions[1].textContent=String(index+1).padStart(2,'0');
+    return record;
   }
   function buildPhotoColumns(){
     const count=innerWidth<=600?1:3;if(count===photoCount)return;
+    if(!photoRecords.length)DATA.photos.forEach((_,i)=>photoRecords.push(createPhotoTile(i)));
     photoCount=count;
     const buckets=Array.from({length:count},(_,i)=>DATA.photos.map((_,n)=>n).filter(n=>n%count===i));
     if(count===3&&heroPhotoIndex%count!==1){
@@ -2900,53 +2952,44 @@ THREE.OBJLoader = ( function () {
     }
     photoColumns=buckets.map(indices=>{
       const col=document.createElement('div');col.className='photo-column';col.photoIndices=indices;
-      col.append(createPhotoTile());return col;
+      col.append(...indices.map(index=>photoRecords[index].item));return col;
     });
-    $('photoColumns').replaceChildren(...photoColumns);
+    $('photoColumns').replaceChildren(...photoColumns);state.heroTile=photoRecords[heroPhotoIndex];
+    preparePhoto(state.heroTile,true);
   }
-  function assignPhoto(record,index,priority){
-    if(record.requested===index)return;
-    record.requested=index;const request=++record.request,p=DATA.photos[index];
-    loadImage(p.src,priority).then(async image=>{
-      if(!image||record.request!==request||!record.item.isConnected)return;
-      const next=image.cloneNode();next.alt=p.label+' — photograph by Cunyu Yuan';sizeImage(next,p.src);
-      await next.decode().catch(()=>{});
-      if(record.request!==request||!record.item.isConnected)return;
-      next.style.visibility=record.suppressed?'hidden':'visible';
-      record.img.replaceWith(next);record.img=next;record.index=index;
-      record.button.dataset.photo=String(index);
-      record.button.setAttribute('aria-label','Enlarge '+p.label+' photograph '+(index+1));
-      record.captions[0].textContent=p.label;record.captions[1].textContent=String(index+1).padStart(2,'0');
-      state.dirty=true;wake();
-    });
+  async function preparePhoto(record,priority){
+    if(record.ready||record.loading)return;
+    record.loading=true;
+    const src=DATA.photos[record.index].src,image=await loadImage(src,priority);
+    if(!image){record.loading=false;return;}
+    // src 一生只赋值一次；即使解码延迟或快速来回滚动，也不可能短暂显示其他照片。
+    record.img.src=src;
+    await record.img.decode().catch(()=>{});
+    record.ready=record.img.complete&&record.img.naturalWidth>0;record.loading=false;
+    record.item.classList.toggle('is-ready',record.ready);state.dirty=true;wake();
   }
-  function heroTileReady(){
-    return !!state.heroTile&&state.heroTile.index===heroPhotoIndex&&state.heroTile.img.complete&&state.heroTile.img.naturalWidth>0;
-  }
+  function heroTileReady(){return !!state.heroTile?.ready;}
   function renderPhotoTiles(motion,handoff){
     photoColumns.forEach((col,i)=>{
       const m=state.layout.photoMetrics[i],shift=(m.down?1:-1)*m.cycle*motion;
-      const start=m.y+shift,first=Math.floor(-start/m.stride)-2,pool=m.pool;
-      for(let k=0;k<pool.length;k++){
-        const n=first+k,record=pool[((n%pool.length)+pool.length)%pool.length];
-        const index=m.indices[((m.focusAt+n)%m.indices.length+m.indices.length)%m.indices.length];
-        const y=start+n*m.stride,visible=y<state.height&&y+m.height>0;
-        assignPhoto(record,index,visible);
+      m.indices.forEach((index,j)=>{
+        const record=photoRecords[index],raw=m.y+shift+(j-m.focusAt)*m.stride;
+        const y=((raw+m.stride)%m.cycle+m.cycle)%m.cycle-m.stride;
+        const visible=y<state.height+32&&y+m.height+32>0,near=y<state.height*2&&y+m.height>-state.height;
+        if(near)preparePhoto(record,visible);
         style(record.item,'transform',`translate3d(0,${y.toFixed(3)}px,0)`);
-        const focal=m.focus===heroPhotoIndex&&n===0;
-        if(focal)state.heroTile=record;
-        // 完整照片始终留在封面下面，双向交接时均不露出黑底。
-        record.suppressed=false;
-        style(record.img,'visibility',record.suppressed?'hidden':'visible');
-        const tab=visible&&handoff&&record.index===index?0:-1;
+        style(record.item,'visibility',visible?'visible':'hidden');
+        const tab=visible&&handoff&&record.ready?0:-1;
         if(record.button.tabIndex!==tab)record.button.tabIndex=tab;
         attribute(record.item,'aria-hidden',String(!visible));
-      }
+      });
     });
   }
+
+
   function renderScroll(){
     if(!state.layout.archTop)return;
-    const {sy,height:h,layout:l}=state;
+    const {sy,height:h,layout:l}=state;syncHeroGlitch();
     const heroP=clamp(sy/h),blurP=smooth(h*.12,l.researchBottom-h*.55,sy);
     style(dom.heroIntro,'opacity',String(1-smooth(.06,.8,heroP)));
     style(dom.heroIntro,'transform',state.reduced?'none':`translate3d(0,${sy*.28}px,0)`);
@@ -2968,9 +3011,9 @@ THREE.OBJLoader = ( function () {
     const entrance=clamp((sy-l.photoTop+h)/h);
     style(dom.logo,'opacity',String(clamp(1-smooth(.18,.9,entrance)+smooth(l.contactTop-h,l.contactTop-h*.12,sy))));
     if(sy<l.photoTop-h*1.2||sy>l.contactTop+h)return;
-    const reveal=clamp((sy-l.photoTop-l.photoHold)/l.photoReveal);
-    // 最后 22% 是缓慢归位区；导数在收尾降至零，随后单独停顿再滚动画廊。
-    const t=clamp((reveal-.04)/.96),dock=1-Math.pow(1-t,3)*(1+3*t);
+    const reveal=sy>=l.photoStart-1?1:clamp((sy-l.photoTop)/l.photoReveal);
+    // 缓慢启程、收尾放缓，但导数始终为正，持续响应手指和滚轮。
+    const t=reveal,dock=t*t*(3-2*t)+.16*t*(1-t)*(1-2*t);
     if(reveal<1)state.photoHandedOff=false;
     const handoff=reveal>=1&&(state.photoHandedOff||heroTileReady());
     if(handoff)state.photoHandedOff=true;
@@ -2981,7 +3024,7 @@ THREE.OBJLoader = ( function () {
     style(dom.photoGallery,'filter',`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
     style(dom.photoTitleTop,'transform',`translate3d(0,${(1-dock)*5.5}vw,0)`);
     style(dom.photoTitleBottom,'transform',`translate3d(0,${-(1-dock)*5.5}vw,0)`);
-    const phraseOut=l.photoHold?smooth(l.photoHold*.48,l.photoHold+l.photoReveal*.16,sy-l.photoTop):1;
+    const phraseOut=smooth(.26,.73,reveal);
     style(dom.photoPhrase,'opacity',String(smooth(.12,.92,entrance)*(1-phraseOut)));
     style(dom.photoPhrase,'transform',`translate3d(0,${(1-entrance)*45-phraseOut*45}px,0)`);
     const m=l.photoFocus,x=lerp(0,m.x,dock),y=lerp(0,m.y,dock),cw=lerp(w,m.width,dock),ch=lerp(h,m.height,dock);
@@ -3036,7 +3079,7 @@ THREE.OBJLoader = ( function () {
     const slide=slides[index];
     slide.el.querySelectorAll('.letter').forEach((letter,i)=>{
       letter.getAnimations().forEach(a=>a.cancel());
-      animateElement(letter,[{opacity:0,transform:`translate3d(${direction*(8+i%3*3)}px,${25+i%4*4}px,0) rotate(${direction*4}deg)`},{opacity:1,transform:'translate3d(0,0,0) rotate(0)'}],{duration:800,delay:100+i*18,fill:'backwards'});
+      animateElement(letter,[{opacity:.72,transform:`translate3d(${direction*(8+i%3*3)}px,${25+i%4*4}px,0) rotate(${direction*4}deg)`},{opacity:1,transform:'translate3d(0,0,0) rotate(0)'}],{duration:620,delay:Math.min(i*12,120),fill:'backwards'});
     });
     animateElement(slide.el.querySelector('.slide__number'),[{opacity:0,transform:'translateX(-20px)'},{opacity:1,transform:'translateX(0)'}],{duration:850,easing:MOTION.pop,delay:140,fill:'backwards'});
     animateElement(slide.side,[{opacity:0,transform:'rotate(180deg) translateY(-25px)'},{opacity:1,transform:'rotate(180deg) translateY(0)'}],{duration:900,delay:200,fill:'backwards'});
@@ -3062,13 +3105,13 @@ THREE.OBJLoader = ( function () {
     const {sy,layout:l,width:w,height:h}=state;
 
     if(sy<l.archTop-h*1.1||sy>l.archBottom+h){state.archMotion=null;return;}
-    const intro=clamp((sy-l.archTop-l.archHold)/(l.archIntro-l.archHold)),arrival=clamp((sy-l.archTop+h)/h);
+    const intro=clamp((sy-l.archTop)/l.archIntro),arrival=clamp((sy-l.archTop+h)/h);
     const reveal=easeOut(clamp((intro-.78)/.22));
     const cardProgress=clamp((sy-l.archGallery)/l.archStep,0,4);
     const index=clamp(Math.floor(cardProgress+.5),0,4);
     const leaving=smooth(l.photoTop-h,l.photoTop,sy),g=state.typeGeometry;
     if(g){
-      const unzoom=smooth(.08,.62,intro),dock=smooth(.58,1,intro);
+      const unzoom=smooth(0,.62,intro),dock=smooth(.58,1,intro);
       const zoom=state.reduced?1:Math.exp(Math.log(g.finalZoom)*(1-unzoom));
       const scale=lerp(g.base*zoom,g.dockScale,dock);
       const x=lerp(g.pivotX-g.anchorX*g.base*zoom,g.dockX,dock),y=lerp(g.pivotY-g.anchorY*g.base*zoom,g.dockY,dock);
@@ -3080,7 +3123,7 @@ THREE.OBJLoader = ( function () {
       $('archBand').style.transform=state.reduced?'none':'translateY('+((1-arrival)*h*-.14)+'px) scale('+lerp(1.07,1,smooth(0,.6,intro))+')';
       $('typeTransition').style.background=intro>.84?'transparent':'#000';
       $('typeTransition').style.opacity='1';
-      const phraseOut=l.archHold?smooth(l.archHold*.48,l.archHold+(l.archIntro-l.archHold)*.13,sy-l.archTop):1;
+      const phraseOut=smooth(.14,.42,intro);
       $('typeCaption').style.opacity=String(smooth(.12,.92,arrival)*(1-phraseOut));
       $('typeCaption').style.transform='translateY('+((1-arrival)*45-phraseOut*70)+'px)';
     }
@@ -3133,7 +3176,8 @@ THREE.OBJLoader = ( function () {
     const backward=['ArrowUp','ArrowLeft','PageUp'].includes(event.key)||space&&event.shiftKey;
     if(event.key==='Home'||event.key==='End'){event.preventDefault();scrollToY(event.key==='Home'?0:maxScroll());return;}
     if(forward||backward){
-      event.preventDefault();if(event.repeat&&(state.gate||state.scrollAnimation?.kind==='card'))return;
+      event.preventDefault();if(event.repeat&&state.archMotion)return;
+      setNativeScroll(false);
       newGesture('keyboard');applyScrollDelta((forward?1:-1)*(event.key.startsWith('Arrow')?70:state.height*.85));
     }
   });
@@ -3215,7 +3259,7 @@ THREE.OBJLoader = ( function () {
     const targetY=lerp(42,25,travel)+contactTravel*7+(state.reduced?0:c.mouseY*.65);
     const targetZ=lerp(112,73,travel)+contactTravel*19;
     c.x=lerp(c.x,targetX,response);c.y=lerp(c.y,targetY,response);c.z=lerp(c.z,targetZ,response);
-    const pull=edge.value*900/Math.max(500,state.height)*(edge.kind==='bottom'?.65:1);
+    const pull=edge.value*900/Math.max(500,state.height)*(1-smooth(0,state.height*.25,state.sy));
     const y=c.y+pull*.035,z=c.z+pull*.15;
     c.camera.position.set(c.x,y,z);c.camera.lookAt(0,0,0);
     if(!c.waveDone||c.forceRender||Math.abs(c.x-(c.renderX??-999))+Math.abs(y-(c.renderY??-999))+Math.abs(z-(c.renderZ??-999))>.0005){
@@ -3289,17 +3333,49 @@ THREE.OBJLoader = ( function () {
     paint();play();
   }
 
+  const heroGlitch={timer:0,end:0,glyphs:[],active:null};
+  function stopHeroGlitch(){
+    clearTimeout(heroGlitch.timer);clearTimeout(heroGlitch.end);heroGlitch.timer=heroGlitch.end=0;
+    const glyph=heroGlitch.active;
+    if(glyph){glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');heroGlitch.active=null;}
+  }
+  function canGlitch(){return state.ready&&!state.reduced&&!state.modal&&!document.hidden&&state.sy<state.height*.25;}
+  function syncHeroGlitch(){
+    if(!canGlitch()){stopHeroGlitch();return;}
+    if(!heroGlitch.glyphs.length||heroGlitch.timer||heroGlitch.active)return;
+    heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},4200+Math.random()*5800);
+  }
+  function pulseHeroGlitch(){
+    if(!canGlitch()||!heroGlitch.glyphs.length)return;
+    const letters=heroGlitch.glyphs.filter(el=>el.dataset.char!==' '),glyph=letters[Math.floor(Math.random()*letters.length)];
+    heroGlitch.active=glyph;
+    if(Math.random()<.38)glyph.textContent='NX7#%'[Math.floor(Math.random()*5)];
+    glyph.classList.add('is-glitching');
+    heroGlitch.end=setTimeout(()=>{heroGlitch.end=0;glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');heroGlitch.active=null;syncHeroGlitch();},150+Math.random()*55);
+  }
+  function initHeroGlitch(){
+    const host=$('heroLetters');
+    host.replaceChildren(...[...'CUNYU YUAN'].map(char=>{const el=document.createElement('span');el.className='hero-glyph';el.dataset.char=char;el.textContent=char;return el;}));
+    heroGlitch.glyphs=[...host.children];
+    // 固定每字的自然宽度（em），字符扰动不会挤动相邻字母，手机横竖屏同样缩放。
+    const em=parseFloat(getComputedStyle(host).fontSize),widths=heroGlitch.glyphs.map(el=>el.getBoundingClientRect().width/em);
+    heroGlitch.glyphs.forEach((el,i)=>el.style.width=widths[i]+'em');syncHeroGlitch();
+  }
+
   function startHeroEntrance(){
     const elements=[document.querySelector('.site-logo'),$('menuToggle'),...$('heroMeta').children,$('heroStatement')];
     elements.forEach((el,i)=>animateElement(el,[{opacity:0,translate:'0 25px'},{opacity:1,translate:'0 0'}],{duration:850,delay:850+i*60,fill:'backwards'}));
     const full='CUNYU YUAN',chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%';
-    if(state.reduced){$('heroLetters').textContent=full;return;}
+    if(state.reduced){$('heroLetters').textContent=full;initHeroGlitch();return;}
     const start=performance.now()+300;
-    const timer=setInterval(()=>{const p=clamp((performance.now()-start)/1400),fixed=Math.floor(p*full.length),shown=Math.min(full.length,fixed+2);let value='';
+    const timer=setInterval(()=>{
+      const p=clamp((performance.now()-start)/1400),fixed=Math.floor(p*full.length),shown=Math.min(full.length,fixed+2);let value='';
       for(let i=0;i<full.length;i++)value+=full[i]===' '?' ':i<fixed?full[i]:i<shown?chars[Math.floor(Math.random()*chars.length)]:' ';
-      if(p>=1){value=full;clearInterval(timer);}$('heroLetters').textContent=value;
+      $('heroLetters').textContent=value;
+      if(p>=1){clearInterval(timer);initHeroGlitch();}
     },35);
   }
+
 
   function updateBeijingTime(){
     const now=new Date(),clock=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(now);
@@ -3331,6 +3407,7 @@ THREE.OBJLoader = ( function () {
   }
   async function boot(){
     if('scrollRestoration'in history)history.scrollRestoration='manual';
+    document.documentElement.classList.toggle('native-scroll',state.nativeScroll);
     writeScroll(0);state.targetScroll=0;
     initBoundarySlides();prepareSlideLetters();buildPhotoColumns();refreshPublications();initAccordions();initMusic();updateBeijingTime();
     setInterval(updateBeijingTime,15000);
@@ -3356,13 +3433,15 @@ THREE.OBJLoader = ( function () {
   }
   addEventListener('scroll',()=>{
     if(state.modal||state.restoring)return;
-    state.sy=scrollY;
-    if(Math.abs(scrollY-state.writtenScroll)>1){state.currentScroll=scrollY;state.gate=null;state.inertia=0;}
-    if(!state.scrollAnimation&&!wheelDamping)state.targetScroll=scrollY;
+    // Safari 越界坐标可以为负或超出文档；仅约束视觉进度，不反向纠正原生滚动。
+    state.sy=clamp(scrollY,0,maxScroll());
+    if(state.nativeScroll||Math.abs(scrollY-state.writtenScroll)>1){state.currentScroll=state.sy;state.landing=null;}
+    if(!state.scrollAnimation&&!wheelDamping)state.targetScroll=state.sy;
     state.dirty=true;wake();
   },{passive:true});
+
   // Browser chrome changes visualViewport during a swipe. Keep animation lengths
-  // stable (svh); only remeasure actual layout changes, never reset native inertia.
+  // stable (lvh); only remeasure actual layout changes, never reset native inertia.
   addEventListener('resize',()=>{if(innerWidth!==state.width||archStage.clientHeight!==state.height)scheduleMeasure();},{passive:true});
 
   addEventListener('keydown',event=>{
@@ -3380,10 +3459,11 @@ THREE.OBJLoader = ( function () {
     if(state.city){state.city.mouseX=event.clientX/innerWidth*2-1;state.city.mouseY=event.clientY/innerHeight*2-1;wake();}
   },{passive:true});
   document.addEventListener('visibilitychange',()=>{
+    syncHeroGlitch();
     if(document.hidden){finishTouch(true);cancelScroll();edge.pull=0;if(state.raf)cancelAnimationFrame(state.raf);state.raf=0;}else{state.lastTime=0;state.dirty=true;updateBeijingTime();wake();}
   });
   fineQuery.addEventListener('change',()=>{document.documentElement.classList.toggle('touch-layout',!fineQuery.matches);});
-  reduceQuery.addEventListener('change',()=>{state.reduced=reduceQuery.matches;cancelScroll();state.targetScroll=scrollY;state.currentScroll=scrollY;measure();});
+  reduceQuery.addEventListener('change',()=>{state.reduced=reduceQuery.matches;syncHeroGlitch();cancelScroll();state.targetScroll=scrollY;state.currentScroll=scrollY;measure();});
   document.querySelector('.site-logo').addEventListener('click',event=>{
     event.currentTarget.querySelector('img').animate([{transform:'scale(.9)'},{transform:'scale(1)'}],{duration:230,easing:MOTION.out});
   });
