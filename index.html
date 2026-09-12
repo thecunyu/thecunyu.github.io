@@ -215,6 +215,9 @@ html{background:#000}main [tabindex="-1"]:focus{outline:none}.slide__title .word
 
 /* Final detail pass: static glass title, independent project plates. */
 #heroLetters{color:transparent;background:linear-gradient(180deg,#ffffffe6,#e8f2ff80 53%,#d5e7ffb0);background-clip:text;-webkit-background-clip:text;-webkit-text-stroke:.5px #eef6ff55}
+/* 打字阶段的渐变只画在父级这一层；拆成单字母后父级背景必须关闭，
+   否则父级渐变与字母各自裁剪的同款渐变叠成两层，半透明字被加成纯白。 */
+#heroLetters:has(.hero-glyph){background:none;}
 .project-intro{display:block}.project-intro__text{max-width:1050px}.project-description{max-width:80ch}.project-images{margin-top:7vh}
 @media(min-width:601px){.contact__inner{height:100lvh;min-height:100lvh;padding-top:clamp(72px,12vh,100px)}.contact__main{min-height:0;padding:3vh 0;grid-template-columns:minmax(0,1fr) minmax(200px,29%);gap:5vw}.contact__portrait{width:auto;max-width:100%;justify-self:end}.portrait-film img{width:auto;max-width:100%;height:auto;max-height:46lvh}.contact__links{padding-bottom:3vh}.contact .footer{padding-top:18px;padding-bottom:20px}.contact h2{font-size:clamp(42px,5.8vw,92px)}.contact__email{margin-top:24px}}
 </style>
@@ -234,7 +237,8 @@ body { overscroll-behavior-y:auto; }
 .site-logo:active img { transform:scale(.9); }
 .menu-toggle { top:max(28px,env(safe-area-inset-top,0px)); right:max(32px,env(safe-area-inset-right,0px)); }
 .photography { overflow:visible; }
-.photo-stage { top:calc(-1 * var(--resistance-loss,0px)); }
+/* iPhone 全屏照片顶部偶发 1px 漏边：让舞台向上多探出 1.5px、加高 3px，盖住接缝。 */
+.photo-stage { top:calc(-1.5px - var(--resistance-loss,0px)); height:calc(100lvh + 3px); }
 .photo-columns { height:100%; }
 .photo-column { height:100%; display:block; }
 .photo-item { position:absolute; top:0; left:0; width:100%; contain:layout style; }
@@ -319,7 +323,7 @@ main { touch-action:pan-y pinch-zoom; }
 .slide__title .letter { opacity:1; backface-visibility:hidden; }
 #heroLetters .hero-glyph { position:relative; display:inline-block; vertical-align:baseline; white-space:pre; background:linear-gradient(180deg,#ffffffe6,#e8f2ff80 53%,#d5e7ffb0); background-clip:text; -webkit-background-clip:text; }
 .hero-glyph.is-glitching { animation:heroGlyphJitter .18s steps(1,end); }
-.hero-glyph.is-glitching::before,.hero-glyph.is-glitching::after { content:attr(data-char); position:absolute; inset:0; color:#9eeeff; -webkit-text-fill-color:#9eeeff; -webkit-text-stroke:0; opacity:.68; clip-path:inset(27% 0 55%); transform:translateX(-2px); }
+.hero-glyph.is-glitching::before,.hero-glyph.is-glitching::after { content:attr(data-show); position:absolute; inset:0; color:#9eeeff; -webkit-text-fill-color:#9eeeff; -webkit-text-stroke:0; opacity:.68; clip-path:inset(27% 0 55%); transform:translateX(-2px); }
 .hero-glyph.is-glitching::after { color:#ffb6ca; -webkit-text-fill-color:#ffb6ca; clip-path:inset(63% 0 24%); transform:translateX(2px); opacity:.5; }
 @keyframes heroGlyphJitter { 0%,100% { transform:none; } 18% { transform:translate(1px,-1px) skewX(-3deg); } 35% { transform:translate(-1.5px,0); } 57% { transform:translate(.5px,1px) skewX(2deg); } 76% { transform:translate(-.5px,-.5px); } }
 @media(prefers-reduced-motion:reduce) { .hero-glyph.is-glitching { animation:none; } .hero-glyph::before,.hero-glyph::after { display:none; } }
@@ -340,8 +344,8 @@ main { touch-action:pan-y pinch-zoom; }
 #typeCaption { z-index:1; }
 #typeArt { z-index:2; contain:paint; transform:translateZ(0); }
 
-/* 模糊源保持 7px，仅合成层淡入淡出；菜单内部的 30px 玻璃效果保留。 */
-.menu-blur { position:fixed; inset:0; z-index:100; pointer-events:none; opacity:0; backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); will-change:opacity; }
+/* 模糊半径由脚本逐帧驱动；颗粒 (::after) 从第一帧起全程在场，元素本身不再淡入淡出。 */
+.menu-blur { position:fixed; inset:0; z-index:100; pointer-events:none; opacity:1; backdrop-filter:blur(0px); -webkit-backdrop-filter:blur(0px); }
 .menu-blur::after { content:''; position:absolute; inset:0; pointer-events:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E"); background-size:145px 145px; mix-blend-mode:soft-light; opacity:.12; }
 .menu-blur[hidden] { display:none; }
 .menu-dialog::backdrop,.menu-dialog.is-open::backdrop { background:transparent; backdrop-filter:none; -webkit-backdrop-filter:none; }
@@ -2591,7 +2595,7 @@ THREE.OBJLoader = ( function () {
 
   // 触屏由浏览器独占滚动；PC 滚轮只在这一处阻尼，弹窗复用相同响应。
   const INPUT={quiet:140,cardThreshold:28,cardLock:260};
-  const input={id:0,source:'',last:-Infinity,direction:0,magnitude:0,peak:0,trough:Infinity,rearmed:false,decay:0,touch:null};
+  const input={id:0,source:'',last:-Infinity,direction:0,magnitude:0,peak:0,trough:Infinity,rearmed:false,decay:0,touch:null,smoothEvent:false};
 
   function setNativeScroll(native){
     if(state.nativeScroll===native)return;
@@ -2626,8 +2630,10 @@ THREE.OBJLoader = ( function () {
     if(state.scrollAnimation)cancelScroll();
     const direction=Math.sign(delta),landing=state.landing;
     if(landing){
-      // 只收束抵达封面这一划的尾部；新发力或反向立即放行，没有强制阅读计时。
-      if(direction===landing.direction&&gesture===landing.gesture&&now-landing.started<260){
+      // 只收束抵达停靠点的这一划；新发力或反向立即放行，没有强制阅读计时。
+      // 鼠标滚轮段落按 260ms 收尾（保持桌面鼠标手感不变）；触控板的平滑惯性流
+      // 会持续数百毫秒，只要同一手势还在输出平滑增量就继续收束，直到手指再次发力。
+      if(direction===landing.direction&&gesture===landing.gesture&&(now-landing.started<260||input.smoothEvent)){
         state.targetScroll=landing.at;wheelDamping=true;wake();return true;
       }
       state.landing=null;
@@ -2673,6 +2679,9 @@ THREE.OBJLoader = ( function () {
     const notch=event.deltaMode!==0||Number.isInteger(raw)&&magnitude>=40&&gap>45;
     if(input.source!=='wheel'||gap>INPUT.quiet||direction!==input.direction||impulse||notch)newGesture('wheel',now);
     input.last=now;input.direction=direction;input.magnitude=magnitude;input.peak=Math.max(input.peak,magnitude);
+    // 触控板惯性流的特征是增量带小数或幅度很小；鼠标咔哒则是整数且幅度大。
+    // 停靠点收束只对手感为平滑流的输入延展到整段手势。
+    input.smoothEvent=event.deltaMode===0&&(!Number.isInteger(raw)||magnitude<40);
     applyScrollDelta(delta,now,'wheel');
   },{passive:false});
   // 普通触摸属于浏览器。只有已经进入卡片区的手势才属于卡片控制器。
@@ -2694,6 +2703,9 @@ THREE.OBJLoader = ( function () {
       touchDeck.pending=requestAnimationFrame(()=>{
         touchDeck.pending=0;
         if(!state.nativeScroll||state.modal||input.touch||!inTouchDeck())return;
+        // 以惯性/程序滚动实际停下的位置定位到最近的一张卡；激活瞬间的旧索引可能早已过期
+        //（例如从下方进入时被初始化为末位卡片，滚动结束后会把页面拽回末位）。
+        touchDeck.index=clamp(Math.round((state.sy-state.layout.archGallery)/state.layout.archStep),0,slides.length-1);
         touchDeck.settled=true;scrollToY(state.layout.archGallery+touchDeck.index*state.layout.archStep,0,null,'touch-card');
       });
     }
@@ -2779,13 +2791,26 @@ THREE.OBJLoader = ( function () {
     return animation.finished.catch(()=>{});
   }
 
+  // 菜单模糊：颗粒层常驻在元素里，元素不再整体淡入淡出，只让模糊半径非线性加速到位。
+  // 这样低模糊阶段一出现色带边缘就被颗粒盖住，且前段曲线更陡、到位更快。
+  let menuBlurRun=0;
+  function setMenuBlur(px){
+    const el=$('menuBlur'),v='blur('+px.toFixed(2)+'px)';
+    el.style.backdropFilter=v;el.style.webkitBackdropFilter=v;
+  }
   async function menuBlur(show){
-    const el=$('menuBlur');
-    if(show){el.hidden=false;el.getAnimations().forEach(a=>a.cancel());}
-    const from=show?0:Number(getComputedStyle(el).opacity);
-    // 非线性加速：前段陡峭、快速达到可感知模糊，尾段收敛，整体时长也缩短。
-    await animateElement(el,[{opacity:from},{opacity:show?1:0}],{duration:show?380:420,easing:show?'cubic-bezier(.16,1,.3,1)':'cubic-bezier(.25,.6,.3,1)',fill:'forwards'});
-    if(!show){el.hidden=true;el.getAnimations().forEach(a=>a.cancel());}
+    const el=$('menuBlur'),run=++menuBlurRun;
+    el.getAnimations().forEach(a=>a.cancel());
+    const from=parseFloat(el.dataset.blur||'0')||0,to=show?7:0;
+    if(show)el.hidden=false;
+    await animateValue(show?300:340,p=>{
+      if(run!==menuBlurRun)return;
+      const t=show?1-Math.pow(1-p,2.6):1-p*p*(3-2*p);
+      const v=lerp(from,to,t);el.dataset.blur=String(v);setMenuBlur(v);
+    });
+    if(run!==menuBlurRun)return;
+    el.dataset.blur=String(to);setMenuBlur(to);
+    if(!show)el.hidden=true;
   }
 
   function openDialog(id,trigger){
@@ -2819,7 +2844,7 @@ THREE.OBJLoader = ( function () {
   }
   function restoreDialog(dialog){
     const id=dialog.id;if(state.modal!==id)return;
-    if(id==='menuDialog'){$('menuBlur').hidden=true;$('menuBlur').getAnimations().forEach(a=>a.cancel());}
+    if(id==='menuDialog'){menuBlurRun++;const blurEl=$('menuBlur');blurEl.hidden=true;blurEl.getAnimations().forEach(a=>a.cancel());blurEl.dataset.blur='0';setMenuBlur(0);}
     const y=state.lockedY;
     state.restoring=true;document.documentElement.classList.add('is-navigating');
     document.body.style.position='';document.body.style.top='';document.body.style.width='';
@@ -3118,8 +3143,9 @@ THREE.OBJLoader = ( function () {
     const leaving=smooth(l.contactTop-h,l.contactTop,sy);
     renderPhotoTiles(motion,handoff);
     style(dom.photoGallery,'transform',state.reduced?'none':`translate3d(0,${(1-dock)*h*.025-leaving*h*.02}px,0) scale(${1-(1-dock)*.02-leaving*.018})`);
-    style(dom.photoGallery,'filter',dock>=1?'none':`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
-    style(dom.photoGallery,'will-change',dock>=1?'transform':'transform,filter');
+    // filter 始终保持同一形式连续收敛到 blur(0)，will-change 也不在收尾时切换：
+    // 手机端在“大图归位为小矩形”的瞬间切换这两者会销毁/重建合成层，表现为一帧闪动。
+    style(dom.photoGallery,'filter',`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
     style(dom.photoTitleTop,'transform',`translate3d(0,${(1-dock)*5.5}vw,0)`);
     style(dom.photoTitleBottom,'transform',`translate3d(0,${-(1-dock)*5.5}vw,0)`);
     const phraseOut=smooth(.26,.73,reveal);
@@ -3224,16 +3250,18 @@ THREE.OBJLoader = ( function () {
       const scale=lerp(g.base*zoom,g.dockScale,dock);
       const x=lerp(g.pivotX-g.anchorX*g.base*zoom,g.dockX,dock),y=lerp(g.pivotY-g.anchorY*g.base*zoom,g.dockY,dock);
       const transform='matrix('+scale+' 0 0 '+scale+' '+x+' '+y+')';
-      $('typeAperture').setAttribute('transform',transform);$('typeSolid').setAttribute('transform',transform);
-      $('typeSolid').style.opacity=String(smooth(.7,.87,intro));
-      $('typeCurtain').style.opacity=String(1-smooth(.84,1,intro));
-      $('archBand').style.opacity=String(1-smooth(.74,.89,intro));
-      $('archBand').style.transform=state.reduced?'none':'translateY('+((1-arrival)*h*-.14)+'px) scale('+lerp(1.07,1,smooth(0,.6,intro))+')';
-      $('typeTransition').style.background=intro>.84?'transparent':'#000';
-      $('typeTransition').style.opacity='1';
+      // SVG 属性与 DOM 写入都按值缓存：卡片滑动阶段 intro 恒为 1，这些值逐帧相同，
+      // 若照旧写回，手机端每帧都会重栅格化整屏文字遮罩，表现为卡片滑动掉帧。
+      if(state.typeTransformCache!==transform){state.typeTransformCache=transform;$('typeAperture').setAttribute('transform',transform);$('typeSolid').setAttribute('transform',transform);}
+      style($('typeSolid'),'opacity',String(smooth(.7,.87,intro)));
+      style($('typeCurtain'),'opacity',String(1-smooth(.84,1,intro)));
+      style($('archBand'),'opacity',String(1-smooth(.74,.89,intro)));
+      style($('archBand'),'transform',state.reduced?'none':'translateY('+((1-arrival)*h*-.14)+'px) scale('+lerp(1.07,1,smooth(0,.6,intro))+')');
+      style($('typeTransition'),'background',intro>.84?'transparent':'#000');
+      style($('typeTransition'),'opacity','1');
       const phraseOut=smooth(.14,.42,intro);
-      $('typeCaption').style.opacity=String(smooth(.12,.92,arrival)*(1-phraseOut));
-      $('typeCaption').style.transform='translateY('+((1-arrival)*45-phraseOut*70)+'px)';
+      style($('typeCaption'),'opacity',String(smooth(.12,.92,arrival)*(1-phraseOut)));
+      style($('typeCaption'),'transform','translateY('+((1-arrival)*45-phraseOut*70)+'px)');
     }
     syncActiveCopy(index);
     const previous=state.archRenderedIndex;
@@ -3267,15 +3295,18 @@ THREE.OBJLoader = ( function () {
       const tilt=active&&!state.archMotion&&fineQuery.matches?1:0,tx=(state.archTiltX||0)*tilt,ty=(state.archTiltY||0)*tilt;
       slide.wrap.style.transform='translate3d('+(x+tx*15)+'px,'+(y+ty*15)+'px,0) rotateZ('+angle+'deg) rotateX('+(-ty*8)+'deg) rotateY('+(tx*9)+'deg)';
       const copyOpacity=delta===0&&!slide.duplicate?reveal:0;
-      slide.copy.style.opacity=String(copyOpacity);slide.side.style.opacity=String(copyOpacity);
-      slide.copy.style.transform='translate3d('+(-tx*18)+'px,'+((1-reveal)*35-ty*18)+'px,0)';
-      slide.el.classList.toggle('is-current',active);slide.el.setAttribute('aria-hidden',String(!active));slide.button.tabIndex=active?0:-1;
+      style(slide.copy,'opacity',String(copyOpacity));style(slide.side,'opacity',String(copyOpacity));
+      style(slide.copy,'transform','translate3d('+(-tx*18)+'px,'+((1-reveal)*35-ty*18)+'px,0)');
+      if(slide.isCurrent!==active){slide.isCurrent=active;slide.el.classList.toggle('is-current',active);slide.button.tabIndex=active?0:-1;}
+      attribute(slide.el,'aria-hidden',String(!active));
     });
     if(!animating){state.archMotion=null;renderSlides.forEach(slide=>{if(Math.abs(slide.logical-index)>1){style(slide.el,'visibility','hidden');style(slide.el,'opacity','0');}});}
-    $('archSlideshow').style.transform=state.reduced?'none':'translateY('+(-leaving*h*.12)+'px) scale('+(1-leaving*.025)+')';
-    $('archSlideshow').style.filter=leaving?'brightness('+(1-leaving*.45)+')':'none';
-    $('archHeading').style.opacity=String(reveal);$('archStatus').style.opacity=String(reveal);
-    $('archSmallTitle').style.opacity='0';$('archCounter').textContent=String(index+1).padStart(2,'0')+' / 05';
+    style($('archSlideshow'),'transform',state.reduced?'none':'translateY('+(-leaving*h*.12)+'px) scale('+(1-leaving*.025)+')');
+    style($('archSlideshow'),'filter',leaving?'brightness('+(1-leaving*.45)+')':'none');
+    style($('archHeading'),'opacity',String(reveal));style($('archStatus'),'opacity',String(reveal));
+    style($('archSmallTitle'),'opacity','0');
+    const counterText=String(index+1).padStart(2,'0')+' / 05';
+    if(state.archCounterText!==counterText){state.archCounterText=counterText;$('archCounter').textContent=counterText;}
   }
   addEventListener('keydown',event=>{
     if(state.modal||event.altKey||event.ctrlKey||event.metaKey||!state.ready)return;
@@ -3442,35 +3473,56 @@ THREE.OBJLoader = ( function () {
     paint();play();
   }
 
-  const heroGlitch={timer:0,pending:new Set(),active:new Set(),glyphs:[],hoverAt:0};
+  const heroGlitch={timer:0,pending:new Set(),active:new Set(),glyphs:[],restore:new Map()};
   function glitchDelay(callback,delay){const id=setTimeout(()=>{heroGlitch.pending.delete(id);callback();},delay);heroGlitch.pending.add(id);return id;}
   function stopHeroGlitch(){
     clearTimeout(heroGlitch.timer);heroGlitch.timer=0;
-    heroGlitch.pending.forEach(clearTimeout);heroGlitch.pending.clear();
+    heroGlitch.pending.forEach(clearTimeout);heroGlitch.pending.clear();heroGlitch.restore.clear();
     heroGlitch.active.forEach(glyph=>{glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');});heroGlitch.active.clear();
   }
   function canGlitch(){return state.ready&&!state.reduced&&!state.modal&&!document.hidden&&state.sy<state.height*.25;}
   function syncHeroGlitch(){
     if(!canGlitch()){stopHeroGlitch();return;}
     if(!heroGlitch.glyphs.length||heroGlitch.timer||heroGlitch.pending.size)return;
-    heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},650+Math.random()*1250);
+    // 环境故障在 0.45s～3.1s 之间随机到来，偶尔紧跟一次短促的二次脉冲，避免听上去像固定节拍。
+    heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},450+Math.random()*2650);
   }
-  function disturbGlyph(glyph){
-    if(!canGlitch()||heroGlitch.active.has(glyph))return;
+  function disturbGlyph(glyph,restart=false){
+    if(!canGlitch())return;
+    if(heroGlitch.active.has(glyph)){
+      if(!restart)return;
+      // 重新触发：撤掉尚未执行的恢复计时，并让 CSS 抖动动画从头播放。
+      const pendingRestore=heroGlitch.restore.get(glyph);
+      if(pendingRestore){clearTimeout(pendingRestore);heroGlitch.pending.delete(pendingRestore);heroGlitch.restore.delete(glyph);}
+      glyph.classList.remove('is-glitching');void glyph.offsetWidth;
+    }
     heroGlitch.active.add(glyph);
-    if(Math.random()<.6)glyph.textContent='NX7#%'[Math.floor(Math.random()*5)];
+    const next=Math.random()<.6?'NX7#%'[Math.floor(Math.random()*5)]:glyph.dataset.char;
+    // 伪元素切片与正文显示同一个替换字符，故障是“变成别的字”，不是“原字上再叠一个字”。
+    glyph.textContent=next;glyph.dataset.show=next;
     glyph.classList.add('is-glitching');
-    glitchDelay(()=>{glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');heroGlitch.active.delete(glyph);syncHeroGlitch();},145+Math.random()*90);
+    const id=glitchDelay(()=>{glyph.textContent=glyph.dataset.char;glyph.classList.remove('is-glitching');heroGlitch.active.delete(glyph);heroGlitch.restore.delete(glyph);syncHeroGlitch();},145+Math.random()*90);
+    heroGlitch.restore.set(glyph,id);
   }
   function pulseHeroGlitch(origin=null){
     if(!canGlitch()||!heroGlitch.glyphs.length)return;
     clearTimeout(heroGlitch.timer);heroGlitch.timer=0;
-    const letters=heroGlitch.glyphs.filter(el=>el.dataset.char!==' '),start=origin?letters.indexOf(origin):Math.floor(Math.random()*letters.length);
-    const count=origin?2:1+Math.floor(Math.random()*3);
+    const letters=heroGlitch.glyphs.filter(el=>el.dataset.char!==' ');
+    if(origin){
+      // 悬停：以划入的字母为中心波及周围一小片（2～4 个），立即重播。
+      let start=letters.indexOf(origin);
+      if(start<0){const gi=heroGlitch.glyphs.indexOf(origin);start=clamp(heroGlitch.glyphs.slice(0,gi).filter(el=>el.dataset.char!==' ').length-1,0,letters.length-1);}
+      if(start<0)return;
+      const offsets=[0,-1,1,-2,2].filter(o=>start+o>=0&&start+o<letters.length).slice(0,2+Math.floor(Math.random()*3));
+      offsets.forEach((o,i)=>{const glyph=letters[start+o];if(i)glitchDelay(()=>disturbGlyph(glyph,true),50+Math.random()*110);else disturbGlyph(glyph,true);});
+      return;
+    }
+    const start=Math.floor(Math.random()*letters.length),count=1+Math.floor(Math.random()*3);
     for(let i=0;i<count;i++){
-      const glyph=letters[(Math.max(0,start)+i)%letters.length];
+      const glyph=letters[(start+i)%letters.length];
       if(i===0)disturbGlyph(glyph);else glitchDelay(()=>disturbGlyph(glyph),i*(60+Math.random()*75));
     }
+    if(Math.random()<.3)glitchDelay(()=>pulseHeroGlitch(),150+Math.random()*220);
   }
   function initHeroGlitch(){
     const host=$('heroLetters'),full='CUNYU YUAN';
@@ -3480,7 +3532,7 @@ THREE.OBJLoader = ( function () {
     host.textContent=full;
     const node=host.firstChild,rects=[];
     for(let i=0;i<full.length;i++){const r=document.createRange();r.setStart(node,i);r.setEnd(node,i+1);rects.push(r.getBoundingClientRect());r.detach();}
-    host.replaceChildren(...[...full].map(char=>{const el=document.createElement('span');el.className='hero-glyph';el.dataset.char=char;el.textContent=char;return el;}));
+    host.replaceChildren(...[...full].map(char=>{const el=document.createElement('span');el.className='hero-glyph';el.dataset.char=char;el.dataset.show=char;el.textContent=char;return el;}));
     heroGlitch.glyphs=[...host.children];
     const em=parseFloat(getComputedStyle(host).fontSize)||1;
     heroGlitch.glyphs.forEach((el,i)=>{
@@ -3488,10 +3540,11 @@ THREE.OBJLoader = ( function () {
       el.style.width=advance/em+'em';
     });
     host.addEventListener('pointerover',event=>{
-      const glyph=event.target.closest('.hero-glyph'),now=performance.now();
-      // 划入一个字母只故障一下；650ms 冷却避免鼠标停留或来回时连放不停。
-      if(event.pointerType!=='mouse'||!glyph||glyph.dataset.char===' '||now-heroGlitch.hoverAt<650)return;
-      heroGlitch.hoverAt=now;pulseHeroGlitch(glyph);
+      // 鼠标每划入一个字母就重新播放该处故障；空格则波及它前面的字母。不设冷却，划过即播。
+      if(event.pointerType!=='mouse')return;
+      const glyph=event.target.closest('.hero-glyph');
+      if(!glyph)return;
+      pulseHeroGlitch(glyph);
     },{passive:true});
     syncHeroGlitch();
   }
@@ -3536,11 +3589,12 @@ THREE.OBJLoader = ( function () {
     await animateElement(loader.querySelector('.loader__inner'),[{opacity:1},{opacity:0}],{duration:240,fill:'forwards'});
     loader.remove();wake();
     if(!state.reduced){
+      // 城市波浪在帘子展开约一半时启动：楼群随帘子揭开同步从地面升起，
+      // 既不等到帘后出现空档，也不至于早到整段上升都被遮帘盖住。
+      setTimeout(()=>{state.revealing=true;wake();},700);
       // 与参考中的二次曲线展开一致：先加速弯曲，再减速铺开；直接绘制遮帘避免 SVG 蒙版兼容问题。
       await animateValue(650,p=>{const t=p*p*p;path.setAttribute('d',`M0 0H100V${lerp(100,50,t)}Q50 ${lerp(100,0,t)} 0 ${lerp(100,50,t)}Z`);});
       startHeroEntrance();
-      // 城市波浪推迟到展开动画接近收尾时开始，让帘子先基本铺开、楼群再从地面升起。
-      setTimeout(()=>{state.revealing=true;wake();},520);
       await animateValue(850,p=>{const t=1-Math.pow(1-p,3);path.setAttribute('d',`M0 0H100V${lerp(50,0,t)}Q50 0 0 ${lerp(50,0,t)}Z`);});
     }else{state.revealing=true;startHeroEntrance();}
     opening.remove();document.body.classList.remove('is-loading');state.ready=true;measure();
@@ -3552,6 +3606,9 @@ THREE.OBJLoader = ( function () {
     if('scrollRestoration'in history)history.scrollRestoration='manual';
     document.documentElement.classList.toggle('native-scroll',state.nativeScroll);
     writeScroll(0);state.targetScroll=0;
+    // 入场前先清空标题：加载完成时 CUNYU YUAN 只能随打字乱码动画逐字出现，
+    // 否则帘子揭开的一瞬间会先闪现完整标题、再回到乱码重播。
+    if(!state.reduced)$('heroLetters').textContent='';
     initBoundarySlides();prepareSlideLetters();buildPhotoColumns();refreshPublications();initAccordions();initMusic();updateBeijingTime();
     setInterval(updateBeijingTime,15000);
     const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{
@@ -3578,15 +3635,19 @@ THREE.OBJLoader = ( function () {
     if(state.modal||state.restoring)return;
     // Safari 越界坐标可以为负或超出文档；仅约束视觉进度，不反向纠正原生滚动。
     const next=clamp(scrollY,0,maxScroll());
-    // 触屏惯性停靠：手指已经离开（纯动量阶段）且跨越停靠点时，把滚动钳在停靠点并吞掉本次惯性余量；
+    // 触屏惯性停靠：手指已经离开（纯动量阶段）且跨越停靠点时，把滚动钳在停靠点；
     // 手指还在屏上（直接拖拽）或程序动画滚动时不干预。下一次划动从停靠点出发，天然越过该点。
+    // 安卓 Chrome 的惯性不会因为一次 writeScroll 就停下，所以只要惯性还往停靠点外推，
+    // 就持续钳回并顺延停靠窗口，直到惯性自然耗尽，避免该停的地方被惯性冲过去。
     if(state.nativeScroll&&state.ready&&!input.touch&&!state.scrollAnimation){
       const prev=state.sy,stopLanding=state.touchStop,now=performance.now();
       if(stopLanding){
-        if(now>stopLanding.until||Math.abs(next-stopLanding.at)>state.height*1.5)state.touchStop=null;
+        if(Math.abs(next-stopLanding.at)>state.height*1.5)state.touchStop=null;
         else if(stopLanding.direction>0?next>stopLanding.at+.5:next<stopLanding.at-.5){
+          stopLanding.until=now+320;
           state.targetScroll=stopLanding.at;writeScroll(stopLanding.at);return;
         }
+        else if(now>stopLanding.until)state.touchStop=null;
       }
       if(!state.touchStop&&Math.abs(next-prev)>1.5){
         const direction=Math.sign(next-prev);
@@ -3634,6 +3695,7 @@ THREE.OBJLoader = ( function () {
   boot().catch(error=>{
     console.error('Portfolio initialization:',error);
     $('loader')?.remove();$('opening')?.remove();document.body.classList.remove('is-loading');document.body.classList.add('is-ready');state.ready=true;
+    const heroLetters=$('heroLetters');if(heroLetters&&!heroLetters.textContent.trim())heroLetters.textContent='CUNYU YUAN';
     document.querySelectorAll('[data-reveal]').forEach(el=>el.classList.add('is-visible'));
   });
 })();
