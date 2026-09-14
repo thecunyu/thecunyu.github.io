@@ -331,12 +331,13 @@ main { touch-action:pan-y pinch-zoom; }
   
 /* 开场循环与真实 SVG 遮帘。 */
 .loader__corners { stroke-dasharray:28 28; stroke-dashoffset:0; animation:loaderOrbit 1.45s linear infinite; stroke-linejoin:round; }
+.loader[data-phase="complete"] .loader__corners { animation-play-state:paused; }
 @keyframes loaderOrbit { from { stroke-dashoffset:0; } to { stroke-dashoffset:-56; } }
 .opening { display:block; z-index:199; contain:paint; }
 .opening[hidden] { display:none; }
 
 /* 手势归属在手指按下前由 CSS 确定，不在普通滚动中切换吸附目标。 */
-.arch-stage.is-touch-deck #archSlideshow { touch-action:pan-x pinch-zoom; }
+.arch-stage.is-touch-deck,.arch-stage.is-touch-deck #archSlideshow { touch-action:pinch-zoom; }
 .arch-copy-layer { position:absolute; inset:0; z-index:6; pointer-events:none; transform:translateZ(0); }
 .slide__copy { will-change:transform; }
 .slide__title .letter { opacity:1; will-change:auto; backface-visibility:visible; -webkit-backface-visibility:visible; }
@@ -370,7 +371,8 @@ main { touch-action:pan-y pinch-zoom; }
 
 /* All original visual effects remain; only their rendering ownership changes. */
 .menu-blur::after { opacity:var(--grain-opacity,0); }
-.menu-dialog { backdrop-filter:blur(var(--menu-panel-blur,30px)) saturate(.8); -webkit-backdrop-filter:blur(var(--menu-panel-blur,30px)) saturate(.8); }
+.menu-dialog { backdrop-filter:blur(0px) saturate(.8); -webkit-backdrop-filter:blur(0px) saturate(.8); }
+.menu-dialog[data-phase="opening"],.menu-dialog[data-phase="closing"] { will-change:transform,clip-path,backdrop-filter; }
 
 /* Phone photos occupy permanent positions in the document. The cover and
    lettering remain sticky overlays, preserving every original transition. */
@@ -392,7 +394,8 @@ main { touch-action:pan-y pinch-zoom; }
 .native-photo-flow.is-photo-locked .photo-stage>.photo-title,
 .native-photo-flow.is-photo-locked .photo-stage>.photo-dimmer,
 .native-photo-flow.is-photo-locked .photo-stage>.photo-cover { position:absolute; top:var(--photo-lock-top); margin-bottom:0; }
-.menu-dialog { box-shadow:-40px 0 100px rgb(0 0 0 / var(--menu-shadow-opacity,.2)); }
+/* 菜单保留玻璃模糊与颗粒；移除向页面延伸的压暗阴影。 */
+.menu-dialog { box-shadow:none; }
 </style>
 </head>
 <body class="is-loading">
@@ -2605,7 +2608,7 @@ THREE.OBJLoader = ( function () {
   }
   function cancelScroll(){
 
-    wheelDamping=false;state.scrollAnimation=null;state.landing=null;
+    wheelDamping=false;state.scrollAnimation=null;state.landing=null;state.nativeCardLanding=null;
     state.targetScroll=state.currentScroll=clamp(scrollY,0,maxScroll());
     document.documentElement.classList.remove('is-navigating');
   }
@@ -2724,7 +2727,11 @@ THREE.OBJLoader = ( function () {
     const freshPush=input.rearmed&&magnitude>=Math.max(input.trough<2?4:18,input.trough*2.5);
     // Tiny residual wheel events must not keep a completed gesture alive forever.
     if(state.landing&&magnitude<2){input.last=now;input.magnitude=magnitude;return;}
-    if(input.source!=='wheel'||gap>INPUT.quiet||reversal||freshPush||meaningfulGap>150&&magnitude>=4||discrete&&gap>65)newGesture('wheel',now);
+    const l=state.layout,overCards=state.sy>=l.archGallery-1.5&&state.sy<=l.archLast+1.5;
+    // 卡片区域的一次像素手势直到停歇/反向才结束，惯性尾部回弹不算新一划。
+    // 离开卡片区后继续采用原检测；离散鼠标滚轮的阈值与响应保持不变。
+    const cardMomentum=overCards&&!discrete;
+    if(input.source!=='wheel'||gap>INPUT.quiet||reversal||!cardMomentum&&(freshPush||meaningfulGap>150&&magnitude>=4)||discrete&&gap>65)newGesture('wheel',now);
     input.last=now;input.direction=direction;input.magnitude=magnitude;
     input.peak=Math.max(input.peak,magnitude);
     if(magnitude>=2)input.lastMeaningful=now;
@@ -2759,9 +2766,13 @@ THREE.OBJLoader = ( function () {
     if(!state.ready)return;
     state.modalScroll=null;setNativeScroll(true);cancelScroll();
     if(event.touches.length!==1){input.touch=null;return;}
-    const t=event.touches[0],deck=!state.modal&&inTouchDeck()&&!!event.target.closest('#archSlideshow');
+    const t=event.touches[0],deck=!state.modal&&inTouchDeck()&&!!event.target.closest('#archStage');
     input.touch={x:t.clientX,y:t.clientY,startX:t.clientX,startY:t.clientY,deck,index:state.archIndex,committed:false};
   },{passive:true});
+  // 仅卡片舞台需要可取消触摸；页面其余区域继续使用被动监听。
+  archStage.addEventListener('touchmove',event=>{
+    if(input.touch?.deck&&event.touches.length===1&&event.cancelable)event.preventDefault();
+  },{passive:false});
   addEventListener('touchmove',event=>{
     const t=input.touch;if(!t||event.touches.length!==1)return;
     const point=event.touches[0],delta=t.y-point.clientY;t.y=point.clientY;t.x=point.clientX;
@@ -2821,29 +2832,41 @@ THREE.OBJLoader = ( function () {
     return animation.finished.catch(()=>{});
   }
 
-  // 菜单模糊：颗粒层常驻在元素里，元素不再整体淡入淡出，只让模糊半径非线性加速到位。
-  // 这样低模糊阶段一出现色带边缘就被颗粒盖住，且前段曲线更陡、到位更快。
-  let menuBlurRun=0;
+  // 模糊与颗粒交给浏览器的动画时间线，保留原半径、曲线和时长。
+  // 只在开始/结束写入样式，避免逐帧改 CSS 变量造成后代样式重算。
+  let menuBlurRun=0,menuBlurAnimations=[];
   function setMenuBlur(px){
-    const el=$('menuBlur'),v='blur('+px.toFixed(2)+'px)';
+    const el=$('menuBlur'),dialog=$('menuDialog'),v='blur('+px.toFixed(2)+'px)';
     el.style.backdropFilter=v;el.style.webkitBackdropFilter=v;
     el.style.setProperty('--grain-opacity',String(.12*clamp(px/7)));
-    $('menuDialog').style.setProperty('--menu-panel-blur',(30*clamp(px/7)).toFixed(2)+'px');
-    $('menuDialog').style.setProperty('--menu-shadow-opacity',String(.2*clamp(px/7)));
+    const panel='blur('+(30*clamp(px/7)).toFixed(2)+'px) saturate(.8)';
+    dialog.style.backdropFilter=panel;dialog.style.webkitBackdropFilter=panel;
   }
   async function menuBlur(show){
-    const el=$('menuBlur'),run=++menuBlurRun;
-    el.getAnimations().forEach(a=>a.cancel());
-    const from=parseFloat(el.dataset.blur||'0')||0,to=show?7:0;
+    const el=$('menuBlur'),dialog=$('menuDialog'),run=++menuBlurRun;
+    const computed=getComputedStyle(el);
+    const from=parseFloat((computed.backdropFilter||'').match(/blur\(([\d.]+)/)?.[1]||
+      (computed.webkitBackdropFilter||'').match(/blur\(([\d.]+)/)?.[1]||'0'),to=show?7:0;
+    menuBlurAnimations.forEach(animation=>animation.cancel());menuBlurAnimations=[];
+    setMenuBlur(from);
     if(show)el.hidden=false;
-    await animateValue(state.reduced?0:show?300:340,p=>{
-      if(run!==menuBlurRun)return;
-      const t=show?1-Math.pow(1-p,2.6):p*p*(3-2*p);
-      const v=lerp(from,to,t);el.dataset.blur=String(v);setMenuBlur(v);
+    if(state.reduced){setMenuBlur(to);return;}
+    const frames=Array.from({length:31},(_,i)=>{
+      const p=i/30,t=show?1-Math.pow(1-p,2.6):p*p*(3-2*p);
+      return {offset:p,px:lerp(from,to,t)};
     });
+    const options={duration:show?300:340,easing:'linear',fill:'forwards'};
+    const blurFrames=scale=>frames.map(({offset,px})=>{
+      const value='blur('+(px*scale).toFixed(3)+'px)'+(scale===1?'':' saturate(.8)');
+      return {offset,backdropFilter:value,webkitBackdropFilter:value};
+    });
+    menuBlurAnimations=[el.animate(blurFrames(1),options),dialog.animate(blurFrames(30/7),options),
+      el.animate(frames.map(({offset,px})=>({offset,opacity:.12*clamp(px/7)})),{...options,pseudoElement:'::after'})];
+    await Promise.all(menuBlurAnimations.map(animation=>animation.finished.catch(()=>{})));
     if(run!==menuBlurRun)return;
-    el.dataset.blur=String(to);setMenuBlur(to);
-    // Keep the now-transparent layer until the dialog has left the top layer.
+    setMenuBlur(to);
+    // 最终样式落地后释放临时动画层。
+    menuBlurAnimations.forEach(animation=>animation.cancel());menuBlurAnimations=[];
   }
 
   function openDialog(id,trigger){
@@ -2878,7 +2901,7 @@ THREE.OBJLoader = ( function () {
   }
   function restoreDialog(dialog){
     const id=dialog.id;if(state.modal!==id)return;
-    if(id==='menuDialog'){menuBlurRun++;const blurEl=$('menuBlur');blurEl.hidden=true;blurEl.getAnimations().forEach(a=>a.cancel());blurEl.dataset.blur='0';setMenuBlur(0);}
+    if(id==='menuDialog'){menuBlurRun++;menuBlurAnimations.forEach(a=>a.cancel());menuBlurAnimations=[];$('menuBlur').hidden=true;setMenuBlur(0);}
     const y=state.lockedY;
     dom.photography.classList.remove('is-photo-locked');
     state.restoring=true;document.documentElement.classList.add('is-navigating');
@@ -2895,7 +2918,7 @@ THREE.OBJLoader = ( function () {
     dialog.dataset.phase='closing';dialog.classList.remove('is-open');photoRequest++;
     const trigger=lockedDialogs.get(id);
     const closingTransform=getComputedStyle(dialog).transform;
-    dialog.getAnimations().forEach(animation=>animation.cancel());
+    dialog.getAnimations().filter(animation=>!menuBlurAnimations.includes(animation)).forEach(animation=>animation.cancel());
     if(id==='menuDialog'){
       await Promise.all([menuBlur(false),animateElement(dialog,[{transform:closingTransform},{transform:'translateX(105%)'}],{duration:400,easing:MOTION.exit,fill:'forwards'})]);
     }else if(id==='lightbox'){
@@ -3238,6 +3261,8 @@ THREE.OBJLoader = ( function () {
     style(dom.photoGallery,'transform',state.reduced?'none':`translate3d(0,${(1-dock)*h*.025-leaving*h*.02}px,0) scale(${1-(1-dock)*.02-leaving*.018})`);
     // Keep the original blur, brightness and scale; native photos take over once these settle.
     style(dom.photoGallery,'filter',`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
+    const titleBlur=dock===1?'none':`blur(${((1-dock)*18).toFixed(2)}px)`;
+    style(dom.photoTitleTop,'filter',titleBlur);style(dom.photoTitleBottom,'filter',titleBlur);
     style(dom.photoTitleTop,'transform',`translate3d(0,${(1-dock)*5.5}vw,0)`);
     style(dom.photoTitleBottom,'transform',`translate3d(0,${-(1-dock)*5.5}vw,0)`);
     const phraseOut=smooth(.26,.73,reveal);
@@ -3587,7 +3612,7 @@ THREE.OBJLoader = ( function () {
     heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},450+Math.random()*1350);
   }
   function disturbGlyph(glyph){
-    if(!canGlitch()||heroGlitch.active.has(glyph)||heroGlitch.active.size>=2)return;
+    if(!canGlitch()||heroGlitch.active.has(glyph)||heroGlitch.active.size>=3)return;
     heroGlitch.active.add(glyph);
     const ink=glyph.firstElementChild,next=Math.random()<.6?'NX7#%'[Math.floor(Math.random()*5)]:glyph.dataset.char;
     ink.textContent=next;ink.dataset.show=next;glyph.classList.add('is-glitching');
@@ -3597,11 +3622,11 @@ THREE.OBJLoader = ( function () {
     if(!canGlitch()||!heroGlitch.glyphs.length||!origin&&heroGlitch.hovering)return;
     stopHeroGlitch();
     const letters=heroGlitch.glyphs.filter(el=>el.dataset.char!==' ');
-    const start=origin?letters.indexOf(origin):Math.floor(Math.random()*letters.length);
-    if(start<0)return;
-    disturbGlyph(letters[start]);
-    const neighbour=start+1<letters.length?start+1:start-1;
-    if(neighbour>=0)glitchDelay(()=>disturbGlyph(letters[neighbour]),45);
+    if(origin&&!letters.includes(origin))return;
+    const count=Math.min(letters.length,1+Math.floor(Math.random()*3)),chosen=[];
+    if(origin){chosen.push(origin);letters.splice(letters.indexOf(origin),1);}
+    while(chosen.length<count)chosen.push(letters.splice(Math.floor(Math.random()*letters.length),1)[0]);
+    chosen.forEach((glyph,i)=>{if(i===0)disturbGlyph(glyph);else glitchDelay(()=>disturbGlyph(glyph),45*i);});
   }
   function initHeroGlitch(){
     const host=$('heroLetters'),full='CUNYU YUAN';
@@ -3723,8 +3748,22 @@ THREE.OBJLoader = ( function () {
   addEventListener('scroll',()=>{
     if(state.modal||state.restoring)return;
     // Safari 越界坐标可以为负或超出文档；仅约束视觉进度，不反向纠正原生滚动。
-    const next=clamp(scrollY,0,maxScroll());
-    // Native touch scrolling is read-only here. Never pull against iOS/Android momentum.
+    let next=clamp(scrollY,0,maxScroll());
+    // 从正文带惯性进入卡片时，只停靠入口卡片；下一次按下再接管卡片手势。
+    // 仅约束卡片边界，正文与摄影区继续使用原生滚动。
+    if(state.nativeScroll&&state.ready&&!state.scrollAnimation){
+      const l=state.layout;
+      if(state.nativeCardLanding==null&&!input.touch?.deck){
+        if(state.sy<l.archGallery&&next>=l.archGallery)state.nativeCardLanding=l.archGallery;
+        else if(state.sy>l.archLast&&next<=l.archLast)state.nativeCardLanding=l.archLast;
+      }
+      if(state.nativeCardLanding!=null){
+        next=state.nativeCardLanding;
+        if(Math.abs(scrollY-next)>.5)window.scrollTo(0,next);
+        state.writtenScroll=scrollY;state.targetScroll=state.currentScroll=next;
+      }
+    }
+    // Outside the card boundary, native touch scrolling remains read-only.
     if(Math.abs(next-state.sy)>.5)state.nativeDirection=Math.sign(next-state.sy);
     state.sy=next;
     if(state.nativeScroll||Math.abs(scrollY-state.writtenScroll)>1){state.currentScroll=state.sy;state.landing=null;}
