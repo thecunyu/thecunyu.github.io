@@ -331,7 +331,6 @@ main { touch-action:pan-y pinch-zoom; }
   
 /* 开场循环与真实 SVG 遮帘。 */
 .loader__corners { stroke-dasharray:28 28; stroke-dashoffset:0; animation:loaderOrbit 1.45s linear infinite; stroke-linejoin:round; }
-.loader[data-phase="complete"] .loader__corners { animation-play-state:paused; }
 @keyframes loaderOrbit { from { stroke-dashoffset:0; } to { stroke-dashoffset:-56; } }
 .opening { display:block; z-index:199; contain:paint; }
 .opening[hidden] { display:none; }
@@ -2643,7 +2642,7 @@ THREE.OBJLoader = ( function () {
 
   // 触屏由浏览器独占滚动；PC 滚轮只在这一处阻尼，弹窗复用相同响应。
   const INPUT={quiet:220,cardThreshold:28,cardLock:260};
-  const input={id:0,source:'',last:-Infinity,direction:0,magnitude:0,peak:0,trough:Infinity,rearmed:false,decay:0,touch:null,smoothEvent:false};
+  const input={id:0,source:'',last:-Infinity,direction:0,magnitude:0,peak:0,trough:Infinity,rearmed:false,decay:0,cardPush:null,touch:null,smoothEvent:false};
 
   function setNativeScroll(native){
     if(state.nativeScroll===native)return;
@@ -2653,7 +2652,7 @@ THREE.OBJLoader = ( function () {
 
   function newGesture(source,now=performance.now()){
     input.id++;input.source=source;input.last=now;input.direction=0;input.decay=0;
-    input.peak=0;input.trough=Infinity;input.rearmed=false;
+    input.peak=0;input.trough=Infinity;input.rearmed=false;input.cardPush=null;
     return input.id;
   }
   function consumeArchGesture(delta,now,gesture=input.id){
@@ -2725,13 +2724,26 @@ THREE.OBJLoader = ( function () {
     }
     if(input.rearmed)input.trough=Math.min(input.trough,magnitude);
     const freshPush=input.rearmed&&magnitude>=Math.max(input.trough<2?4:18,input.trough*2.5);
-    // Tiny residual wheel events must not keep a completed gesture alive forever.
-    if(state.landing&&magnitude<2){input.last=now;input.magnitude=magnitude;return;}
     const l=state.layout,overCards=state.sy>=l.archGallery-1.5&&state.sy<=l.archLast+1.5;
-    // 卡片区域的一次像素手势直到停歇/反向才结束，惯性尾部回弹不算新一划。
-    // 离开卡片区后继续采用原检测；离散鼠标滚轮的阈值与响应保持不变。
     const cardMomentum=overCards&&!discrete;
-    if(input.source!=='wheel'||gap>INPUT.quiet||reversal||!cardMomentum&&(freshPush||meaningfulGap>150&&magnitude>=4)||discrete&&gap>65)newGesture('wheel',now);
+    // 连续采样确认新发力，单次或两次尾部回弹仍被吞掉。
+    // 有效输入已静默时也接受先强后弱的一划；惯性尚未静默时要求持续增强。
+    let confirmedCardPush=false;
+    const cardRearmed=freshPush||meaningfulGap>INPUT.quiet||input.cardPush;
+    if(cardMomentum&&cardRearmed&&magnitude>=4&&!reversal&&now>=(state.cardLockedUntil||0)){
+      let push=input.cardPush;
+      if(!push||gap>80||magnitude<push.magnitude*(push.settled?.65:1)){
+        push=input.cardPush={start:now,count:0,sum:0,magnitude,settled:meaningfulGap>INPUT.quiet};
+      }
+      push.count++;push.sum+=magnitude;push.magnitude=magnitude;
+      confirmedCardPush=push.count>=3&&now-push.start>=24&&push.sum>=INPUT.cardThreshold*(push.settled?3:2)&&magnitude>=12;
+    }else input.cardPush=null;
+    // 小于 2px 的惯性尾巴不改变有效方向，也不延长有效手势的静默计时。
+    if((state.landing||cardMomentum)&&magnitude<2){input.last=now;input.magnitude=magnitude;return;}
+    const resumed=cardMomentum?confirmedCardPush:
+      (freshPush||meaningfulGap>150&&magnitude>=4);
+    // 卡片以外和离散鼠标滚轮继续使用原阈值。
+    if(input.source!=='wheel'||gap>INPUT.quiet||reversal||resumed||discrete&&gap>65)newGesture('wheel',now);
     input.last=now;input.direction=direction;input.magnitude=magnitude;
     input.peak=Math.max(input.peak,magnitude);
     if(magnitude>=2)input.lastMeaningful=now;
