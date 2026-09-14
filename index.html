@@ -361,18 +361,38 @@ main { touch-action:pan-y pinch-zoom; }
 #heroLetters .hero-glyph { cursor:default; }
 @media(prefers-reduced-motion:reduce) { .loader__corners { animation:none; } }
 
-/* One oversized native snap area preserves free reading inside each gesture's boundaries. */
-html.native-scroll:not(.is-navigating):not(.has-modal) { scroll-snap-type:y mandatory; scroll-padding:0; }
-.scroll-stops { position:absolute; top:0; left:0; width:1px; height:0; pointer-events:none; opacity:0; }
-.scroll-stop { position:absolute; left:0; width:100vw; height:100dvh; scroll-snap-align:start; scroll-snap-stop:always; }
-html:not(.native-scroll) .scroll-stop { scroll-snap-align:none; }
+/* Dialog movement has a single animation owner. */
 .menu-dialog[open] { animation:none; }
-.webkit-engine .menu-dialog { backdrop-filter:none; -webkit-backdrop-filter:none; }
-/* The lower title follows browser chrome; chapter lengths remain based on lvh. */
-@media (any-pointer:coarse) {
-  .photo-title>span:last-child { bottom:calc(100% - 100dvh - 2.5vw + env(safe-area-inset-bottom,0px)); }
-  .photo-title>span { mix-blend-mode:normal; color:#e4e4df; }
+/* Restore the original inversion and static lower title placement. */
+.photo-title { mix-blend-mode:exclusion; }
+.photo-title>span { mix-blend-mode:normal; }
+.photo-title>span:last-child { bottom:-5vw; }
+
+/* All original visual effects remain; only their rendering ownership changes. */
+.menu-blur::after { opacity:var(--grain-opacity,0); }
+.menu-dialog { backdrop-filter:blur(var(--menu-panel-blur,30px)) saturate(.8); -webkit-backdrop-filter:blur(var(--menu-panel-blur,30px)) saturate(.8); }
+
+/* Phone photos occupy permanent positions in the document. The cover and
+   lettering remain sticky overlays, preserving every original transition. */
+.photo-native-flow { display:none; }
+.native-photo-flow .photo-stage { position:relative; top:0; height:100%; overflow:visible; }
+.native-photo-flow .photo-stage>.photo-gallery,
+.native-photo-flow .photo-stage>.photo-title,
+.native-photo-flow .photo-stage>.photo-dimmer,
+.native-photo-flow .photo-stage>.photo-cover {
+  position:sticky; inset:auto; top:0; width:100%; height:100lvh; margin-bottom:-100lvh;
 }
+.native-photo-flow .photo-gallery { z-index:2; }
+.native-photo-flow .photo-title { overflow:clip; }
+.native-photo-flow .photo-collection { pointer-events:auto; }
+.native-photo-flow .photo-native-flow { display:block; position:absolute; z-index:1; overflow:clip; opacity:0; }
+.native-photo-flow .photo-native-flow[hidden] { display:none; }
+.photo-native-flow .photo-item { visibility:visible; will-change:auto; }
+.native-photo-flow.is-photo-locked .photo-stage>.photo-gallery,
+.native-photo-flow.is-photo-locked .photo-stage>.photo-title,
+.native-photo-flow.is-photo-locked .photo-stage>.photo-dimmer,
+.native-photo-flow.is-photo-locked .photo-stage>.photo-cover { position:absolute; top:var(--photo-lock-top); margin-bottom:0; }
+.menu-dialog { box-shadow:-40px 0 100px rgb(0 0 0 / var(--menu-shadow-opacity,.2)); }
 </style>
 </head>
 <body class="is-loading">
@@ -2546,7 +2566,7 @@ THREE.OBJLoader = ( function () {
     if(state.scrollAnimation)state.targetScroll=clamp(state.scrollAnimation.to,0,maxScroll());
     else if(!wheelDamping)state.targetScroll=clamp(scrollY,0,maxScroll());
     state.sy=clamp(scrollY,0,maxScroll());
-    measureType();setupPhotoTimeline();updateNativeStops();if(state.city)resizeCity();state.dirty=true;wake();
+    measureType();setupNativePhotoFlow();setupPhotoTimeline();if(state.city)resizeCity();state.dirty=true;wake();
   }
 
   function frame(now){
@@ -2592,7 +2612,6 @@ THREE.OBJLoader = ( function () {
   function scrollToY(to,duration=650,done,kind='navigation'){
     cancelScroll();to=clamp(to,0,maxScroll());state.targetScroll=to;
     document.documentElement.classList.add('is-navigating');
-    if(state.nativeScroll)armNativeRange(to);
     if(state.reduced||duration===0){
       writeScroll(to);done?.();
       requestAnimationFrame(()=>{if(!state.scrollAnimation)document.documentElement.classList.remove('is-navigating');});
@@ -2694,13 +2713,21 @@ THREE.OBJLoader = ( function () {
     if(state.modal){if(modalWheel(delta))event.preventDefault();return;}
     setNativeScroll(false);event.preventDefault();
     const now=performance.now(),direction=Math.sign(delta),magnitude=Math.abs(delta),gap=now-input.last;
-    // WheelEvent 没有跨浏览器一致的手指离开标记。以静默间隔分组，
-    // 不用整数/大增量或惯性中的局部回升拆分同一次手势。
     const discrete=event.deltaMode!==0;
     const reversal=direction!==input.direction&&magnitude>=3;
-    if(state.landing&&gap<=INPUT.quiet&&direction!==input.direction&&magnitude<3)return;
-    if(input.source!=='wheel'||gap>INPUT.quiet||reversal||discrete&&gap>65)newGesture('wheel',now);
+    const meaningfulGap=now-(input.lastMeaningful??-Infinity);
+    if(magnitude<input.magnitude){
+      input.decay++;
+      if(input.decay>=3&&magnitude<Math.max(10,input.peak*.45))input.rearmed=true;
+    }
+    if(input.rearmed)input.trough=Math.min(input.trough,magnitude);
+    const freshPush=input.rearmed&&magnitude>=Math.max(input.trough<2?4:18,input.trough*2.5);
+    // Tiny residual wheel events must not keep a completed gesture alive forever.
+    if(state.landing&&magnitude<2){input.last=now;input.magnitude=magnitude;return;}
+    if(input.source!=='wheel'||gap>INPUT.quiet||reversal||freshPush||meaningfulGap>150&&magnitude>=4||discrete&&gap>65)newGesture('wheel',now);
     input.last=now;input.direction=direction;input.magnitude=magnitude;
+    input.peak=Math.max(input.peak,magnitude);
+    if(magnitude>=2)input.lastMeaningful=now;
     applyScrollDelta(delta,now,'wheel');
   },{passive:false});
   // 普通触摸属于浏览器。只有已经进入卡片区的手势才属于卡片控制器。
@@ -2713,26 +2740,6 @@ THREE.OBJLoader = ( function () {
       touchDeck.index=clamp(Math.round((state.sy-state.layout.archGallery)/state.layout.archStep),0,slides.length-1);
     }
     touchDeck.active=active;
-  }
-  // A single oversized snap area gives the current chapter a free scrolling
-  // interval. Its two edges are the only native momentum limits for this gesture.
-  const nativeStops=document.createElement('div'),nativeRange=document.createElement('span');
-  nativeStops.className='scroll-stops';nativeStops.setAttribute('aria-hidden','true');
-  nativeRange.className='scroll-stop';nativeStops.append(nativeRange);document.body.append(nativeStops);
-  function updateNativeStops(){
-    const l=state.layout;
-    state.nativeStops=[...new Set([0,...(l.stops||[]),...slides.map((_,i)=>l.archGallery+i*l.archStep),maxScroll()])]
-      .filter(y=>Number.isFinite(y)&&y>=0&&y<=maxScroll()).sort((a,b)=>a-b);
-    armNativeRange(state.scrollAnimation?.to??scrollY);
-  }
-  function armNativeRange(y){
-    const points=state.nativeStops;if(!points?.length)return;
-    // At an existing stop, the next gesture may leave in either direction.
-    const lower=[...points].reverse().find(point=>point<y-2)??0;
-    const upper=points.find(point=>point>y+2)??maxScroll();
-    state.nativeRange={lower,upper};
-    style(nativeRange,'top',lower+'px');
-    style(nativeRange,'height','calc('+(upper-lower)+'px + 100dvh)');
   }
   function commitTouchCard(t){
     if(t.committed||!t.deck)return;
@@ -2751,7 +2758,6 @@ THREE.OBJLoader = ( function () {
   addEventListener('touchstart',event=>{
     if(!state.ready)return;
     state.modalScroll=null;setNativeScroll(true);cancelScroll();
-    if(!state.modal)armNativeRange(scrollY);
     if(event.touches.length!==1){input.touch=null;return;}
     const t=event.touches[0],deck=!state.modal&&inTouchDeck()&&!!event.target.closest('#archSlideshow');
     input.touch={x:t.clientX,y:t.clientY,startX:t.clientX,startY:t.clientY,deck,index:state.archIndex,committed:false};
@@ -2821,6 +2827,9 @@ THREE.OBJLoader = ( function () {
   function setMenuBlur(px){
     const el=$('menuBlur'),v='blur('+px.toFixed(2)+'px)';
     el.style.backdropFilter=v;el.style.webkitBackdropFilter=v;
+    el.style.setProperty('--grain-opacity',String(.12*clamp(px/7)));
+    $('menuDialog').style.setProperty('--menu-panel-blur',(30*clamp(px/7)).toFixed(2)+'px');
+    $('menuDialog').style.setProperty('--menu-shadow-opacity',String(.2*clamp(px/7)));
   }
   async function menuBlur(show){
     const el=$('menuBlur'),run=++menuBlurRun;
@@ -2834,7 +2843,7 @@ THREE.OBJLoader = ( function () {
     });
     if(run!==menuBlurRun)return;
     el.dataset.blur=String(to);setMenuBlur(to);
-    if(!show)el.hidden=true;
+    // Keep the now-transparent layer until the dialog has left the top layer.
   }
 
   function openDialog(id,trigger){
@@ -2871,6 +2880,7 @@ THREE.OBJLoader = ( function () {
     const id=dialog.id;if(state.modal!==id)return;
     if(id==='menuDialog'){menuBlurRun++;const blurEl=$('menuBlur');blurEl.hidden=true;blurEl.getAnimations().forEach(a=>a.cancel());blurEl.dataset.blur='0';setMenuBlur(0);}
     const y=state.lockedY;
+    dom.photography.classList.remove('is-photo-locked');
     state.restoring=true;document.documentElement.classList.add('is-navigating');
     document.body.style.position='';document.body.style.top='';document.body.style.width='';
     dialog.classList.remove('is-open');dialog.dataset.phase='closed';
@@ -2893,7 +2903,7 @@ THREE.OBJLoader = ( function () {
     }else{
       await animateElement(dialog,[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(7vh)'}],{duration:500,easing:MOTION.sweep,fill:'forwards'});
     }
-    dialog.getAnimations().forEach(animation=>animation.cancel());dialog.close();restoreDialog(dialog);
+    dialog.close();dialog.getAnimations().forEach(animation=>animation.cancel());restoreDialog(dialog);
     await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   }
   document.querySelectorAll('dialog').forEach(dialog=>{
@@ -3004,7 +3014,7 @@ THREE.OBJLoader = ( function () {
     [currentPhoto-1,currentPhoto+1].filter(i=>i>=0&&i<DATA.photos.length).forEach(i=>loadImage(DATA.photos[i].src));
     return true;
   }
-  $('photoColumns').addEventListener('click',async event=>{
+  dom.photography.addEventListener('click',async event=>{
     const button=event.target.closest('[data-photo]');if(!button||state.modal)return;
     const epoch=state.mediaEpoch||0;
     if(await showPhoto(Number(button.dataset.photo))&&epoch===(state.mediaEpoch||0)&&!state.modal)openDialog('lightbox',button);
@@ -3088,7 +3098,63 @@ THREE.OBJLoader = ( function () {
     const raw=m.y+(m.down?1:-1)*m.cycle*motion+(j-m.focusAt)*m.stride;
     return ((raw+m.stride)%m.cycle+m.cycle)%m.cycle-m.stride;
   }
+  let nativePhotoFlow=null,nativePhotoRecords=[];
+  function setupNativePhotoFlow(){
+    const active=state.nativeScroll&&photoCount===1;
+    state.nativePhotoFlow=active;
+    dom.photography.classList.toggle('native-photo-flow',active);
+    if(!active){
+      if(nativePhotoFlow)nativePhotoFlow.hidden=true;
+      style($('photoColumns'),'opacity','1');
+      $('photoColumns').inert=false;
+      return;
+    }
+    const l=state.layout,m=l.photoMetrics[0],n=m.indices.length;
+    if(!nativePhotoFlow){
+      nativePhotoFlow=document.createElement('div');
+      nativePhotoFlow.id='photoNativeFlow';nativePhotoFlow.className='photo-native-flow';
+      // Permanent document positions: no recycling, scroll-linked transforms or scrollTo.
+      // The repeated edge photos preserve the original complete cycle and its handoff.
+      for(let k=-2;k<=n+1;k++){
+        const index=m.indices[((m.focusAt+k)%n+n)%n],r=createPhotoTile(index);
+        r.slot=k;r.button.tabIndex=0;r.img.loading=Math.abs(k)<=1?'eager':'lazy';
+        r.img.addEventListener('load',()=>{
+          r.ready=true;r.item.classList.add('is-ready');state.dirty=true;wake();
+        });
+        r.img.src=DATA.photos[index].src;
+        nativePhotoRecords.push(r);nativePhotoFlow.append(r.item);
+      }
+      $('photoStage').append(nativePhotoFlow);
+    }
+    nativePhotoFlow.hidden=false;
+    style(nativePhotoFlow,'left',m.x+'px');style(nativePhotoFlow,'width',m.width+'px');
+    style(nativePhotoFlow,'height',(l.photoTravel+state.height)+'px');
+    nativePhotoRecords.forEach(r=>style(r.item,'top',(m.y+r.slot*m.stride).toFixed(3)+'px'));
+  }
+  function renderNativePhotoFlow(distance,handoff){
+    if(!state.nativePhotoFlow)return 0;
+    const l=state.layout,travel=galleryDistance(distance,l.photoLength,l.photoRamp);
+    const fade=Math.min(80,state.height*.12);
+    const alpha=handoff?smooth(0,fade,distance)*(1-smooth(l.photoLength-fade,l.photoLength,distance)):0;
+    // Only the original short entrance/exit easing changes this offset.
+    // Throughout the gallery it is constant, so even asynchronous iOS momentum
+    // moves the actual photos directly with the document, without a JS correction.
+    const offset=clamp(distance,0,l.photoLength)-travel;
+    style(nativePhotoFlow,'top',(l.photoStart-l.photoRawTop+offset).toFixed(3)+'px');
+    // Keep the matching image underneath opaque. Fading both copies together
+    // would produce a brief dark pulse even when their positions are identical.
+    style(nativePhotoFlow,'opacity',handoff&&distance>=0&&distance<=l.photoLength?'1':'0');
+    if(nativePhotoFlow.inert!==(alpha<.5))nativePhotoFlow.inert=alpha<.5;
+    style($('photoColumns'),'opacity',String(1-alpha));
+    if($('photoColumns').inert!==(alpha>=.5))$('photoColumns').inert=alpha>=.5;
+    return alpha;
+  }
   function freezePhotoTimeline(){
+    if(state.nativePhotoFlow){
+      dom.photography.style.setProperty('--photo-lock-top',clamp(state.lockedY-state.layout.photoRawTop,0,dom.photography.offsetHeight-state.height)+'px');
+      dom.photography.classList.add('is-photo-locked');
+    }
+
     if(!state.photoTimeline)return;
     // 锁定 body 会暂时消除根滚动范围。先保存当前合成位置，再停用时间线。
     const positions=photoRecords.filter(r=>r.near).map(r=>[r,getComputedStyle(r.item).transform]);
@@ -3098,7 +3164,7 @@ THREE.OBJLoader = ( function () {
   }
   function setupPhotoTimeline(){
     const l=state.layout;if(!l.photoMetrics)return;
-    state.photoTimeline=state.nativeScroll&&supportsPhotoTimeline&&!state.reduced;
+    state.photoTimeline=state.nativeScroll&&!state.nativePhotoFlow&&supportsPhotoTimeline&&!state.reduced;
     if(!state.photoTimeline){photoTimelineStyle.textContent='';photoRecords.forEach(r=>r.item.style.animationName='none');return;}
     const css=[],length=l.photoLength,ramp=l.photoRamp;
     const inverse=motion=>{
@@ -3166,16 +3232,19 @@ THREE.OBJLoader = ( function () {
     const handoff=reveal>=1&&heroTileReady();
     const motion=galleryDistance(sy-l.photoStart,l.photoLength,l.photoRamp)/l.photoTravel;
     const leaving=smooth(l.contactTop-h,l.contactTop,sy);
-    renderPhotoTiles(motion,handoff);
+    const nativeAlpha=renderNativePhotoFlow(sy-l.photoStart,handoff);
+    // The original animated column only draws the cover handoffs on phones.
+    if(!state.nativePhotoFlow||nativeAlpha<1)renderPhotoTiles(motion,handoff&&nativeAlpha<.5);
     style(dom.photoGallery,'transform',state.reduced?'none':`translate3d(0,${(1-dock)*h*.025-leaving*h*.02}px,0) scale(${1-(1-dock)*.02-leaving*.018})`);
-    // Safari/触屏避免每帧对整屏照片做高半径模糊，以独立遮光层保留明暗过渡。
-    const lightCompositing=webkit||state.nativeScroll;
-    style(dom.photoGallery,'filter',lightCompositing?'none':`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
+    // Keep the original blur, brightness and scale; native photos take over once these settle.
+    style(dom.photoGallery,'filter',`blur(${((1-dock)*18).toFixed(2)}px) brightness(${(.3+.7*smooth(0,1,dock)).toFixed(4)})`);
     style(dom.photoTitleTop,'transform',`translate3d(0,${(1-dock)*5.5}vw,0)`);
     style(dom.photoTitleBottom,'transform',`translate3d(0,${-(1-dock)*5.5}vw,0)`);
     const phraseOut=smooth(.26,.73,reveal);
     style(dom.photoPhrase,'opacity',String(smooth(.12,.92,entrance)*(1-phraseOut)));
     style(dom.photoPhrase,'transform',`translate3d(0,${(1-entrance)*45-phraseOut*45}px,0)`);
+    const coverOpacity=handoff?1-smooth(0,Math.min(80,h*.12),sy-l.photoStart):1;
+    if(coverOpacity>0){
     const m=l.photoFocus,focusY=photoY(m,m.focusAt,motion);
     const x=lerp(0,m.x,dock),y=lerp(0,focusY,dock),cw=lerp(w,m.width,dock),ch=lerp(h,m.height,dock);
     // 固定布局尺寸，只改裁剪及变换。源图按实际比例绘制，矩形归位时与下方照片逐像素重合。
@@ -3184,10 +3253,10 @@ THREE.OBJLoader = ( function () {
     const zoom=state.reduced?1.015:lerp(1.2,1.015,dock),scale=fitW/l.coverWidth*zoom;
     const tx=x+(cw-fitW*zoom)*.5,ty=y+(ch-fitH)*.35*zoom+ch*(1-zoom)*.5+(state.reduced?0:(1-entrance)*h*-.13*(1-dock));
     style(dom.photoCoverImage,'transform',`translate3d(${tx.toFixed(3)}px,${ty.toFixed(3)}px,0) scale(${scale})`);
-    const coverOpacity=handoff?1-smooth(0,Math.min(80,h*.12),sy-l.photoStart):1;
+    }
     style(dom.photoCover,'opacity',String(coverOpacity));
-    style(dom.photoDimmer,'opacity',String(Math.max(leaving*.16,lightCompositing?(1-dock)*.7:0)));
-    style(dom.photoGallery,'pointer-events',handoff?'auto':'none');
+    style(dom.photoDimmer,'opacity',String(leaving*.16));
+    style(dom.photoGallery,'pointer-events',handoff&&(!state.nativePhotoFlow||nativeAlpha<.5)?'auto':'none');
   }
 
   function measureType(){
@@ -3396,7 +3465,7 @@ THREE.OBJLoader = ( function () {
     const w=state.width,h=c.host==='contact'?state.layout.contactHeight:dom.cityScene.clientHeight;
     if(w===c.width&&h===c.height)return;
     c.width=w;c.height=h;
-    c.renderer.setPixelRatio(Math.min(devicePixelRatio||1,webkit?(w<=600?1:1.25):(w<=600?1.25:1.5)));
+    c.renderer.setPixelRatio(Math.min(devicePixelRatio||1,w<=600?1.25:1.5));
     c.renderer.setSize(w,h,false);c.camera.aspect=w/h;c.camera.updateProjectionMatrix();c.forceRender=true;
   }
   function updateCity(now,dt){
@@ -3430,7 +3499,6 @@ THREE.OBJLoader = ( function () {
     const y=c.y+pull*.035,z=c.z+pull*.15;
     c.camera.position.set(c.x,y,z);c.camera.lookAt(0,0,0);
     if(!c.waveDone||c.forceRender||Math.abs(c.x-(c.renderX??-999))+Math.abs(y-(c.renderY??-999))+Math.abs(z-(c.renderZ??-999))>.0005){
-      if(webkit&&!c.forceRender&&now-c.lastRender<15)return true;
       c.renderer.render(c.scene,c.camera);c.lastRender=now;c.renderX=c.x;c.renderY=y;c.renderZ=z;c.forceRender=false;
     }
     return state.revealing&&!c.waveDone||Math.abs(c.x-targetX)+Math.abs(c.y-targetY)+Math.abs(c.z-targetZ)>.015;
@@ -3516,7 +3584,7 @@ THREE.OBJLoader = ( function () {
   function syncHeroGlitch(){
     if(!canGlitch()){stopHeroGlitch();return;}
     if(heroGlitch.hovering||!heroGlitch.glyphs.length||heroGlitch.timer||heroGlitch.pending.size)return;
-    heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},1800+Math.random()*2600);
+    heroGlitch.timer=setTimeout(()=>{heroGlitch.timer=0;pulseHeroGlitch();},450+Math.random()*1350);
   }
   function disturbGlyph(glyph){
     if(!canGlitch()||heroGlitch.active.has(glyph)||heroGlitch.active.size>=2)return;
@@ -3656,8 +3724,7 @@ THREE.OBJLoader = ( function () {
     if(state.modal||state.restoring)return;
     // Safari 越界坐标可以为负或超出文档；仅约束视觉进度，不反向纠正原生滚动。
     const next=clamp(scrollY,0,maxScroll());
-    // 停靠由浏览器原生 scroll-snap-stop 完成，绝不在 scroll 回调中
-    // 用 scrollTo 抵消尚未结束的系统惯性（iOS 抽动、Android 反复闪回的来源）。
+    // Native touch scrolling is read-only here. Never pull against iOS/Android momentum.
     if(Math.abs(next-state.sy)>.5)state.nativeDirection=Math.sign(next-state.sy);
     state.sy=next;
     if(state.nativeScroll||Math.abs(scrollY-state.writtenScroll)>1){state.currentScroll=state.sy;state.landing=null;}
