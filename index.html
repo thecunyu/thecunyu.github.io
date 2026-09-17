@@ -398,6 +398,9 @@ main { touch-action:pan-y pinch-zoom; }
 .native-photo-flow.is-photo-locked .photo-stage>.photo-title,
 .native-photo-flow.is-photo-locked .photo-stage>.photo-dimmer,
 .native-photo-flow.is-photo-locked .photo-stage>.photo-cover { position:absolute; top:var(--photo-lock-top); margin-bottom:0; }
+/* iPhone Chrome：裁掉末章之外的合成溢出，不给 sticky 新增滚动容器。 */
+html.ios-chrome.native-scroll main { overflow:clip; }
+html.ios-chrome .contact { overflow:hidden; }
 /* 菜单保留玻璃模糊与颗粒；移除向页面延伸的压暗阴影。 */
 .menu-dialog { box-shadow:none; }
 </style>
@@ -2557,6 +2560,8 @@ THREE.OBJLoader = ( function () {
   const fineQuery=matchMedia('(any-hover: hover) and (any-pointer: fine)');
   const webkit=/AppleWebKit/i.test(navigator.userAgent)&&!/(Chrome|Chromium|Edg|OPR|Android)/i.test(navigator.userAgent);
   document.documentElement.classList.toggle('webkit-engine',webkit);
+  const iosChrome=/CriOS\//i.test(navigator.userAgent);
+  document.documentElement.classList.toggle('ios-chrome',iosChrome);
   document.documentElement.classList.toggle('touch-layout',!fineQuery.matches);
   const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,v));
   const lerp=(a,b,t)=>a+(b-a)*t;
@@ -2580,12 +2585,30 @@ THREE.OBJLoader = ( function () {
   const styleCache=new WeakMap();
   function style(el,key,value){let cache=styleCache.get(el);if(!cache){cache={};styleCache.set(el,cache);}if(cache[key]!==value){cache[key]=value;el.style.setProperty(key,value);}}
   function attribute(el,key,value){if(el.getAttribute(key)!==value)el.setAttribute(key,value);} 
-  const edge={value:0,velocity:0,pull:0,last:0,kind:'home'};
-  function pullEdge(delta,kind='home'){
+  const EDGE_RELEASE_DELAY=180;
+  const wheelHasMomentum='momentum' in WheelEvent.prototype;
+  const edge={value:0,velocity:0,pull:0,last:0,kind:'home',releaseTimer:0};
+  function releaseEdge(){
+    clearTimeout(edge.releaseTimer);edge.releaseTimer=0;
+    edge.pull=0;edge.last=0;wake();
+  }
+  function pullEdge(delta,kind='home',impulse=false){
     if(state.reduced)return;
     const limit=85*Math.max(500,state.height)/900;
-    edge.kind=kind;edge.pull+=Math.abs(delta)*.24*(1-edge.pull/limit);
-    edge.pull=clamp(edge.pull,0,limit);edge.last=performance.now();wake();
+    edge.kind=kind;edge.last=performance.now();
+    clearTimeout(edge.releaseTimer);edge.releaseTimer=0;
+    if(impulse){
+      // 旧浏览器没有惯性标记：输入只推动弹簧，平衡位置始终为零。
+      // 慢速轻划仍有响应；衰减中的惯性不会累加成锁住的拉伸位置。
+      edge.pull=0;
+      const resistance=clamp(1-Math.max(0,edge.value)/limit);
+      edge.velocity=Math.min(limit*12,edge.velocity+Math.abs(delta)*6*resistance);
+    }else{
+      edge.pull=clamp(edge.pull+Math.abs(delta)*.24*(1-edge.pull/limit),0,limit);
+      // 无惯性事件的停手也必须自行释放，不等待下一次输入。
+      if(!input.touch)edge.releaseTimer=setTimeout(releaseEdge,EDGE_RELEASE_DELAY);
+    }
+    wake();
   }
   const documentTop=el=>{
     // offsetTop rounds each ancestor to whole pixels. Measure the fractional layout
@@ -2771,7 +2794,10 @@ THREE.OBJLoader = ( function () {
     }
     if(consumeArchGesture(delta,now,gesture))return true;
     const from=state.targetScroll;
-    if(from<=.5&&direction<0){pullEdge(delta);return true;}
+    if(from<=.5&&direction<0){
+      // 不用幅度阈值猜测松手；有原生标记时保留直接拖动反馈。
+      pullEdge(delta,'home',source==='wheel'&&!wheelHasMomentum);return true;
+    }
     if(direction<0||from>state.height*.1)edge.pull=0;
     let next=clamp(from+delta,0,maxScroll());
     const crossing=(state.layout.stops||[]).filter(point=>direction>0?from<point-.5&&next>=point:from>point+.5&&next<=point).sort((a,b)=>direction*(a-b))[0];
@@ -2793,10 +2819,16 @@ THREE.OBJLoader = ( function () {
     s.target=clamp(s.target+delta,0,max);wake();return true;
   }
   addEventListener('wheel',event=>{
-    if(event.ctrlKey||event.metaKey||!state.ready||!event.cancelable)return;
+    if(event.ctrlKey||event.metaKey||!state.ready)return;
     const raw=Math.abs(event.deltaX)>Math.abs(event.deltaY)?event.deltaX:event.deltaY;
     const delta=raw*(event.deltaMode===1?16:event.deltaMode===2?state.height:1);
-    if(!delta)return;
+    // 系统明确报告已经松手时立即释放；惯性尾部不再给首屏施加拉力。
+    // 零位移或不可取消的尾部事件也能结束拉伸。
+    if(event.momentum===true&&!state.modal&&state.targetScroll<=.5&&delta<=0){
+      if(event.cancelable)event.preventDefault();
+      releaseEdge();return;
+    }
+    if(!event.cancelable||!delta)return;
     if(state.modal){if(modalWheel(delta))event.preventDefault();return;}
     setNativeScroll(false);event.preventDefault();
     const now=performance.now(),direction=Math.sign(delta),magnitude=Math.abs(delta),gap=now-input.last;
@@ -2866,7 +2898,40 @@ THREE.OBJLoader = ( function () {
     const t=event.touches[0],deck=!state.modal&&inTouchDeck()&&!!event.target.closest('#archStage');
     input.touch={x:t.clientX,y:t.clientY,startX:t.clientX,startY:t.clientY,deck,index:state.archIndex,committed:false};
   },{passive:true});
-  // 仅卡片舞台需要可取消触摸；页面其余区域继续使用被动监听。
+  // Chrome iOS 的工具栏变化和原生惯性可能越过末章；使用实时可见边界。
+  function contactScrollLimit(){
+    const viewport=window.visualViewport;
+    const visibleBottom=viewport?viewport.offsetTop+viewport.height:innerHeight;
+    return Math.max(0,dom.contact.getBoundingClientRect().bottom+scrollY-visibleBottom);
+  }
+  function guardContactEnd(){
+    if(!iosChrome||!state.nativeScroll||!state.ready||state.modal||state.restoring||
+      input.touch?.deck||Math.abs((window.visualViewport?.scale||1)-1)>.01||
+      scrollY+innerHeight<state.layout.contactRawTop)return;
+    const limit=contactScrollLimit();state.maxScroll=limit;
+    if(scrollY>limit+.5){
+      window.scrollTo(0,limit);state.writtenScroll=scrollY;
+      state.currentScroll=state.targetScroll=scrollY;
+    }
+  }
+  if(iosChrome){
+    $('main').addEventListener('touchmove',event=>{
+      const t=input.touch;
+      if(!t||t.deck||state.modal||!state.nativeScroll||event.touches.length!==1||
+        !event.cancelable||Math.abs((window.visualViewport?.scale||1)-1)>.01)return;
+      const point=event.touches[0],delta=t.y-point.clientY;
+      if(delta<=0||delta<Math.abs(t.x-point.clientX)||scrollY+innerHeight<state.layout.contactRawTop)return;
+      const limit=contactScrollLimit();
+      if(scrollY+delta>=limit-.5){
+        event.preventDefault();state.maxScroll=limit;
+        writeScroll(limit);state.targetScroll=state.currentScroll;wake();
+      }
+    },{passive:false});
+    window.visualViewport?.addEventListener('resize',()=>{
+      guardContactEnd();state.dirty=true;wake();
+    },{passive:true});
+  }
+  // 卡片舞台取消自身手势；其余触摸处理保持被动监听。
   archStage.addEventListener('touchmove',event=>{
     if(input.touch?.deck&&event.touches.length===1&&event.cancelable)event.preventDefault();
   },{passive:false});
@@ -2878,7 +2943,7 @@ THREE.OBJLoader = ( function () {
     if(scrollY<=0&&delta<0)pullEdge(delta);else edge.pull=0;
   },{passive:true});
   function finishTouch(cancelled=false){
-    const t=input.touch;input.touch=null;edge.pull=0;edge.last=0;
+    const t=input.touch;input.touch=null;releaseEdge();
     if(!cancelled&&t?.deck)commitTouchCard(t);
     state.dirty=true;wake();
   }
@@ -2897,7 +2962,7 @@ THREE.OBJLoader = ( function () {
   // 弹簧按时间积分，60/120 Hz 与触摸/滚轮共享强度及阻尼。
   function updateEdge(now,dt){
     if(state.reduced){edge.value=edge.velocity=edge.pull=0;return false;}
-    if(!input.touch&&now-edge.last>110)edge.pull=0;
+    if(!input.touch&&now-edge.last>EDGE_RELEASE_DELAY)edge.pull=0;
     const steps=Math.max(1,Math.ceil(dt/.012)),step=dt/steps;
     for(let i=0;i<steps;i++){
       edge.velocity+=(180*(edge.pull-edge.value)-19*edge.velocity)*step;
@@ -3844,7 +3909,8 @@ THREE.OBJLoader = ( function () {
   }
   addEventListener('scroll',()=>{
     if(state.modal||state.restoring)return;
-    // Safari 越界坐标可以为负或超出文档；仅约束视觉进度，不反向纠正原生滚动。
+    guardContactEnd();
+    // 其余浏览器仍只约束视觉进度，不反向纠正原生滚动。
     let next=clamp(scrollY,0,maxScroll());
     // 从正文带惯性进入卡片时，只停靠入口卡片；下一次按下再接管卡片手势。
     // 仅约束卡片边界，正文与摄影区继续使用原生滚动。
